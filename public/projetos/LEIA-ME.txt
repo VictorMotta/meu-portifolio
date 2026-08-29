@@ -1,0 +1,99 @@
+Como adicionar um projeto
+=========================
+
+Tudo mora nesta pasta. Um projeto = um arquivo .md. Nao existe indice nem
+banco para atualizar depois: o site le esta pasta no build.
+
+  meu-projeto.md          <- o texto em portugues. E ISSO que cria o projeto.
+  meu-projeto.en.md       <- traducao em ingles (opcional)
+  meu-projeto_1.webp      <- imagens do carrossel, na ordem
+  meu-projeto_2.webp         a _1 tambem e a capa no card da home
+  meu-projeto_3.webp
+
+O nome-base ("meu-projeto") amarra tudo, e vira o endereco da pagina:
+/pt/projetos/meu-projeto. Use so minusculas, numeros e hifen.
+
+
+O arquivo .md
+-------------
+
+  ---
+  year: 2026
+  featured: true
+  role: Desenvolvimento full stack
+  stack: [Next.js, TypeScript, PostgreSQL]
+  repo: https://github.com/VictorMotta/meu-projeto
+  live: https://meu-projeto.com
+  alts:
+    - Painel principal com o funil em colunas
+    - Tela de importacao mostrando o relatorio de erros
+  ---
+
+  # Nome do Projeto
+
+  Uma frase explicando o que e. Este primeiro paragrafo vira o resumo do card.
+
+  Daqui para baixo e o texto completo, que aparece so na pagina do projeto.
+  Pode usar **negrito**, listas, links e subtitulos com ##.
+
+O que cada campo faz:
+
+  year       ordena os projetos (mais recente primeiro). Obrigatorio na pratica.
+  featured   true = layout largo no topo da secao. Deixe 2 ou 3 no maximo.
+  role       o que voce fez. Aparece na barra lateral.
+  stack      tecnologias. Viram as etiquetas.
+  repo/live  links. Some o botao se voce omitir a linha.
+  alts       descricao de cada imagem, na ordem _1, _2, _3...
+
+Sobre o "alts": e o que uma pessoa cega ouve no lugar da imagem. Descreva o que
+se ve ("painel com o funil em colunas"), nao o nome do projeto. Se voce nao
+escrever, entra um texto generico — funciona, mas e bem pior.
+
+
+A traducao (.en.md)
+-------------------
+
+Opcional. Sem ela, a versao em ingles do site mostra o texto em portugues, o
+que e melhor do que pagina vazia.
+
+Ela so precisa do que muda de idioma — titulo, texto, "role" e "alts". Ano,
+stack e links sao herdados do arquivo em portugues, entao nao repita.
+
+  ---
+  role: Full stack development
+  alts:
+    - Main dashboard with the funnel in columns
+  ---
+
+  # Project Name
+
+  One sentence explaining what it is.
+
+  The full text goes here.
+
+
+Imagens
+-------
+
+Formatos aceitos: .webp  .avif  .png  .jpg  .jpeg
+Maiuscula tanto faz (.JPG funciona igual a .jpg), e da para misturar formatos
+no mesmo projeto: _1.png com _2.webp e _3.jpg convivem numa boa.
+
+Sugestao: WebP de ~1600x1000 (leve e nitido). Mas nao se prenda a isso — o
+Next converte a imagem para WebP ou AVIF na hora de servir, seja qual for o
+formato que voce colocar aqui. Mande o PNG do print direto se for mais rapido.
+
+Nao precisa anotar largura nem altura em lugar nenhum.
+
+A numeracao pode passar de 9 sem problema: _10 vem depois de _9, nao entre
+_1 e _2.
+
+Enquanto um projeto nao tiver imagem, o card mostra as iniciais do nome num
+bloco desenhado — nao quebra e nao fica com icone de imagem quebrada.
+
+
+Importante
+----------
+
+O site e estatico: o .md novo so aparece no ar depois de commit e deploy.
+Largar o arquivo na pasta em producao nao publica sozinho.

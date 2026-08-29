@@ -1,0 +1,307 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Design tokens
+
+   Todo par de cor foi conferido contra WCAG 2.1 AA. O numero entre parenteses
+   e o PIOR caso do token — o contraste contra `surface-2`, o fundo mais claro
+   do tema escuro (e o mais escuro do tema claro), onde ficam os cards e os
+   estados de hover. Conferir so contra `bg` engana: o texto quase sempre
+   aparece sobre um card, nao sobre o fundo puro.
+
+   Se mexer em qualquer cor, rode `npm run a11y` antes de commitar — o
+   axe-core reprova contraste insuficiente e o script sai com erro.
+   ========================================================================= */
+@theme {
+  /* Tema escuro (padrao) */
+  --color-bg: #0a0a0b;
+  --color-surface: #131316;
+  --color-surface-2: #1b1b1f;
+  --color-border: #26262b;
+  --color-border-strong: #3a3a42;
+  --color-fg: #ededf0; /* 14.7:1 — AAA */
+  --color-fg-muted: #a1a1ab; /* 6.7:1 — AAA */
+  --color-fg-subtle: #8a8a92; /* 5.0:1 — AA */
+  --color-accent: #4ee1c1; /* 10.5:1 — AAA */
+  --color-accent-dim: #2ba98e;
+  --color-accent-ink: #04120e; /* texto sobre o acento — 11.7:1 */
+  --color-danger: #ff6b6b; /* 6.2:1 — AA */
+  --color-success: #4ee1c1;
+
+  /* Tipografia — as tres variaveis vem de next/font em app/[locale]/layout.tsx */
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
+
+  /* Escala fluida: cresce com a viewport sem precisar de breakpoint */
+  --text-display: clamp(2.75rem, 1rem + 8.5vw, 8rem);
+  --text-h1: clamp(2.25rem, 1rem + 5vw, 4.5rem);
+  --text-h2: clamp(1.75rem, 1rem + 3vw, 3rem);
+  --text-h3: clamp(1.25rem, 1rem + 1.2vw, 1.75rem);
+  --text-lead: clamp(1.0625rem, 1rem + 0.6vw, 1.375rem);
+
+  --radius-card: 20px;
+  --radius-control: 12px;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tema claro — mesmos papeis, valores recalculados.
+   O acento neon puro nao chega perto de 4.5:1 em fundo claro, entao escurece
+   para um verde-petroleo que passa tanto como texto quanto como fundo de
+   botao com texto branco por cima. */
+:root[data-theme="light"] {
+  --color-bg: #fafafa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f1f3;
+  --color-border: #e3e3e7;
+  --color-border-strong: #c9c9d1;
+  --color-fg: #131316; /* 16.4:1 — AAA */
+  --color-fg-muted: #55555f; /* 6.5:1 — AAA */
+  --color-fg-subtle: #68686f; /* 4.9:1 — AA */
+  --color-accent: #0d6f5e; /* 5.4:1 — AA */
+  --color-accent-dim: #0a5f50;
+  --color-accent-ink: #ffffff; /* texto sobre o acento — 6.1:1 */
+  --color-danger: #c62828; /* 5.0:1 — AA */
+  --color-success: #0f7d6a;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Compensa o header fixo quando o usuario pula para uma ancora, para o
+       titulo da secao nao ficar escondido atras dele. */
+    scroll-padding-top: 6rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Um unico anel de foco para o site inteiro. Nunca sobrescrever com
+     outline:none sem colocar outro indicador visivel no lugar. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Respeitar quem pediu menos movimento. Isso cobre tudo que e CSS; os
+     componentes com motion checam useReducedMotion por conta propria. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Container padrao das secoes */
+  .shell {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 5vw, 4rem);
+  }
+
+  /* Texto em degrade usado no hero. Tem fallback de cor solida antes do
+     background-clip para nao sumir em navegador que nao suporta. */
+  .text-gradient {
+    color: var(--color-fg);
+    background: linear-gradient(
+      120deg,
+      var(--color-fg) 0%,
+      var(--color-fg) 45%,
+      var(--color-accent) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Texto vindo do markdown dos projetos.
+     Escrito a mao em vez de instalar @tailwindcss/typography: o conteudo aqui
+     e simples (paragrafo, subtitulo, lista, link, codigo) e o plugin traria
+     um tema inteiro que teria de ser sobrescrito para casar com os tokens. */
+  .prose {
+    color: var(--color-fg-muted);
+    font-size: var(--text-lead);
+    line-height: 1.75;
+  }
+
+  .prose > * + * {
+    margin-top: 1.25em;
+  }
+
+  .prose h2,
+  .prose h3 {
+    color: var(--color-fg);
+    margin-top: 2em;
+  }
+
+  .prose h2 {
+    font-size: var(--text-h3);
+  }
+
+  .prose h3 {
+    font-size: 1.25rem;
+  }
+
+  .prose strong {
+    color: var(--color-fg);
+    font-weight: 600;
+  }
+
+  .prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 1.5em;
+  }
+
+  .prose ul {
+    list-style: disc;
+  }
+
+  .prose ol {
+    list-style: decimal;
+  }
+
+  .prose li + li {
+    margin-top: 0.5em;
+  }
+
+  .prose li::marker {
+    color: var(--color-accent);
+  }
+
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 0.15em 0.4em;
+  }
+
+  .prose pre {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    padding: 1rem 1.25rem;
+    /* Bloco de codigo longo rola dentro de si, sem empurrar a pagina. */
+    overflow-x: auto;
+  }
+
+  .prose pre code {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .prose blockquote {
+    border-left: 3px solid var(--color-accent);
+    padding-left: 1.25em;
+    color: var(--color-fg-subtle);
+  }
+
+  .prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-control);
+  }
+
+  /* Icones do botao de tema, trocados por CSS.
+     Fazer isso em JavaScript exigiria um estado "mounted" (o servidor nao
+     sabe o tema do usuario), o que custa um render extra e mostra o icone
+     errado por um instante. Com o seletor de atributo o icone ja nasce certo,
+     porque o script do next-themes escreve data-theme antes da primeira
+     pintura. Sem atributo, o padrao e o tema escuro. */
+  .theme-icon-to-light {
+    display: block;
+  }
+
+  .theme-icon-to-dark {
+    display: none;
+  }
+
+  :root[data-theme="light"] .theme-icon-to-light {
+    display: none;
+  }
+
+  :root[data-theme="light"] .theme-icon-to-dark {
+    display: block;
+  }
+
+  /* Etiqueta monoespacada que numera as secoes */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+}
+
+@layer utilities {
+  /* Esconde visualmente mas mantem no fluxo para leitores de tela.
+     Diferente de hidden/display:none, que remove do acessibility tree. */
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
