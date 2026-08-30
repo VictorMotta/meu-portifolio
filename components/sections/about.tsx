@@ -16,9 +16,9 @@ export function About({
   dict: Dictionary;
   locale: Locale;
 }) {
-  /* Conferir aqui, no servidor, evita a requisicao para uma foto que nao
+  /* Conferir aqui, no servidor, evita a requisição para uma foto que não
      existe — sem isso o otimizador de imagem do Next responde 500 e o log de
-     desenvolvimento enche de ruido ate voce colocar o arquivo. */
+     desenvolvimento enche de ruído até você colocar o arquivo. */
   const FOTO = "/victor.jpg";
   const temFoto = fs.existsSync(path.join(process.cwd(), "public", FOTO));
 
@@ -64,8 +64,8 @@ export function About({
           <Reveal delay={0.1}>
             <figure className="relative overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]">
               {/* TODO(victor): coloque a sua foto em /public/victor.jpg.
-                  Ate la aparece o monograma, e o layout nao muda quando o
-                  arquivo chegar — a proporcao ja esta reservada aqui. */}
+                  Até la aparece o monograma, e o layout não muda quando o
+                  arquivo chegar — a proporção já esta reservada aqui. */}
               <div className="relative aspect-[4/5]">
                 <ImageWithFallback
                   src={temFoto ? FOTO : ""}

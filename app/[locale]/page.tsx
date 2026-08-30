@@ -20,8 +20,8 @@ export default async function HomePage({
   const typedLocale = locale as Locale;
   const dict = getDictionary(typedLocale);
 
-  /* JSON-LD do tipo Person: e o que faz o Google mostrar voce como pessoa
-     (nome, cargo, perfis) em vez de so uma pagina qualquer. */
+  /* JSON-LD do tipo Person: é o que faz o Google mostrar você como pessoa
+     (nome, cargo, perfis) em vez de só uma página qualquer. */
   const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",

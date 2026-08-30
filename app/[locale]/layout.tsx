@@ -12,8 +12,8 @@ import { GrainOverlay } from "@/components/ui/grain-overlay";
 import { getDictionary } from "@/content/i18n";
 import { locales, site, type Locale } from "@/content/site";
 
-/* Variaveis CSS consumidas por --font-display / --font-sans / --font-mono
-   no globals.css. Servidas pelo proprio dominio, sem round-trip ao Google. */
+/* Variáveis CSS consumidas por --font-display / --font-sans / --font-mono
+   no globals.css. Servidas pelo próprio domínio, sem round-trip ao Google. */
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-bricolage",
@@ -58,8 +58,8 @@ export async function generateMetadata({
     creator: site.name,
     alternates: {
       canonical: url,
-      /* hreflang: diz ao buscador que /pt e /en sao a mesma pagina em
-         idiomas diferentes, em vez de conteudo duplicado. */
+      /* hreflang: diz ao buscador que /pt e /en são a mesma página em
+         idiomas diferentes, em vez de conteúdo duplicado. */
       languages: {
         "pt-BR": `${site.url}/pt`,
         "en-US": `${site.url}/en`,
@@ -97,7 +97,7 @@ export default async function LocaleLayout({
   const dict = getDictionary(typedLocale);
 
   return (
-    /* suppressHydrationWarning e necessario porque o next-themes escreve
+    /* suppressHydrationWarning é necessário porque o next-themes escreve
        data-theme no <html> antes do React hidratar. */
     <html
       lang={dict.meta.localeTag}

@@ -31,8 +31,8 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
             <a
               key={label}
               href={href}
-              /* Perfis externos abrem em nova aba; o mailto nao, senao o
-                 navegador deixa uma aba em branco para tras. */
+              /* Perfis externos abrem em nova aba; o mailto não, senao o
+                 navegador deixa uma aba em branco para trás. */
               {...(href.startsWith("http")
                 ? { target: "_blank", rel: "noopener noreferrer" }
                 : {})}

@@ -1,12 +1,12 @@
 import type { SVGProps } from "react";
 
 /**
- * Icones de marca em SVG proprio.
+ * Ícones de marca em SVG próprio.
  *
- * O lucide-react removeu logos de terceiros na v1 (questao de licenca de
- * marca), entao GitHub, LinkedIn e WhatsApp vem daqui. A assinatura imita a
+ * O lucide-react removeu logos de terceiros na v1 (questao de licença de
+ * marca), então GitHub, LinkedIn e WhatsApp vem daqui. A assinatura imita a
  * do lucide — `className` e o resto das props passam direto — para que o uso
- * seja identico ao dos outros icones.
+ * seja idêntico ao dos outros ícones.
  */
 
 type IconProps = SVGProps<SVGSVGElement>;

@@ -11,11 +11,11 @@ import type { Project } from "@/lib/projects";
 /**
  * Card de projeto.
  *
- * Mostra so a primeira imagem (_1). O carrossel fica na pagina de detalhe —
- * dentro de um card ele competiria com o link do proprio card.
+ * Mostra só a primeira imagem (_1). O carrossel fica na página de detalhe —
+ * dentro de um card ele competiria com o link do próprio card.
  *
- * O link do titulo cobre a area toda com um ::after, entao clicar em qualquer
- * ponto funciona — mas o Tab pega um unico link, nao a area inteira. Os links
+ * O link do título cobre a área toda com um ::after, então clicar em qualquer
+ * ponto funciona — mas o Tab pega um único link, não a área inteira. Os links
  * de repo e demo ficam acima dele no z-index para continuarem clicaveis.
  */
 export function ProjectCard({

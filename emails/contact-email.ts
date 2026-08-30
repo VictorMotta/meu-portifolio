@@ -1,22 +1,22 @@
 import type { ProjectType } from "@/lib/validation";
 
 /**
- * Template do e-mail de notificacao, escrito como HTML inline.
+ * Template do e-mail de notificação, escrito como HTML inline.
  *
- * Cliente de e-mail nao roda CSS moderno: nada de flexbox, grid ou variavel
- * CSS. Tabela e style inline sao o que funciona no Gmail, Outlook e Apple Mail
- * ao mesmo tempo — por isso o markup parece 2005 de proposito.
+ * Cliente de e-mail não roda CSS moderno: nada de flexbox, grid ou variável
+ * CSS. Tabela e style inline são o que funciona no Gmail, Outlook e Apple Mail
+ * ao mesmo tempo — por isso o markup parece 2005 de propósito.
  */
 
 const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
-  web: "Aplicacao web",
+  web: "Aplicação web",
   mobile: "Aplicativo mobile",
   api: "API / back-end",
   consulting: "Consultoria / code review",
   other: "Outro",
 };
 
-/** Escapa entidades HTML — o conteudo vem de um formulario publico. */
+/** Escapa entidades HTML — o conteúdo vem de um formulário público. */
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -26,7 +26,7 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-/** Escapa e converte quebras de linha em <br>, preservando os paragrafos. */
+/** Escapa e converte quebras de linha em <br>, preservando os parágrafos. */
 function escapeMultiline(value: string): string {
   return escapeHtml(value).replace(/\r?\n/g, "<br />");
 }
@@ -37,7 +37,7 @@ export type ContactEmailData = {
   company?: string;
   projectType: ProjectType;
   message: string;
-  /** Uma entrada por imagem anexada, ja com o cid usado no <img>. */
+  /** Uma entrada por imagem anexada, já com o cid usado no <img>. */
   images: { cid: string; filename: string; size: string }[];
   submittedAt: Date;
 };
@@ -86,7 +86,7 @@ export function renderContactEmail(data: ContactEmailData): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Nova mensagem do portfolio</title>
+  <title>Nova mensagem do portfólio</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0a0a0b;">
   <!-- Preview que aparece na lista do inbox antes de abrir -->
@@ -104,7 +104,7 @@ export function renderContactEmail(data: ContactEmailData): string {
           <tr>
             <td style="padding:28px 32px 20px;border-bottom:1px solid #26262b;">
               <p style="margin:0 0 6px;color:#4ee1c1;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-family:monospace;">
-                Portfolio · novo contato
+                Portfólio · novo contato
               </p>
               <h1 style="margin:0;color:#ededf0;font-size:22px;font-weight:700;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
                 ${escapeHtml(data.name)}
@@ -142,7 +142,7 @@ export function renderContactEmail(data: ContactEmailData): string {
           <tr>
             <td style="padding:16px 32px 24px;border-top:1px solid #26262b;">
               <p style="margin:0;color:#71717f;font-size:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-                Enviado pelo formulario de contato do seu portfolio.
+                Enviado pelo formulário de contato do seu portfólio.
                 Basta responder este e-mail para falar direto com ${escapeHtml(data.name)}.
               </p>
             </td>
@@ -156,10 +156,10 @@ export function renderContactEmail(data: ContactEmailData): string {
 </html>`;
 }
 
-/** Versao texto puro, para clientes que nao renderizam HTML. */
+/** Versão texto puro, para clientes que não renderizam HTML. */
 export function renderContactText(data: ContactEmailData): string {
   const lines = [
-    `Nova mensagem do portfolio`,
+    `Nova mensagem do portfólio`,
     ``,
     `Nome:    ${data.name}`,
     `E-mail:  ${data.email}`,

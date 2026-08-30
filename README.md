@@ -78,7 +78,7 @@ para inferir (`year`, `featured`, `role`, `stack`, `repo`, `live`, `alts`). O
 formato completo está em [public/projetos/LEIA-ME.txt](public/projetos/LEIA-ME.txt).
 
 **O site é estático**: um `.md` novo só vai ao ar depois de commit e deploy —
-largar o arquivo no servidor não publica sozinho. Em compensação, as páginas
+largar o arquivo no servidor não pública sozinho. Em compensação, as páginas
 saem como HTML pré-renderizado e o git funciona como CMS, com histórico e
 rollback de graça.
 

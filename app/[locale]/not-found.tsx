@@ -4,8 +4,8 @@ import { getDictionary } from "@/content/i18n";
 import { defaultLocale } from "@/content/site";
 
 /**
- * Nao da para ler o params dentro de not-found (o Next renderiza fora do
- * contexto da rota), entao o 404 fica no idioma padrao.
+ * Não da para ler o params dentro de not-found (o Next renderiza fora do
+ * contexto da rota), então o 404 fica no idioma padrão.
  */
 export default function NotFound() {
   const dict = getDictionary(defaultLocale);

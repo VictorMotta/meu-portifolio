@@ -1,17 +1,17 @@
 Como adicionar um projeto
 =========================
 
-Tudo mora nesta pasta. Um projeto = um arquivo .md. Nao existe indice nem
+Tudo mora nesta pasta. Um projeto = um arquivo .md. Não existe indice nem
 banco para atualizar depois: o site le esta pasta no build.
 
-  meu-projeto.md          <- o texto em portugues. E ISSO que cria o projeto.
-  meu-projeto.en.md       <- traducao em ingles (opcional)
+  meu-projeto.md          <- o texto em português. E ISSO que cria o projeto.
+  meu-projeto.en.md       <- tradução em inglês (opcional)
   meu-projeto_1.webp      <- imagens do carrossel, na ordem
-  meu-projeto_2.webp         a _1 tambem e a capa no card da home
+  meu-projeto_2.webp         a _1 também e a capa no card da home
   meu-projeto_3.webp
 
-O nome-base ("meu-projeto") amarra tudo, e vira o endereco da pagina:
-/pt/projetos/meu-projeto. Use so minusculas, numeros e hifen.
+O nome-base ("meu-projeto") amarra tudo, e vira o endereço da página:
+/pt/projetos/meu-projeto. Use só minúsculas, números e hífen.
 
 
 O arquivo .md
@@ -26,38 +26,38 @@ O arquivo .md
   live: https://meu-projeto.com
   alts:
     - Painel principal com o funil em colunas
-    - Tela de importacao mostrando o relatorio de erros
+    - Tela de importação mostrando o relatório de erros
   ---
 
   # Nome do Projeto
 
-  Uma frase explicando o que e. Este primeiro paragrafo vira o resumo do card.
+  Uma frase explicando o que é. Este primeiro parágrafo vira o resumo do card.
 
-  Daqui para baixo e o texto completo, que aparece so na pagina do projeto.
-  Pode usar **negrito**, listas, links e subtitulos com ##.
+  Daqui para baixo é o texto completo, que aparece só na página do projeto.
+  Pode usar **negrito**, listas, links e subtítulos com ##.
 
 O que cada campo faz:
 
-  year       ordena os projetos (mais recente primeiro). Obrigatorio na pratica.
-  featured   true = layout largo no topo da secao. Deixe 2 ou 3 no maximo.
-  role       o que voce fez. Aparece na barra lateral.
+  year       ordena os projetos (mais recente primeiro). Obrigatório na prática.
+  featured   true = layout largo no topo da seção. Deixe 2 ou 3 no máximo.
+  role       o que você fez. Aparece na barra lateral.
   stack      tecnologias. Viram as etiquetas.
-  repo/live  links. Some o botao se voce omitir a linha.
-  alts       descricao de cada imagem, na ordem _1, _2, _3...
+  repo/live  links. Some o botão se você omitir a linha.
+  alts       descrição de cada imagem, na ordem _1, _2, _3...
 
-Sobre o "alts": e o que uma pessoa cega ouve no lugar da imagem. Descreva o que
-se ve ("painel com o funil em colunas"), nao o nome do projeto. Se voce nao
-escrever, entra um texto generico — funciona, mas e bem pior.
+Sobre o "alts": é o que uma pessoa cega ouve no lugar da imagem. Descreva o que
+se ve ("painel com o funil em colunas"), não o nome do projeto. Se você não
+escrever, entra um texto genérico — funciona, mas é bem pior.
 
 
-A traducao (.en.md)
+A tradução (.en.md)
 -------------------
 
-Opcional. Sem ela, a versao em ingles do site mostra o texto em portugues, o
-que e melhor do que pagina vazia.
+Opcional. Sem ela, a versão em inglês do site mostra o texto em português, o
+que é melhor do que página vazia.
 
-Ela so precisa do que muda de idioma — titulo, texto, "role" e "alts". Ano,
-stack e links sao herdados do arquivo em portugues, entao nao repita.
+Ela só precisa do que muda de idioma — título, texto, "role" e "alts". Ano,
+stack e links são herdados do arquivo em português, então não repita.
 
   ---
   role: Full stack development
@@ -79,21 +79,21 @@ Formatos aceitos: .webp  .avif  .png  .jpg  .jpeg
 Maiuscula tanto faz (.JPG funciona igual a .jpg), e da para misturar formatos
 no mesmo projeto: _1.png com _2.webp e _3.jpg convivem numa boa.
 
-Sugestao: WebP de ~1600x1000 (leve e nitido). Mas nao se prenda a isso — o
+Sugestao: WebP de ~1600x1000 (leve e nítido). Mas não se prenda a isso — o
 Next converte a imagem para WebP ou AVIF na hora de servir, seja qual for o
-formato que voce colocar aqui. Mande o PNG do print direto se for mais rapido.
+formato que você colocar aqui. Mande o PNG do print direto se for mais rápido.
 
-Nao precisa anotar largura nem altura em lugar nenhum.
+Não precisa anotar largura nem altura em lugar nenhum.
 
-A numeracao pode passar de 9 sem problema: _10 vem depois de _9, nao entre
+A numeração pode passar de 9 sem problema: _10 vem depois de _9, não entre
 _1 e _2.
 
-Enquanto um projeto nao tiver imagem, o card mostra as iniciais do nome num
-bloco desenhado — nao quebra e nao fica com icone de imagem quebrada.
+Enquanto um projeto não tiver imagem, o card mostra as iniciais do nome num
+bloco desenhado — não quebra e não fica com ícone de imagem quebrada.
 
 
 Importante
 ----------
 
-O site e estatico: o .md novo so aparece no ar depois de commit e deploy.
-Largar o arquivo na pasta em producao nao publica sozinho.
+O site é estático: o .md novo só aparece no ar depois de commit e deploy.
+Largar o arquivo na pasta em produção não pública sozinho.

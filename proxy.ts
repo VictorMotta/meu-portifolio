@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { defaultLocale, locales, type Locale } from "@/content/site";
 
 /**
- * Todo conteudo vive sob /pt ou /en. Este proxy pega quem chegou sem prefixo
+ * Todo conteúdo vive sob /pt ou /en. Este proxy pega quem chegou sem prefixo
  * (a raiz, um link antigo, o Google) e manda para o idioma que o navegador
  * pediu.
  *
@@ -53,6 +53,6 @@ export default function proxy(request: NextRequest) {
 
 export const config = {
   /* Fora do proxy: API, arquivos internos do Next e qualquer coisa com
-     extensao (pdf, ico, webp, svg...) servida de /public. */
+     extensão (pdf, ico, webp, svg...) servida de /public. */
   matcher: ["/((?!api|_next/static|_next/image|.*\\..*).*)"],
 };

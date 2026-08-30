@@ -1,9 +1,9 @@
 /**
- * Stack exibida na secao 02. Os grupos batem com as chaves de
- * `stack.groups` no dicionario i18n.
+ * Stack exibida na seção 02. Os grupos batem com as chaves de
+ * `stack.groups` no dicionário i18n.
  *
- * TODO(victor): ajuste para o que voce realmente usa. `level` alimenta a barra
- * de proficiencia: "core" = uso diario, "strong" = confortavel, "working" =
+ * TODO(victor): ajuste para o que você realmente usa. `level` alimenta a barra
+ * de proficiência: "core" = uso diário, "strong" = confortável, "working" =
  * resolvo o que precisa.
  */
 export type SkillLevel = "core" | "strong" | "working";
@@ -25,7 +25,7 @@ export const stack: Record<StackGroup, Skill[]> = {
     { name: "Node.js", level: "core" },
     { name: "REST APIs", level: "core" },
     { name: "Python", level: "strong" },
-    { name: "Autenticacao & RBAC", level: "strong" },
+    { name: "Autenticação & RBAC", level: "strong" },
     { name: "WebSockets", level: "working" },
   ],
   data: [

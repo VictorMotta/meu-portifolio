@@ -16,12 +16,12 @@ import {
   type ProjectType,
 } from "@/lib/validation";
 
-/* Precisa de Node: o runtime edge nao tem Buffer, e a Resend espera os anexos
+/* Precisa de Node: o runtime edge não tem Buffer, e a Resend espera os anexos
    como Buffer. */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/* O padrao da Vercel no plano gratuito e 10s. Enviar alguns MB de anexo pela
+/* O padrão da Vercel no plano gratuito é 10s. Enviar alguns MB de anexo pela
    Resend costuma levar menos de 2s, mas 30s evita corte em rede ruim. */
 export const maxDuration = 30;
 
@@ -36,9 +36,9 @@ function parseLocale(value: FormDataEntryValue | null): Locale {
 }
 
 export async function POST(request: Request) {
-  /* 1. Guarda de rajada antes de qualquer trabalho — nao vale parsear 15 MB
-     de upload de quem esta martelando o endpoint. O teto e folgado: quem so
-     errou o formulario nao pode ficar de fora por isso. */
+  /* 1. Guarda de rajada antes de qualquer trabalho — não vale parsear 15 MB
+     de upload de quem esta martelando o endpoint. O teto e folgado: quem só
+     errou o formulário não pode ficar de fora por isso. */
   const clientKey = getClientKey(request.headers);
   const burst = checkBurst(clientKey);
   if (!burst.allowed) {
@@ -58,14 +58,14 @@ export async function POST(request: Request) {
   const dict = getDictionary(locale);
 
   /* 2. Honeypot. Bot preenche todo campo que encontra; humano nunca ve este.
-     Respondemos 200 de proposito: dizer "voce foi bloqueado" so ensina o bot
+     Respondemos 200 de propósito: dizer "você foi bloqueado" só ensina o bot
      a contornar. */
   const honeypot = form.get("website");
   if (typeof honeypot === "string" && honeypot.length > 0) {
     return NextResponse.json({ ok: true });
   }
 
-  /* 3. Tempo de preenchimento. Mesma logica: descarta em silencio. */
+  /* 3. Tempo de preenchimento. Mesma lógica: descarta em silencio. */
   const renderedAt = Number(form.get("renderedAt"));
   if (
     Number.isFinite(renderedAt) &&
@@ -75,8 +75,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  /* 4. Revalidacao no servidor com o MESMO schema do formulario. A validacao
-     do client e so conforto de UX — esta e a que decide. */
+  /* 4. Revalidacao no servidor com o MESMO schema do formulário. A validação
+     do client e só conforto de UX — esta e a que decide. */
   const files = form
     .getAll("files")
     .filter((entry): entry is File => entry instanceof File && entry.size > 0);
@@ -98,8 +98,8 @@ export async function POST(request: Request) {
 
   const data = parsed.data;
 
-  /* 5. Cota de envio. Cobrada so aqui, com a mensagem ja validada: assim
-     tentativa recusada por erro de digitacao nao gasta o limite de ninguem. */
+  /* 5. Cota de envio. Cobrada só aqui, com a mensagem já validada: assim
+     tentativa recusada por erro de digitacao não gasta o limite de ninguém. */
   const quota = checkSendQuota(clientKey);
   if (!quota.allowed) {
     return fail("rate_limit", 429, {
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
     });
   }
 
-  /* 6. Config. Sem chave nao da para enviar — falhar alto no log do servidor e
+  /* 6. Config. Sem chave não da para enviar — falhar alto no log do servidor é
      melhor do que fingir sucesso para o visitante. */
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.CONTACT_TO_EMAIL;
@@ -121,14 +121,14 @@ export async function POST(request: Request) {
     ].filter(Boolean);
 
     console.error(
-      `\n[contato] Envio nao configurado. Faltando em .env.local: ${faltando.join(", ")}` +
+      `\n[contato] Envio não configurado. Faltando em .env.local: ${faltando.join(", ")}` +
         "\n           Copie .env.example para .env.local, preencha e REINICIE o servidor" +
-        "\n           (variavel de ambiente so e lida na inicializacao).\n",
+        "\n           (variável de ambiente só é lida na inicialização).\n",
     );
 
-    /* Em producao o visitante recebe o erro generico: dizer "falta a chave da
-       API" a quem esta do lado de fora entrega detalhe de infraestrutura sem
-       ajudar ninguem. Em desenvolvimento, quem ve a tela e voce. */
+    /* Em produção o visitante recebe o erro genérico: dizer "falta a chave da
+       API" a quem está do lado de fora entrega detalhe de infraestrutura sem
+       ajudar ninguém. Em desenvolvimento, quem vê a tela é você. */
     return fail(
       process.env.NODE_ENV === "development" ? "config" : "server",
       500,
@@ -169,10 +169,10 @@ export async function POST(request: Request) {
     const { error } = await resend.emails.send({
       from,
       to: [to],
-      /* Responder no cliente de e-mail ja endereca o visitante, sem
-         copiar e colar o endereco na mao. */
+      /* Responder no cliente de e-mail já endereça o visitante, sem
+         copiar e colar o endereço na mao. */
       replyTo: data.email,
-      subject: `Portfolio · ${data.name}${data.company ? ` (${data.company})` : ""}`,
+      subject: `Portfólio · ${data.name}${data.company ? ` (${data.company})` : ""}`,
       html: renderContactEmail(emailData),
       text: renderContactText(emailData),
       attachments: attachments.map((a) => ({

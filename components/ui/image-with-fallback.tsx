@@ -4,14 +4,14 @@ import Image from "next/image";
 import { useState } from "react";
 
 /**
- * Imagem que degrada para um bloco desenhado quando o arquivo nao existe.
+ * Imagem que degrada para um bloco desenhado quando o arquivo não existe.
  *
- * Enquanto as imagens reais nao estiverem em /public, o next/image devolve
- * erro e sobraria o icone de imagem quebrada. Aqui o onError troca por um
- * bloco com as iniciais — parece proposital, nao parece bug.
+ * Enquanto as imagens reais não estiverem em /public, o next/image devolve
+ * erro e sobraria o ícone de imagem quebrada. Aqui o onError troca por um
+ * bloco com as iniciais — parece proposital, não parece bug.
  *
- * Precisa preencher um pai com `position: relative`: usa `fill`, entao quem
- * define a proporcao e o container.
+ * Precisa preencher um pai com `position: relative`: usa `fill`, então quem
+ * define a proporção é o container.
  */
 export function ImageWithFallback({
   src,
@@ -31,9 +31,9 @@ export function ImageWithFallback({
 }) {
   const [failed, setFailed] = useState(false);
 
-  /* src vazio nao pode chegar ao next/image: ele avisa que o navegador vai
-     baixar a pagina inteira de novo e ainda emite um preload com href "".
-     Quando nao ha arquivo, o fallback e o unico caminho. */
+  /* src vazio não pode chegar ao next/image: ele avisa que o navegador vai
+     baixar a página inteira de novo e ainda emite um preload com href "".
+     Quando não há arquivo, o fallback e o único caminho. */
   const semImagem = src.trim() === "";
 
   const initials = fallbackFrom
@@ -54,8 +54,8 @@ export function ImageWithFallback({
       >
         <span
           aria-hidden="true"
-          /* fg-subtle, nao border-strong: as iniciais sao decorativas, mas
-             o axe nao sabe disso e reprovaria 1.5:1 de contraste. */
+          /* fg-subtle, não border-strong: as iniciais são decorativas, mas
+             o axe não sabe disso e reprovaria 1.5:1 de contraste. */
           className="font-[family-name:var(--font-display)] text-6xl font-bold text-[var(--color-fg-subtle)]"
         >
           {initials}

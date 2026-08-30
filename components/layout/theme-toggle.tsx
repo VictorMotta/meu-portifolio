@@ -6,14 +6,14 @@ import { useTheme } from "next-themes";
 /**
  * Alterna claro/escuro.
  *
- * Os dois icones sao renderizados sempre e o CSS mostra o certo a partir do
- * `data-theme` do <html> (ver globals.css). Isso evita o padrao de estado
- * "mounted": o servidor nao conhece a preferencia do usuario, entao qualquer
- * decisao em JavaScript custaria um render extra e um instante com o icone
- * errado. O script do next-themes ja escreve o atributo antes da primeira
+ * Os dois ícones são renderizados sempre e o CSS mostra o certo a partir do
+ * `data-theme` do <html> (ver globals.css). Isso evita o padrão de estado
+ * "mounted": o servidor não conhece a preferência do usuário, então qualquer
+ * decisão em JavaScript custaria um render extra e um instante com o ícone
+ * errado. O script do next-themes já escreve o atributo antes da primeira
  * pintura, e o CSS resolve o resto.
  *
- * `aria-label` descreve a acao, nao o estado — por isso nao ha aria-pressed:
+ * `aria-label` descreve a acao, não o estado — por isso não há aria-pressed:
  * "alternar entre tema claro e escuro" faz sentido em qualquer um dos dois.
  */
 export function ThemeToggle({ label }: { label: string }) {

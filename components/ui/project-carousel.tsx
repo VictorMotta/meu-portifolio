@@ -10,12 +10,12 @@ import type { ProjectImage } from "@/lib/projects";
 /**
  * Carrossel das imagens do projeto.
  *
- * Decisoes de acessibilidade:
- *   - Nao roda sozinho. Carrossel automatico tira do usuario o controle do
- *     tempo de leitura e e um dos criterios que reprovam em WCAG.
- *   - So o slide visivel fica no DOM ativo; os outros saem com `hidden`,
- *     entao nem o Tab nem o leitor de tela tropecam em conteudo invisivel.
- *   - A troca e anunciada por uma regiao live discreta ("Imagem 2 de 4").
+ * Decisões de acessibilidade:
+ *   - Não roda sozinho. Carrossel automático tira do usuário o controle do
+ *     tempo de leitura e é um dos critérios que reprovam em WCAG.
+ *   - Só o slide visível fica no DOM ativo; os outros saem com `hidden`,
+ *     então nem o Tab nem o leitor de tela tropecam em conteúdo invisível.
+ *   - A troca é anunciada por uma regiao live discreta ("Imagem 2 de 4").
  *   - Setas do teclado funcionam quando o foco esta dentro do carrossel.
  */
 export function ProjectCarousel({
@@ -36,7 +36,7 @@ export function ProjectCarousel({
   const ir = (indice: number) => setAtual((indice + total) % total);
 
   if (total === 0) {
-    /* Sem imagem ainda: o placeholder mantem a proporcao para a pagina nao
+    /* Sem imagem ainda: o placeholder mantem a proporção para a página não
        pular quando os arquivos chegarem. */
     return (
       <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface-2)]">
@@ -74,7 +74,7 @@ export function ProjectCarousel({
           const fim = e.changedTouches[0]?.clientX;
           inicioToque.current = null;
           if (inicio == null || fim == null) return;
-          /* 50px de folga: abaixo disso costuma ser toque, nao arrasto. */
+          /* 50px de folga: abaixo disso costuma ser toque, não arrasto. */
           if (Math.abs(fim - inicio) < 50) return;
           ir(fim < inicio ? atual + 1 : atual - 1);
         }}
@@ -133,7 +133,7 @@ export function ProjectCarousel({
               aria-label={format(t.goToImage, { number: indice + 1 })}
               aria-current={indice === atual ? "true" : undefined}
               /* Alvo de 44px por acessibilidade; o ponto colorido dentro e
-                 so o indicador visual. */
+                 só o indicador visual. */
               className="grid size-11 place-items-center"
             >
               <span

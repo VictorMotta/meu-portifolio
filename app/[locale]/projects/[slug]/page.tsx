@@ -12,7 +12,7 @@ import { getProject, getProjectSlugs } from "@/lib/projects";
 
 type PageParams = { params: Promise<{ locale: string; slug: string }> };
 
-/* Uma pagina estatica por projeto x idioma, gerada no build a partir dos
+/* Uma página estática por projeto x idioma, gerada no build a partir dos
    arquivos .md em public/projetos/. */
 export function generateStaticParams() {
   const slugs = getProjectSlugs();
@@ -65,7 +65,7 @@ export default async function ProjectPage({ params }: PageParams) {
       <div className="shell">
         <Link
           href={`/${locale}#projetos`}
-          /* -my-2 py-2: cresce a area de toque para 44px sem abrir espaco
+          /* -my-2 py-2: cresce a área de toque para 44px sem abrir espaço
              extra no layout. */
           className="-my-2 inline-flex h-11 items-center gap-2 py-2 text-sm text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-accent)]"
         >
@@ -124,8 +124,8 @@ export default async function ProjectPage({ params }: PageParams) {
             <h2 className="text-[length:var(--text-h3)] text-[var(--color-fg)]">
               {dict.projects.overview}
             </h2>
-            {/* O markdown e escrito pelo Victor, nao por visitante — por isso
-                nao passa por sanitizador. Se um dia o texto vier de fora,
+            {/* O markdown e escrito pelo Victor, não por visitante — por isso
+                não passa por sanitizador. Se um dia o texto vier de fora,
                 sanitizar aqui deixa de ser opcional. */}
             <div
               className="prose mt-6"

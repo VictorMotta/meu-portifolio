@@ -3,14 +3,14 @@
 import type { ReactNode } from "react";
 
 /**
- * Embrulho padrao de campo.
+ * Embrulho padrão de campo.
  *
  * Garante o trio que faz o campo funcionar com leitor de tela:
- *   - <label for> real (placeholder nao e rotulo: some quando se digita)
+ *   - <label for> real (placeholder não é rótulo: some quando se digita)
  *   - aria-describedby apontando para dica e erro
- *   - aria-invalid quando ha erro
+ *   - aria-invalid quando há erro
  *
- * Os ids sao derivados do `id` do campo, entao nao ha como se desencontrarem.
+ * Os ids são derivados do `id` do campo, então não há como se desencontrarem.
  */
 export function FormField({
   id,
@@ -36,9 +36,9 @@ export function FormField({
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
 
   return (
-    /* min-w-0: um <select> tem largura intrinseca igual a da opcao mais longa,
+    /* min-w-0: um <select> tem largura intrinseca igual a da opção mais longa,
        e como item de grid isso esticaria a trilha e furaria o layout em telas
-       de 320px. min-w-0 deixa a trilha encolher abaixo do conteudo. */
+       de 320px. min-w-0 deixa a trilha encolher abaixo do conteúdo. */
     <div className="min-w-0">
       <div className="flex items-baseline justify-between gap-3">
         <label
@@ -70,7 +70,7 @@ export function FormField({
 
       {error ? (
         /* role="alert" faz o leitor de tela anunciar o erro assim que ele
-           aparece, sem esperar o proximo foco. */
+           aparece, sem esperar o próximo foco. */
         <p
           id={errorId}
           role="alert"

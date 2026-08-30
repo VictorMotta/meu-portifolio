@@ -7,19 +7,19 @@ import { marked } from "marked";
 import type { Locale } from "@/content/site";
 
 /**
- * Os projetos vem de arquivos, nao de banco.
+ * Os projetos vem de arquivos, não de banco.
  *
- * Uma pasta so, em public/projetos/:
+ * Uma pasta só, em public/projetos/:
  *
- *   plataforma-corretora.md        texto em portugues — E O QUE CRIA O PROJETO
- *   plataforma-corretora.en.md     traducao (opcional; sem ela, /en mostra o PT)
+ *   plataforma-corretora.md        texto em português — E O QUE CRIA O PROJETO
+ *   plataforma-corretora.en.md     tradução (opcional; sem ela, /en mostra o PT)
  *   plataforma-corretora_1.webp    imagens do carrossel, na ordem
- *   plataforma-corretora_2.webp    a _1 tambem e a capa no card da home
+ *   plataforma-corretora_2.webp    a _1 também é a capa no card da home
  *
  * O nome-base amarra tudo. Adicionar um projeto = adicionar um .md e as
- * imagens; nao ha nenhum indice para atualizar depois.
+ * imagens; não há nenhum indice para atualizar depois.
  *
- * Como o site e estatico, esta leitura acontece no build: arquivo novo so
+ * Como o site é estático, esta leitura acontece no build: arquivo novo só
  * aparece no ar depois de commit e deploy.
  */
 
@@ -36,9 +36,9 @@ export type ProjectImage = {
 export type Project = {
   slug: string;
   title: string;
-  /** Primeiro paragrafo do markdown. Vai no card. */
+  /** Primeiro parágrafo do markdown. Vai no card. */
   summary: string;
-  /** Resto do texto, ja convertido para HTML. Vai na pagina de detalhe. */
+  /** Resto do texto, já convertido para HTML. Vai na página de detalhe. */
   bodyHtml: string;
   role: string;
   year: number;
@@ -46,7 +46,7 @@ export type Project = {
   repo?: string;
   live?: string;
   featured: boolean;
-  /** _1 .. _N em ordem numerica. A primeira e a capa. */
+  /** _1 .. _N em ordem numérica. A primeira é a capa. */
   images: ProjectImage[];
 };
 
@@ -57,7 +57,7 @@ type Frontmatter = {
   role?: string;
   repo?: string;
   live?: string;
-  /** Descricao de cada imagem, na mesma ordem dos arquivos _1, _2... */
+  /** Descrição de cada imagem, na mesma ordem dos arquivos _1, _2... */
   alts?: string[];
 };
 
@@ -65,25 +65,25 @@ function lerPasta(): string[] {
   try {
     return fs.readdirSync(PASTA);
   } catch {
-    /* Pasta ainda nao existe: o site sobe com a secao de projetos vazia em
+    /* Pasta ainda não existe: o site sobe com a seção de projetos vazia em
        vez de quebrar o build. */
     return [];
   }
 }
 
 /**
- * Imagens do projeto, em ordem numerica de verdade.
+ * Imagens do projeto, em ordem numérica de verdade.
  *
- * Ordenacao alfabetica poria _10 antes de _2 — por isso comparamos o numero,
- * nao a string.
+ * Ordenação alfabetica poria _10 antes de _2 — por isso comparamos o número,
+ * não a string.
  */
 function imagensDo(slug: string, arquivos: string[], alts: string[]): ProjectImage[] {
   const encontradas: { numero: number; arquivo: string }[] = [];
 
   for (const arquivo of arquivos) {
-    /* A extensao original serve para cortar o nome; a versao em minuscula so
-       para comparar. Passar a minuscula ao basename faria ele nao reconhecer
-       "foto.PNG" (o corte e sensivel a maiuscula) e a imagem sumiria calada. */
+    /* A extensão original serve para cortar o nome; a versão em minuscula só
+       para comparar. Passar a minuscula ao basename faria ele não reconhecer
+       "foto.PNG" (o corte e sensível a maiuscula) e a imagem sumiria calada. */
     const ext = path.extname(arquivo);
     if (!EXTENSOES_IMAGEM.includes(ext.toLowerCase())) continue;
 
@@ -98,7 +98,7 @@ function imagensDo(slug: string, arquivos: string[], alts: string[]): ProjectIma
 
   return encontradas.map(({ arquivo }, indice) => ({
     src: `${URL_BASE}/${arquivo}`,
-    /* Sem alt escrito no frontmatter sobra uma descricao generica: pior que
+    /* Sem alt escrito no frontmatter sobra uma descrição genérica: pior que
        um texto de verdade, melhor que alt vazio numa imagem informativa. */
     alt:
       alts[indice]?.trim() ||
@@ -106,7 +106,7 @@ function imagensDo(slug: string, arquivos: string[], alts: string[]): ProjectIma
   }));
 }
 
-/** Separa o `# Titulo`, o primeiro paragrafo e o resto do corpo. */
+/** Separa o `# Título`, o primeiro parágrafo e o resto do corpo. */
 function partirCorpo(markdown: string): {
   title: string;
   summary: string;
@@ -116,7 +116,7 @@ function partirCorpo(markdown: string): {
   let title = "";
   let i = 0;
 
-  /* O primeiro "# " e o titulo — assim o nome do projeto nao precisa ser
+  /* O primeiro "# " é o título — assim o nome do projeto não precisa ser
      repetido no frontmatter. */
   while (i < linhas.length && linhas[i]!.trim() === "") i++;
   if (linhas[i]?.startsWith("# ")) {
@@ -127,7 +127,7 @@ function partirCorpo(markdown: string): {
   const restoLinhas = linhas.slice(i);
   const texto = restoLinhas.join("\n").trim();
 
-  /* Primeiro paragrafo = resumo do card. Paragrafos sao separados por linha
+  /* Primeiro parágrafo = resumo do card. Parágrafos são separados por linha
      em branco. */
   const quebra = texto.indexOf("\n\n");
   const summary = (quebra === -1 ? texto : texto.slice(0, quebra)).trim();
@@ -140,8 +140,8 @@ function lerArquivo(slug: string, locale: Locale, arquivos: string[]): Project |
   const nomePt = `${slug}.md`;
   const nomeEn = `${slug}.en.md`;
 
-  /* Portugues e a fonte da verdade: define o projeto e serve de reserva
-     quando a traducao ainda nao existe. */
+  /* Português é a fonte da verdade: define o projeto e serve de reserva
+     quando a tradução ainda não existe. */
   const preferido = locale === "en" && arquivos.includes(nomeEn) ? nomeEn : nomePt;
   if (!arquivos.includes(preferido)) return null;
 
@@ -149,8 +149,8 @@ function lerArquivo(slug: string, locale: Locale, arquivos: string[]): Project |
   const { data, content } = matter(bruto);
   const meta = data as Frontmatter;
 
-  /* Ano, stack e links so existem no arquivo em portugues — a traducao nao
-     precisa repetir metadado que nao muda de idioma. */
+  /* Ano, stack e links só existem no arquivo em português — a tradução não
+     precisa repetir metadado que não muda de idioma. */
   const metaPt =
     preferido === nomePt
       ? meta
@@ -178,7 +178,7 @@ export function getProjects(locale: Locale): Project[] {
   const arquivos = lerPasta();
 
   const slugs = arquivos
-    /* `.en.md` e traducao de um projeto existente, nao um projeto novo. */
+    /* `.en.md` é tradução de um projeto existente, não um projeto novo. */
     .filter((f) => f.endsWith(".md") && !f.endsWith(".en.md"))
     .map((f) => path.basename(f, ".md"));
 
@@ -192,7 +192,7 @@ export function getProject(locale: Locale, slug: string): Project | undefined {
   return getProjects(locale).find((p) => p.slug === slug);
 }
 
-/** Slugs para o generateStaticParams das paginas de detalhe. */
+/** Slugs para o generateStaticParams das páginas de detalhe. */
 export function getProjectSlugs(): string[] {
   return lerPasta()
     .filter((f) => f.endsWith(".md") && !f.endsWith(".en.md"))

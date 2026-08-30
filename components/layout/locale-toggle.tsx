@@ -6,11 +6,11 @@ import { usePathname } from "next/navigation";
 import { locales, type Locale } from "@/content/site";
 
 /**
- * Troca de idioma mantendo a pagina atual: /pt/projects/foo vira
- * /en/projects/foo, e nao um retorno para a home.
+ * Troca de idioma mantendo a página atual: /pt/projects/foo vira
+ * /en/projects/foo, e não um retorno para a home.
  *
- * E um <Link> de verdade, nao um botao — o idioma alternativo fica no HTML,
- * navegavel e indexavel.
+ * E um <Link> de verdade, não um botão — o idioma alternativo fica no HTML,
+ * navegável e indexável.
  */
 export function LocaleToggle({
   locale,
@@ -24,7 +24,7 @@ export function LocaleToggle({
   const pathname = usePathname();
   const target = locales.find((l) => l !== locale) ?? locale;
 
-  /* Troca so o primeiro segmento do caminho. */
+  /* Troca só o primeiro segmento do caminho. */
   const rest = pathname.replace(new RegExp(`^/${locale}`), "");
   const href = `/${target}${rest}`;
 

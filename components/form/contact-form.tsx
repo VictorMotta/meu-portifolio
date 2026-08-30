@@ -41,7 +41,7 @@ export function ContactForm({
   const [errorCode, setErrorCode] = useState<ErrorCode>("server");
 
   /* Foco vai para o painel de resultado quando o envio termina — sem isso a
-     pessoa que usa leitor de tela nao sabe que algo mudou na tela. */
+     pessoa que usa leitor de tela não sabe que algo mudou na tela. */
   const feedbackRef = useRef<HTMLDivElement>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
 
@@ -67,13 +67,13 @@ export function ContactForm({
     },
   });
 
-  /* useWatch e nao watch(): watch() devolve uma funcao nova a cada render, que
-     o compilador do React nao consegue memoizar e por isso desiste de otimizar
+  /* useWatch e não watch(): watch() devolve uma função nova a cada render, que
+     o compilador do React não consegue memoizar e por isso desiste de otimizar
      o componente inteiro. useWatch assina o campo direto. */
   const files = useWatch({ control, name: "files" });
 
-  /* Carimba o momento em que o formulario ficou pronto. O servidor compara
-     com a hora do envio: humano nao preenche isso em menos de 3 segundos. */
+  /* Carimba o momento em que o formulário ficou pronto. O servidor compara
+     com a hora do envio: humano não preenche isso em menos de 3 segundos. */
   useEffect(() => {
     setValue("renderedAt", Date.now());
     register("files");
@@ -86,18 +86,18 @@ export function ContactForm({
     }
   }, [status]);
 
-  /* O input de arquivo nao e registrado pelo RHF, entao o foco automatico de
-     erro nao o alcanca. Levamos manualmente. */
+  /* O input de arquivo não é registrado pelo RHF, então o foco automático de
+     erro não o alcança. Levamos manualmente. */
   useEffect(() => {
     if (errors.files) {
       dropzoneRef.current?.scrollIntoView({ block: "center" });
     }
   }, [errors.files]);
 
-  /* Funcao solta, e nao `handleSubmit(...)` chamado aqui: chamar handleSubmit
+  /* Função solta, e não `handleSubmit(...)` chamado aqui: chamar handleSubmit
      durante o render faz o compilador do React tratar este callback como
-     codigo de render e reprovar `Date.now()` e `fetch` como impuros. A
-     composicao acontece no onSubmit do <form>, ja dentro do evento. */
+     código de render e reprovar `Date.now()` e `fetch` como impuros. A
+     composicao acontece no onSubmit do <form>, já dentro do evento. */
   const submitContact = async (values: ContactFormValues) => {
     setStatus("submitting");
 
@@ -125,7 +125,7 @@ export function ContactForm({
         return;
       }
 
-      /* 413 vem da infraestrutura da Vercel, nao da nossa rota: o corpo nem
+      /* 413 vem da infraestrutura da Vercel, não da nossa rota: o corpo nem
          chega a ser JSON. Precisa ser tratado pelo status. */
       if (response.status === 413) {
         setErrorCode("too_large");
@@ -192,7 +192,7 @@ export function ContactForm({
       className="space-y-6"
     >
       {/* Honeypot: fora do fluxo visual, fora da ordem de tabulacao e
-          invisivel para leitor de tela. So bot preenche. */}
+          invisível para leitor de tela. Só bot preenche. */}
       <div aria-hidden="true" className="absolute left-[-9999px] top-0">
         <label htmlFor="website">Website</label>
         <input

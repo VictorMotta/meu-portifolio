@@ -8,11 +8,11 @@ import { compressImage } from "@/lib/compress-image";
 import { ACCEPTED_IMAGE_TYPES, MAX_FILES, formatBytes } from "@/lib/validation";
 
 /**
- * Selecao de imagens com arrastar-e-soltar.
+ * Seleção de imagens com arrastar-e-soltar.
  *
- * O arrastar e um atalho, nao o caminho principal: por baixo existe um
- * <input type="file"> de verdade dentro de um <label>, entao clicar, tabular
- * e apertar Enter funcionam exatamente como em qualquer formulario.
+ * O arrastar é um atalho, não o caminho principal: por baixo existe um
+ * <input type="file"> de verdade dentro de um <label>, então clicar, tabular
+ * e apertar Enter funcionam exatamente como em qualquer formulário.
  */
 export function FileDropzone({
   files,
@@ -31,17 +31,17 @@ export function FileDropzone({
   const [otimizando, setOtimizando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  /* Uma URL de objeto por arquivo, criada no proprio handler de evento — nem
+  /* Uma URL de objeto por arquivo, criada no próprio handler de evento — nem
      durante o render (seria impuro) nem dentro de um efeito (custaria um
-     render extra a cada troca). O File mantem a mesma referencia enquanto
-     estiver na lista, entao ele serve de chave.
+     render extra a cada troca). O File mantem a mesma referência enquanto
+     estiver na lista, então ele serve de chave.
 
      Revogar importa: uma URL de objeto viva segura o arquivo inteiro na
-     memoria do navegador ate a aba fechar. */
+     memória do navegador até a aba fechar. */
   const [urls, setUrls] = useState<Map<File, string>>(() => new Map());
 
-  /* Espelho das URLs para a limpeza de desmontagem: a funcao de cleanup de um
-     efeito com dependencias vazias enxergaria o valor inicial do estado, e nao
+  /* Espelho das URLs para a limpeza de desmontagem: a função de cleanup de um
+     efeito com dependências vazias enxergaria o valor inicial do estado, e não
      o atual. */
   const urlsRef = useRef(urls);
   useEffect(() => {
@@ -58,8 +58,8 @@ export function FileDropzone({
   const addFiles = async (incoming: FileList | null) => {
     if (!incoming) return;
 
-    /* Corta no limite aqui tambem, alem do zod: e melhor a pessoa ver na hora
-       que so cinco entraram do que descobrir no submit. */
+    /* Corta no limite aqui também, além do zod: é melhor a pessoa ver na hora
+       que só cinco entraram do que descobrir no submit. */
     const escolhidos = Array.from(incoming).slice(
       0,
       Math.max(0, MAX_FILES - files.length),
@@ -135,7 +135,7 @@ export function FileDropzone({
           onChange={(event) => void addFiles(event.target.files)}
           aria-describedby={describedBy}
           /* sr-only em vez de hidden: o input continua no accessibility tree
-             e recebe foco pelo Tab, so nao ocupa espaco visual. */
+             e recebe foco pelo Tab, só não ocupa espaço visual. */
           className="sr-only"
         />
         <ImagePlus
@@ -163,8 +163,8 @@ export function FileDropzone({
                 className="relative overflow-hidden rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface-2)]"
               >
                 <div className="aspect-[4/3]">
-                  {/* <img> puro e nao next/image: a origem e um blob: local,
-                      que o otimizador de imagem do Next nao processa. */}
+                  {/* <img> puro e não next/image: a origem e um blob: local,
+                      que o otimizador de imagem do Next não processa. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={urls.get(file)}

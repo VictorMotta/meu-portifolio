@@ -6,9 +6,9 @@ import { WhatsApp as WhatsAppIcon } from "@/components/ui/brand-icons";
 import { whatsappUrl } from "@/content/site";
 
 /**
- * Botao flutuante de WhatsApp.
+ * Botão flutuante de WhatsApp.
  *
- * So aparece depois que a pessoa passa do hero — na primeira tela ele
+ * Só aparece depois que a pessoa passa do hero — na primeira tela ele
  * competiria com os CTAs principais. `safe-bottom` evita que ele fique
  * embaixo da barra de gestos do iPhone.
  */
@@ -34,7 +34,7 @@ export function WhatsAppFloatingButton({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      /* Escondido do foco enquanto invisivel: um link que nao se ve nao pode
+      /* Escondido do foco enquanto invisível: um link que não se ve não pode
          receber Tab, senao o foco some da tela. */
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}
@@ -47,7 +47,7 @@ export function WhatsAppFloatingButton({
   );
 }
 
-/** Versao em linha, usada dentro da secao de contato. */
+/** Versão em linha, usada dentro da seção de contato. */
 export function WhatsAppLink({
   message,
   label,

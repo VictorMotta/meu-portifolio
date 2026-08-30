@@ -37,7 +37,7 @@ export function Header({
     { id: "contato", label: dict.nav.contact },
   ];
 
-  /* Fundo solido so depois de sair do topo — no hero o header flutua. */
+  /* Fundo solido só depois de sair do topo — no hero o header flutua. */
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
@@ -45,8 +45,8 @@ export function Header({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* Marca o item do menu correspondente a secao visivel. Vira aria-current,
-     entao a informacao chega tambem a quem usa leitor de tela. */
+  /* Marca o item do menu correspondente a seção visível. Vira aria-current,
+     então a informação chega também a quem usa leitor de tela. */
   useEffect(() => {
     const sections = nav
       .map((item) => document.getElementById(item.id))
@@ -61,8 +61,8 @@ export function Header({
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (visible) setActiveSection(visible.target.id);
       },
-      /* A faixa cobre o meio da tela: a secao "ativa" e a que o usuario esta
-         realmente lendo, nao a que encostou na borda. */
+      /* A faixa cobre o meio da tela: a seção "ativa" é a que o usuário esta
+         realmente lendo, não a que encostou na borda. */
       { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
     );
 
@@ -73,13 +73,13 @@ export function Header({
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
-    /* Devolve o foco ao botao que abriu — sem isso o foco volta para o
-       inicio da pagina e a pessoa se perde. */
+    /* Devolve o foco ao botão que abriu — sem isso o foco volta para o
+       início da página e a pessoa se perde. */
     triggerRef.current?.focus();
   }, []);
 
   /* Enquanto o menu esta aberto: Esc fecha, Tab circula dentro do painel e o
-     corpo para de rolar por tras. */
+     corpo para de rolar por trás. */
   useEffect(() => {
     if (!menuOpen) return;
 
@@ -149,7 +149,7 @@ export function Header({
               href={`${home}#${item.id}`}
               aria-current={activeSection === item.id ? "true" : undefined}
               /* h-11 em vez de py-2: a partir de 768px este menu aparece no
-                 iPad, onde e alvo de dedo e nao de mouse. */
+                 iPad, onde e alvo de dedo e não de mouse. */
               className={`inline-flex h-11 items-center rounded-full px-4 text-sm transition-colors ${
                 activeSection === item.id
                   ? "text-[var(--color-accent)]"
@@ -195,7 +195,7 @@ export function Header({
       {menuOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
           {/* Clique fora fecha. E decorativo: quem usa teclado sai pelo Esc
-              ou pelo botao de fechar, ambos dentro do painel. */}
+              ou pelo botão de fechar, ambos dentro do painel. */}
           <div
             className="absolute inset-0 bg-[var(--color-bg)]/80 backdrop-blur-sm"
             onClick={closeMenu}

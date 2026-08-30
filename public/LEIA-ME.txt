@@ -1,12 +1,12 @@
-Arquivos que voce precisa colocar aqui
+Arquivos que você precisa colocar aqui
 ======================================
 
-  victor.jpg                      Sua foto, usada na secao "Sobre" (proporcao 4:5,
-                                  ex.: 1000x1250). Ate ela existir, aparece o
+  victor.jpg                      Sua foto, usada na seção "Sobre" (proporção 4:5,
+                                  ex.: 1000x1250). Até ela existir, aparece o
                                   monograma "VM" no lugar.
 
-  curriculo-victor-motta.pdf      Curriculo em portugues (botao "Curriculo").
-  resume-victor-motta.pdf         Curriculo em ingles.
+  currículo-victor-motta.pdf      Currículo em português (botão "Currículo").
+  resume-victor-motta.pdf         Currículo em inglês.
 
   projetos/                       Um .md por projeto, mais as imagens.
                                   Veja projetos/LEIA-ME.txt.

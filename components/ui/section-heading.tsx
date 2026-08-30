@@ -1,8 +1,8 @@
 import { Reveal } from "@/components/ui/reveal";
 
 /**
- * Cabecalho padrao das secoes. Sempre <h2>: o unico <h1> da home e o nome no
- * hero, e a hierarquia nao pode pular niveis.
+ * Cabeçalho padrão das seções. Sempre <h2>: o único <h1> da home é o nome no
+ * hero, e a hierarquia não pode pular niveis.
  */
 export function SectionHeading({
   eyebrow,

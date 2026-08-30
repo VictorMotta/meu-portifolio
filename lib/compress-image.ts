@@ -1,24 +1,24 @@
 /**
  * Reduz a imagem no navegador antes de enviar.
  *
- * Motivo concreto: a Vercel corta qualquer requisicao acima de 4,5 MB com um
- * 413 que acontece ANTES do nosso codigo rodar — nao da nem para responder
- * uma mensagem decente. Tres prints de celular ja passam disso.
+ * Motivo concreto: a Vercel corta qualquer requisição acima de 4,5 MB com um
+ * 413 que acontece ANTES do nosso código rodar — não da nem para responder
+ * uma mensagem decente. Três prints de celular já passam disso.
  *
  * Comprimindo aqui, um print de 6 MB vira uns 300 KB e o problema deixa de
- * existir na pratica, sem precisar recusar arquivo de ninguem.
+ * existir na prática, sem precisar recusar arquivo de ninguém.
  */
 
 /** Maior lado da imagem depois de redimensionar. */
 const LADO_MAXIMO = 1920;
 const QUALIDADE = 0.82;
 
-/** Abaixo disso nao vale o trabalho de recodificar. */
+/** Abaixo disso não vale o trabalho de recodificar. */
 const TAMANHO_MINIMO_PARA_COMPRIMIR = 300 * 1024;
 
 export async function compressImage(file: File): Promise<File> {
-  /* GIF fica de fora: o canvas so enxerga o primeiro quadro e destruiria a
-     animacao. */
+  /* GIF fica de fora: o canvas só enxerga o primeiro quadro e destruiria a
+     animação. */
   if (file.type === "image/gif") return file;
 
   if (
@@ -56,7 +56,7 @@ export async function compressImage(file: File): Promise<File> {
       canvas.toBlob(resolve, "image/webp", QUALIDADE),
     );
 
-    /* Se a conversao nao ajudou (imagem ja otimizada, por exemplo), fica o
+    /* Se a conversão não ajudou (imagem já otimizada, por exemplo), fica o
        original — nunca entregar um arquivo maior do que o que entrou. */
     if (!blob || blob.size >= file.size) return file;
 
@@ -67,7 +67,7 @@ export async function compressImage(file: File): Promise<File> {
     });
   } catch {
     /* Navegador sem createImageBitmap ou arquivo corrompido: segue o original
-       e deixa a validacao de tamanho decidir. */
+       e deixa a validação de tamanho decidir. */
     return file;
   }
 }

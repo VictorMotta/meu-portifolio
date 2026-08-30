@@ -1,11 +1,11 @@
 import type { Locale } from "./site";
 
 /**
- * Interpola `{chave}` num texto do dicionario.
+ * Interpola `{chave}` num texto do dicionário.
  *
- * O dicionario e so string, sem funcao, de proposito: ele atravessa a
- * fronteira Server -> Client Component, e funcao nao e serializavel. Um
- * dicionario com funcao quebra o build na hora de prerenderizar.
+ * O dicionário é só string, sem função, de propósito: ele atravessa a
+ * fronteira Server -> Client Component, e função não é serializável. Um
+ * dicionário com função quebra o build na hora de prerenderizar.
  */
 export function format(
   template: string,
@@ -17,41 +17,41 @@ export function format(
 }
 
 /**
- * Dicionario de textos. O objeto `pt` define o formato — `en` e tipado contra
- * ele, entao esquecer de traduzir uma chave vira erro de compilacao, nao um
- * buraco silencioso na pagina.
+ * Dicionário de textos. O objeto `pt` define o formato — `en` é tipado contra
+ * ele, então esquecer de traduzir uma chave vira erro de compilacao, não um
+ * buraco silencioso na página.
  */
 const pt = {
   meta: {
     title: "Victor Motta — Desenvolvedor Full Stack",
     description:
-      "Portfolio de Victor Motta, desenvolvedor full stack. Projetos, stack, curriculo e contato direto.",
+      "Portfólio de Victor Motta, desenvolvedor full stack. Projetos, stack, currículo e contato direto.",
     localeTag: "pt-BR",
   },
 
   nav: {
-    skipToContent: "Pular para o conteudo",
-    home: "Inicio",
+    skipToContent: "Pular para o conteúdo",
+    home: "Início",
     about: "Sobre",
     stack: "Stack",
     projects: "Projetos",
     contact: "Contato",
-    resume: "Curriculo",
-    openMenu: "Abrir menu de navegacao",
-    closeMenu: "Fechar menu de navegacao",
+    resume: "Currículo",
+    openMenu: "Abrir menu de navegação",
+    closeMenu: "Fechar menu de navegação",
     toggleTheme: "Alternar entre tema claro e escuro",
-    switchLanguage: "Ver este site em ingles",
+    switchLanguage: "Ver este site em inglês",
     languageShort: "EN",
   },
 
   hero: {
     eyebrow: "Desenvolvedor Full Stack",
-    availability: "Disponivel para novos projetos",
+    availability: "Disponível para novos projetos",
     headline: ["Construo produtos", "que as pessoas", "conseguem usar."],
     lead:
-      "Do banco de dados a interface. Escrevo software que aguenta producao, carrega rapido e funciona para todo mundo — inclusive para quem navega so pelo teclado.",
+      "Do banco de dados à interface. Escrevo software que aguenta produção, carrega rápido e funciona para todo mundo — inclusive para quem navega só pelo teclado.",
     ctaProjects: "Ver projetos",
-    ctaResume: "Baixar curriculo",
+    ctaResume: "Baixar currículo",
     scrollHint: "Role para explorar",
   },
 
@@ -59,13 +59,13 @@ const pt = {
     eyebrow: "01 — Sobre",
     title: "Um dev que se importa com o que acontece depois do deploy",
     paragraphs: [
-      "Sou desenvolvedor full stack e trabalho no ciclo inteiro: modelagem de dados, API, interface e o que quebra as tres da manha. Gosto de problema de verdade — o tipo que exige entender o negocio antes de abrir o editor.",
-      "Acessibilidade e performance nao entram no fim do projeto como enfeite. Entram na primeira decisao de arquitetura, porque depois sai caro.",
-      "Quando nao estou codando, estou provavelmente refatorando algo que ja funcionava.",
+      "Sou desenvolvedor full stack e trabalho no ciclo inteiro: modelagem de dados, API, interface e o que quebra às três da manhã. Gosto de problema de verdade — o tipo que exige entender o negócio antes de abrir o editor.",
+      "Acessibilidade e performance não entram no fim do projeto como enfeite. Entram na primeira decisão de arquitetura, porque depois sai caro.",
+      "Quando não estou codando, estou provavelmente refatorando algo que já funcionava.",
     ],
     photoAlt: "Retrato de Victor Motta",
     stats: {
-      experience: "anos de experiencia",
+      experience: "anos de experiência",
       projects: "projetos entregues",
       focus: "foco atual",
       focusValue: "Full Stack & DX",
@@ -76,7 +76,7 @@ const pt = {
     eyebrow: "02 — Stack",
     title: "As ferramentas que uso todo dia",
     lead:
-      "Nao e uma lista de tudo que ja toquei. E o que eu uso com confianca hoje, em producao.",
+      "Não é uma lista de tudo que já toquei. É o que eu uso com confiança hoje, em produção.",
     groups: {
       frontend: "Front-end",
       backend: "Back-end",
@@ -95,17 +95,17 @@ const pt = {
     viewCaseOf: "Ver o caso completo do projeto {title}",
     liveDemo: "Ver ao vivo",
     liveDemoOf: "Abrir {title} em uma nova aba",
-    sourceCode: "Codigo",
-    sourceCodeOf: "Ver o codigo-fonte de {title} no GitHub",
+    sourceCode: "Código",
+    sourceCodeOf: "Ver o código-fonte de {title} no GitHub",
     backToProjects: "Voltar para os projetos",
     role: "Meu papel",
     year: "Ano",
     stackLabel: "Stack",
     overview: "Sobre o projeto",
-    empty: "Os projetos estao sendo preparados. Volte em breve.",
+    empty: "Os projetos estão sendo preparados. Volte em breve.",
     carousel: "Imagens do projeto {title}",
     previousImage: "Imagem anterior",
-    nextImage: "Proxima imagem",
+    nextImage: "Próxima imagem",
     imageCounter: "Imagem {current} de {total}",
     goToImage: "Ir para a imagem {number}",
   },
@@ -114,12 +114,12 @@ const pt = {
     eyebrow: "04 — Contato",
     title: "Vamos conversar sobre o seu projeto",
     lead:
-      "Descreva o que voce precisa e anexe imagens, telas ou referencias. Respondo em ate um dia util.",
+      "Descreva o que você precisa e anexe imagens, telas ou referências. Respondo em até um dia útil.",
     directTitle: "Prefere um caminho mais direto?",
     whatsapp: "Chamar no WhatsApp",
     whatsappAria: "Abrir uma conversa comigo no WhatsApp",
     whatsappPrefill:
-      "Ola Victor! Vi o seu portfolio e gostaria de conversar sobre um projeto.",
+      "Olá, Victor! Vi o seu portfólio e gostaria de conversar sobre um projeto.",
     emailLabel: "E-mail",
     githubLabel: "GitHub",
     linkedinLabel: "LinkedIn",
@@ -132,10 +132,10 @@ const pt = {
       emailHint: "Uso apenas para responder esta mensagem.",
       company: "Empresa",
       companyOptional: "opcional",
-      companyPlaceholder: "Onde voce trabalha",
+      companyPlaceholder: "Onde você trabalha",
       projectType: "Tipo de projeto",
       projectTypes: {
-        web: "Aplicacao web",
+        web: "Aplicação web",
         mobile: "Aplicativo mobile",
         api: "API / back-end",
         consulting: "Consultoria / code review",
@@ -143,12 +143,12 @@ const pt = {
       },
       message: "Mensagem",
       messagePlaceholder:
-        "Conte o que voce quer construir, o prazo que tem em mente e o que ja existe hoje.",
-      messageHint: "Minimo de 20 caracteres.",
+        "Conte o que você quer construir, o prazo que tem em mente e o que já existe hoje.",
+      messageHint: "Mínimo de 20 caracteres.",
       files: "Imagens do projeto",
       filesOptional: "opcional",
       filesHint:
-        "Ate 5 imagens. Sao comprimidas automaticamente, entao pode mandar o print direto do celular. Formatos: PNG, JPG, WebP ou GIF.",
+        "Até 5 imagens. São comprimidas automaticamente, então pode mandar o print direto do celular. Formatos: PNG, JPG, WebP ou GIF.",
       filesDrop: "Arraste imagens aqui ou clique para escolher",
       filesOptimizing: "Otimizando as imagens...",
       filesButton: "Escolher imagens",
@@ -159,34 +159,35 @@ const pt = {
       submitting: "Enviando...",
       successTitle: "Mensagem enviada!",
       success:
-        "Recebi tudo certinho e respondo em ate um dia util. Obrigado pelo contato.",
+        "Recebi tudo certinho e respondo em até um dia útil. Obrigado pelo contato.",
       sendAnother: "Enviar outra mensagem",
-      errorTitle: "Nao consegui enviar",
+      errorTitle: "Não consegui enviar",
       errorGeneric:
         "Algo deu errado no envio. Tente de novo em instantes ou me chame no WhatsApp.",
       errorNetwork:
-        "Nao consegui falar com o servidor. Verifique sua conexao e tente de novo.",
+        "Não consegui falar com o servidor. Verifique sua conexão e tente de novo.",
       errorRateLimit:
-        "Voce ja enviou algumas mensagens agora ha pouco. Espere alguns minutos antes de tentar de novo.",
+        "Você já enviou algumas mensagens agora há pouco. Espere alguns minutos antes de tentar de novo.",
       errorTooLarge:
         "As imagens ficaram pesadas demais para o envio. Remova uma e tente de novo.",
       errorConfig:
-        "O envio de e-mail ainda nao esta configurado. Preencha RESEND_API_KEY, CONTACT_TO_EMAIL e CONTACT_FROM_EMAIL no .env.local e reinicie o servidor. (Esta mensagem so aparece em desenvolvimento.)",
-      requiredMark: "obrigatorio",
+        "O envio de e-mail ainda não está configurado. Preencha RESEND_API_KEY, CONTACT_TO_EMAIL e CONTACT_FROM_EMAIL no .env.local e reinicie o servidor. (Esta mensagem só aparece em desenvolvimento.)",
+      requiredMark: "obrigatório",
     },
 
     validation: {
       nameMin: "Escreva seu nome com pelo menos 2 caracteres.",
       nameMax: "Esse nome passou de 80 caracteres.",
-      emailInvalid: "Esse e-mail nao parece valido.",
+      emailInvalid: "Esse e-mail não parece válido.",
       companyMax: "O nome da empresa passou de 80 caracteres.",
       projectTypeInvalid: "Escolha um tipo de projeto da lista.",
       messageMin: "Conte um pouco mais — pelo menos 20 caracteres.",
       messageMax: "A mensagem passou de 5000 caracteres.",
-      fileTooMany: "Voce pode anexar no maximo 5 imagens.",
-      fileTooLarge: 'A imagem "{name}" e grande demais mesmo depois de comprimida.',
-      fileTotalTooLarge: "As imagens somadas passam do limite de envio. Tire uma e tente de novo.",
-      fileWrongType: '"{name}" nao e uma imagem PNG, JPG, WebP ou GIF.',
+      fileTooMany: "Você pode anexar no máximo 5 imagens.",
+      fileTooLarge: 'A imagem "{name}" é grande demais mesmo depois de comprimida.',
+      fileTotalTooLarge:
+        "As imagens somadas passam do limite de envio. Tire uma e tente de novo.",
+      fileWrongType: '"{name}" não é uma imagem PNG, JPG, WebP ou GIF.',
     },
   },
 
@@ -197,13 +198,13 @@ const pt = {
   },
 
   notFound: {
-    title: "Pagina nao encontrada",
-    lead: "O endereco que voce tentou abrir nao existe (ou nao existe mais).",
-    back: "Voltar para o inicio",
+    title: "Página não encontrada",
+    lead: "O endereço que você tentou abrir não existe (ou não existe mais).",
+    back: "Voltar para o início",
   },
 };
 
-/** Formato do dicionario, derivado do portugues. */
+/** Formato do dicionário, derivado do português. */
 export type Dictionary = typeof pt;
 
 const en: Dictionary = {

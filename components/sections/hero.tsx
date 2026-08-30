@@ -15,11 +15,11 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
     { href: `mailto:${site.email}`, label: dict.contact.emailLabel, Icon: Mail },
   ];
 
-  /* Cada linha do titulo entra com um pequeno atraso em cascata.
-     `y` e uma transformacao: o reducedMotion="user" do MotionConfig a
-     descarta para quem pediu menos movimento, deixando so o fade. Por isso
-     as props sao sempre as mesmas no servidor e no cliente — nada de
-     ramificar o JSX aqui, sob pena de o conteudo ficar invisivel. */
+  /* Cada linha do título entra com um pequeno atraso em cascata.
+     `y` e uma transformação: o reducedMotion="user" do MotionConfig a
+     descarta para quem pediu menos movimento, deixando só o fade. Por isso
+     as props são sempre as mesmas no servidor e no cliente — nada de
+     ramificar o JSX aqui, sob pena de o conteúdo ficar invisível. */
   const line = (index: number) => ({
     initial: { opacity: 0, y: "0.35em" },
     animate: { opacity: 1, y: "0em" },
@@ -35,7 +35,7 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
       id="topo"
       className="relative flex min-h-[100svh] items-center overflow-hidden pt-20"
     >
-      {/* Brilho difuso atras do texto. Decorativo, sem custo de imagem. */}
+      {/* Brilho difuso atrás do texto. Decorativo, sem custo de imagem. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -top-1/4 left-1/2 size-[min(90vw,900px)] -translate-x-1/2 rounded-full opacity-[0.13] blur-[120px]"
@@ -55,9 +55,9 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
         </motion.p>
 
         <h1 className="mt-8 text-[length:var(--text-display)] leading-[0.95] tracking-[-0.04em]">
-          {/* O nome e o cargo so aparecem para leitor de tela — visualmente
-              eles ja estao no header e na etiqueta acima. A headline em si
-              NAO e aria-hidden: e conteudo de verdade, e esconde-la deixaria
+          {/* O nome e o cargo só aparecem para leitor de tela — visualmente
+              eles já estao no header e na etiqueta acima. A headline em si
+              NÃO e aria-hidden: e conteúdo de verdade, e esconde-la deixaria
               o h1 com metade do sentido. */}
           <span className="sr-only">
             {site.name} — {dict.hero.eyebrow}.{" "}
@@ -72,8 +72,8 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
                   : "text-[var(--color-fg)]"
               }`}
             >
-              {/* O espaco final separa as linhas quando o leitor de tela
-                  junta tudo numa frase so. */}
+              {/* O espaço final separa as linhas quando o leitor de tela
+                  junta tudo numa frase só. */}
               {text}{" "}
             </motion.span>
           ))}

@@ -1,8 +1,8 @@
 /**
  * Textura de grao por cima de tudo. E um SVG inline em vez de PNG: pesa
- * ~400 bytes, escala em qualquer densidade de tela e nao gera requisicao.
+ * ~400 bytes, escala em qualquer densidade de tela e não gera requisição.
  *
- * aria-hidden + pointer-events-none: puramente decorativo, invisivel para
+ * aria-hidden + pointer-events-none: puramente decorativo, invisível para
  * leitor de tela e transparente ao clique.
  */
 export function GrainOverlay() {

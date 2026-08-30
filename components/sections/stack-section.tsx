@@ -3,8 +3,8 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import type { Dictionary } from "@/content/i18n";
 import { stack, stackGroupOrder, type SkillLevel } from "@/content/stack";
 
-/* A barra e um reforco visual do texto, nunca a unica fonte da informacao —
-   por isso o nivel tambem aparece escrito no title/sr-only. */
+/* A barra é um reforço visual do texto, nunca a única fonte da informação —
+   por isso o nivel também aparece escrito no title/sr-only. */
 const LEVEL_WIDTH: Record<SkillLevel, string> = {
   core: "100%",
   strong: "72%",
@@ -12,9 +12,9 @@ const LEVEL_WIDTH: Record<SkillLevel, string> = {
 };
 
 const LEVEL_LABEL: Record<SkillLevel, { pt: string; en: string }> = {
-  core: { pt: "uso diario", en: "daily driver" },
-  strong: { pt: "confortavel", en: "comfortable" },
-  working: { pt: "conhecimento pratico", en: "working knowledge" },
+  core: { pt: "uso diário", en: "daily driver" },
+  strong: { pt: "confortável", en: "comfortable" },
+  working: { pt: "conhecimento prático", en: "working knowledge" },
 };
 
 export function StackSection({
