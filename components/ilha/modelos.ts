@@ -73,6 +73,15 @@ export type Encaixe = {
    * por material, compartilhada entre as malhas que o usavam.
    */
   recolorir?: Record<string, string | { cor: string; metal?: number; aspereza?: number }>;
+  /**
+   * Refaz a UV das malhas renomeadas como um plano sobre a face.
+   *
+   * O whiteboard tem UV, mas não uma que abra a face do quadro em 0..1 — é a
+   * UV de um modelo que nunca foi texturizado. Pintar nela dá uma cor chapada:
+   * a textura inteira colapsa num punhado de texels. Com o plano refeito a
+   * partir da caixa da geometria, o desenho cobre a face.
+   */
+  uvPlano?: boolean;
   /** Prefixo dos nomes das malhas, para elas não colidirem com as da cena. */
   prefixo: string;
 };
@@ -531,6 +540,85 @@ export const PLANTA_MESA: Encaixe = {
   prefixo: "planta_mesa_modelo",
 };
 
+/* ---------- os três quadros ---------- */
+
+/**
+ * O mesmo whiteboard nos três lugares: a lousa da stack, o quadro de projetos
+ * e o cavalete do currículo.
+ *
+ * A chapa DESENHADA de cada um continua na cena, encostada na face do modelo
+ * (ver `encostarNoQuadro`, em `texturas.ts`). É ela que a câmera enquadra e
+ * que a pintura escreve.
+ *
+ * Pintar direto na malha `Backboard` do modelo seria mais limpo e não
+ * funciona: a UV dele é a de um modelo que nunca foi texturizado, e a textura
+ * inteira colapsa num punhado de texels — o quadro sai de uma cor chapada só.
+ * Refazer a UV como um plano tampouco resolveu: os três quadros entram em
+ * orientações diferentes e a escolha do eixo "de cima" não converge.
+ *
+ * O quadro é paisagem (2,876 x 1,828, proporção 1,573). A folha do currículo
+ * era retrato; virou paisagem junto, em `texturas.ts`.
+ */
+function quadro(
+  pai: string,
+  substitui: string[],
+  prefixo: string,
+  altura: number,
+  /* A face do modelo é fina no X. A lousa da stack também era, mas o quadro
+     de projetos e a folha do currículo eram finos no Z — e os post-its são
+     cartões voltados para o Z. Sem o quarto de volta eles ficariam de perfil,
+     de lado no quadro. */
+  deitado: boolean,
+): Encaixe {
+  return {
+    arquivo: "/modelos/whiteboard.glb",
+    pai,
+    substitui,
+    alvo: deitado
+      ? { x: 2.3, y: altura, z: 0.55 }
+      : { x: 0.55, y: altura, z: 2.3 },
+    proporcional: true,
+    base: [0, 0, 0],
+    giroY: deitado ? Math.PI / 2 : 0,
+    prefixo,
+  };
+}
+
+export const QUADRO_STACK = quadro(
+  "whiteboard",
+  [
+    "whiteboard_frame", "whiteboard_tray",
+    "whiteboard_leg_1", "whiteboard_leg_2",
+    "whiteboard_foot_1", "whiteboard_foot_2",
+  ],
+  "quadro_stack_modelo",
+  2.0,
+  false,
+);
+
+export const QUADRO_PROJETOS = quadro(
+  "project_board",
+  [
+    "project_board_frame", "project_board_header",
+    "project_board_leg_1", "project_board_leg_2",
+    "project_board_foot_1", "project_board_foot_2",
+  ],
+  "quadro_projetos_modelo",
+  2.1,
+  true,
+);
+
+export const QUADRO_CURRICULO = quadro(
+  "resume_easel",
+  [
+    "easel_leg_left", "easel_leg_right", "easel_leg_back", "easel_tray",
+    "resume_backing", "resume_stack", "resume_stack_top",
+  ],
+  "quadro_curriculo_modelo",
+  2.0,
+  true,
+);
+
 /** Tudo que a ilha carrega, na ordem em que entra. */
 export const ENCAIXES: Encaixe[] = [
   MESA_GAMER, MACBOOK, MONITOR_ESQ, MONITOR_DIR, CADEIRA,
@@ -538,6 +626,7 @@ export const ENCAIXES: Encaixe[] = [
   MOVEL_TV, TV, PS1, FLIPERAMA,
   ESTANTE, GLOBO, LIVRO, GABINETE, BEBEDOURO, LIXEIRA, LUMINARIA,
   PLANTA_1, PLANTA_2, PLANTA_3, PLANTA_MESA,
+  QUADRO_STACK, QUADRO_PROJETOS, QUADRO_CURRICULO,
 ];
 
 /**
@@ -629,16 +718,23 @@ export async function encaixarModelo(
     lixo.push({ dispose: () => { antiga.name = alvo; } });
   }
 
-  /* O GLTFLoader troca espaço por underscore no nome de cada nó (é o
-     `sanitizeNodeName` da three, que existe para o nome poder virar caminho de
-     animação). Então "Ultrawide Monitor_Screen_0" chega aqui como
-     "Ultrawide_Monitor_Screen_0", e comparar com o nome cru do arquivo não
-     casa nunca. Normalizar os dois lados evita ter de escrever no encaixe um
-     nome que não é o que se lê no arquivo. */
-  const chave = (nome: string) => nome.replace(/\s/g, "_");
+  /* O GLTFLoader reescreve o nome de cada nó (é o `sanitizeNodeName` da three,
+     que existe para o nome poder virar caminho de animação): espaço vira
+     underscore E os caracteres reservados `[ ] . : /` somem.
+     Então "Ultrawide Monitor_Screen_0" chega como "Ultrawide_Monitor_Screen_0"
+     e "Backboard_Material.002_0" chega como "Backboard_Material002_0".
+     Normalizar os dois lados evita ter de escrever no encaixe um nome que não
+     é o que se lê no arquivo — e foi o ponto, não o espaço, que deixou os três
+     quadros em branco na primeira tentativa. */
+  const chave = (nome: string) => nome.replace(/\s/g, "_").replace(/[[\].:/]/g, "");
   const renomeia = new Map(
     Object.entries(encaixe.renomeia ?? {}).map(([de, para]) => [chave(de), para]),
   );
+
+  /* A UV só pode ser refeita depois que o modelo estiver posicionado: o eixo
+     "de cima" da textura é decidido pela orientação no mundo, e antes de o
+     suporte entrar na cena essa orientação ainda não existe. */
+  const aplanar: THREE.Mesh[] = [];
 
   /* Uma cópia por material do arquivo, não por malha: a cadeira tem 22
      malhas e seis materiais, e clonar por malha faria 22 programas de shader
@@ -672,6 +768,8 @@ export async function encaixarModelo(
     const herdado = renomeia.get(chave(malha.name));
     malha.name = herdado ?? `${encaixe.prefixo}_${malha.name || "peca"}`;
 
+    if (herdado && encaixe.uvPlano) aplanar.push(malha);
+
     if (encaixe.recolorir) {
       malha.material = Array.isArray(malha.material)
         ? malha.material.map(tingir)
@@ -681,6 +779,17 @@ export async function encaixarModelo(
 
   pai.add(suporte);
   lixo.push({ dispose: () => { suporte.removeFromParent(); } });
+
+  suporte.updateWorldMatrix(true, true);
+  for (const malha of aplanar) {
+    /* Geometria própria antes de mexer na UV. As cópias do mesmo arquivo
+       compartilham a geometria, e os três quadros entram em orientações
+       diferentes: reescrevendo a UV compartilhada, o último a carregar
+       desmanchava a dos outros dois. */
+    malha.geometry = malha.geometry.clone();
+    lixo.push(malha.geometry);
+    planificarUV(malha);
+  }
 
   return lixo;
 }
@@ -695,6 +804,53 @@ export function esconder(ilha: THREE.Object3D, nomes: string[]): Descartaveis {
     lixo.push({ dispose: () => { peca.visible = true; } });
   }
   return lixo;
+}
+
+/**
+ * Reescreve a UV de uma malha como um plano sobre os dois eixos maiores dela.
+ *
+ * A geometria é compartilhada entre as cópias do mesmo arquivo, então isto
+ * roda uma vez e vale para as três lousas — que é o que se quer, já que todas
+ * são pintadas do mesmo jeito.
+ */
+function planificarUV(malha: THREE.Mesh) {
+  const geo = malha.geometry;
+  geo.computeBoundingBox();
+  const caixa = geo.boundingBox;
+  if (!caixa) return;
+
+  const tamanho = caixa.getSize(new THREE.Vector3());
+  const eixos = (["x", "y", "z"] as const)
+    .slice()
+    .sort((a, b) => tamanho[b] - tamanho[a]);
+
+  /* Dos dois eixos da face, o "de cima" da textura é o que aponta para o alto
+     no mundo — e não o menor dos dois. Escolher pelo tamanho pôs a faixa azul
+     do quadro de pé, virada, numa tira na lateral: no arquivo o eixo comprido
+     da chapa é a altura, não a largura. */
+  const rotacao = new THREE.Matrix3().setFromMatrix4(malha.matrixWorld);
+  const paraCima = (eixo: "x" | "y" | "z") => {
+    const v = new THREE.Vector3(
+      eixo === "x" ? 1 : 0,
+      eixo === "y" ? 1 : 0,
+      eixo === "z" ? 1 : 0,
+    );
+    return Math.abs(v.applyMatrix3(rotacao).normalize().y);
+  };
+  const face = [eixos[0]!, eixos[1]!];
+  const vertical = paraCima(face[0]!) >= paraCima(face[1]!) ? face[0]! : face[1]!;
+  const horizontal = vertical === face[0] ? face[1]! : face[0]!;
+
+  const pos = geo.attributes.position;
+  if (!pos) return;
+  const uv = new Float32Array(pos.count * 2);
+  const ponto = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    ponto.fromBufferAttribute(pos, i);
+    uv[i * 2] = (ponto[horizontal] - caixa.min[horizontal]) / (tamanho[horizontal] || 1);
+    uv[i * 2 + 1] = (ponto[vertical] - caixa.min[vertical]) / (tamanho[vertical] || 1);
+  }
+  geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
 }
 
 /** Encaixa a lista inteira, sem deixar um erro de um arquivo derrubar os outros. */

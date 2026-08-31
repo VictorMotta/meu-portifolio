@@ -484,36 +484,137 @@ function faixaDoQuadro(texto: string) {
  * Só é desenhado quando a terceira fileira de post-its está escondida; com
  * mais de seis projetos ela desce até aqui e o texto ficaria por baixo.
  */
+/**
+ * Onde cada coisa fica na face do quadro, em fração da largura e da altura.
+ *
+ * O MESMO mapa serve para o desenho (a textura) e para a geometria (os
+ * cartões). Eram dois conjuntos de números antes, e bastou o quadro mudar de
+ * tamanho para os cartões saírem flutuando fora dele.
+ */
+const MAPA_DO_QUADRO = {
+  faixa: 0.085,
+  titulo: 0.175,
+  chamada: 0.235,
+  cartoes: { topo: 0.30, base: 0.95, esquerda: 0.035, direita: 0.965, vao: 0.025 },
+};
+
+/** A face do whiteboard tem proporção 1,573 (2,876 x 1,828 no arquivo). */
+const ALTURA_QUADRO = Math.round(LARGURA / 1.573);
+
+/**
+ * O corpo do quadro de projetos: a faixa azul, o título e a chamada — na
+ * mesma ordem do painel. A faixa era uma peça de geometria à parte; com o
+ * quadro virando modelo, ela passou a ser desenhada aqui.
+ */
 function corpoDoQuadro(dict: Dictionary) {
-  const ALTURA = 589;
-  const t = tela(ALTURA);
+  const t = tela(ALTURA_QUADRO);
   if (!t) return null;
   const { c, p } = t;
+  const M = MAPA_DO_QUADRO;
 
   p.fillStyle = "#c3cbd9";
-  p.fillRect(0, 0, LARGURA, ALTURA);
+  p.fillRect(0, 0, LARGURA, ALTURA_QUADRO);
 
-  /* Logo abaixo da faixa azul, na mesma ordem do painel: chapéu na faixa,
-     título, chamada, e então os cartões. A faixa termina em 95px e a
-     primeira fileira de post-its começa em 172px — os 77px entre as duas
-     são exatamente o espaço que as tarjas de coluna ocupavam. */
-  p.font = `bold 34px ${SANS}`;
+  p.fillStyle = "#1d4ed8";
+  p.fillRect(0, 0, LARGURA, M.faixa * ALTURA_QUADRO);
+  p.font = `bold 26px ${MONO}`;
+  p.fillStyle = "#ffffff";
+  p.fillText(dict.projects.eyebrow.toUpperCase(), 44, M.faixa * ALTURA_QUADRO - 16);
+
+  p.font = `bold 38px ${SANS}`;
   p.fillStyle = "#171b23";
-  p.fillText(dict.projects.title, 58, 132);
+  p.fillText(dict.projects.title, 44, M.titulo * ALTURA_QUADRO);
 
-  p.font = `19px ${SANS}`;
+  p.font = `21px ${SANS}`;
   p.fillStyle = "#3f4854";
-  escrever(p, dict.projects.lead, 58, 162, LARGURA - 116, 24, 1);
+  escrever(p, dict.projects.lead, 44, M.chamada * ALTURA_QUADRO, LARGURA - 88, 26, 1);
   return c;
+}
+
+/**
+ * Encosta a chapa desenhada na face do whiteboard que entrou no lugar dela.
+ *
+ * O modelo é o móvel; a chapa é onde o conteúdo é escrito. Ela sobrevive ao
+ * encaixe justamente porque a UV do modelo não serve para pintar — mesmo
+ * motivo pelo qual a tela da TV desenhada continua na frente da TV modelada.
+ *
+ * `espessa` diz qual eixo da chapa é a espessura, porque as três nasceram
+ * diferentes: a lousa é fina no X, o quadro e a folha são finos no Z.
+ */
+function encostarNoQuadro(
+  ilha: THREE.Object3D,
+  chapa: string,
+  modelo: string,
+  face: readonly [number, number],
+  espessa: "x" | "z",
+  lixo: Descartaveis,
+) {
+  const painel = ilha.getObjectByName(chapa);
+  const quadro = ilha.getObjectByName(modelo);
+  if (!painel || !quadro || !painel.parent) return;
+
+  const caixa = caixaEm(quadro, painel.parent);
+  if (!caixa) return;
+
+  const tamanho = caixa.getSize(new THREE.Vector3());
+  const centro = caixa.getCenter(new THREE.Vector3());
+  const largura = espessa === "x" ? tamanho.z : tamanho.x;
+
+  const escalaAntes = painel.scale.clone();
+  const posicaoAntes = painel.position.clone();
+
+  if (espessa === "x") {
+    painel.scale.set(1, tamanho.y / face[1], largura / face[0]);
+    painel.position.set(caixa.max.x + 0.006, centro.y, centro.z);
+  } else {
+    painel.scale.set(largura / face[0], tamanho.y / face[1], 1);
+    painel.position.set(centro.x, centro.y, caixa.max.z + 0.006);
+  }
+
+  lixo.push({
+    dispose: () => {
+      painel.scale.copy(escalaAntes);
+      painel.position.copy(posicaoAntes);
+    },
+  });
+}
+
+/**
+ * A caixa de um objeto medida nos eixos de outro.
+ *
+ * Serve para saber onde a face do quadro caiu depois do encaixe do modelo —
+ * sem isso os cartões teriam de ser posicionados por número chutado, e todo
+ * ajuste de tamanho do quadro os deixaria para trás.
+ */
+function caixaEm(alvo: THREE.Object3D, referencia: THREE.Object3D): THREE.Box3 | null {
+  const geo = (alvo as THREE.Mesh).geometry;
+  if (!geo) return null;
+  geo.computeBoundingBox();
+  const local = geo.boundingBox;
+  if (!local) return null;
+
+  const inversa = new THREE.Matrix4().copy(referencia.matrixWorld).invert();
+  const caixa = new THREE.Box3();
+  const ponto = new THREE.Vector3();
+  for (let i = 0; i < 8; i++) {
+    ponto.set(
+      i & 1 ? local.max.x : local.min.x,
+      i & 2 ? local.max.y : local.min.y,
+      i & 4 ? local.max.z : local.min.z,
+    );
+    caixa.expandByPoint(ponto.applyMatrix4(alvo.matrixWorld).applyMatrix4(inversa));
+  }
+  return caixa;
 }
 
 /**
  * O post-it como o cartão do projeto no painel: título, resumo e a stack.
  * Antes era só o título centralizado, e o quadro dizia menos do que o painel.
  */
-/* A nota, depois de reposicionada, mede 0,553 x 0,332 — proporção 1,666. O
-   canvas nasce com ela para o texto não sair esticado. */
-const ALTURA_NOTA = Math.round(LARGURA / 1.666);
+/* A proporção do cartão sai do mapa do quadro e da proporção da face:
+   (0,2933 / 0,3125) x 1,573 = 1,476. O canvas nasce com ela para o texto não
+   sair esticado. */
+const ALTURA_NOTA = Math.round(LARGURA / 1.476);
 
 function postIt(projeto: Project, dict: Dictionary, fundo: string) {
   const t = tela(ALTURA_NOTA);
@@ -826,10 +927,40 @@ export function aplicarTexturas(
      que o painel mostra, e lá são cartões grandes, alinhados e preenchendo a
      grade. Como `cena.ts` é gerado e não deve ser reescrito, o ajuste é feito
      aqui, na escala e na posição, e desfeito no descarte. */
-  const LARGURA_CARTAO = 0.553;
-  const ALTURA_CARTAO = 0.332;
-  const COLUNAS = [-0.6035, 0, 0.6035];
-  const FILEIRAS = [1.423, 1.041];
+  /* As três chapas encostam na face do whiteboard antes de qualquer medida:
+     os cartões do quadro de projetos são posicionados a partir da chapa, e
+     medi-la no lugar antigo os deixaria para trás. */
+  ilha.updateWorldMatrix(true, true);
+  encostarNoQuadro(ilha, "whiteboard_panel", "quadro_stack_modelo_Backboard_Material002_0", [1.7, 1.0], "x", lixo);
+  encostarNoQuadro(ilha, "project_board_panel", "quadro_projetos_modelo_Backboard_Material002_0", [2.0, 1.15], "z", lixo);
+  encostarNoQuadro(ilha, "resume_sheet", "quadro_curriculo_modelo_Backboard_Material002_0", [0.84, 1.12], "z", lixo);
+
+  /* Onde os cartões vão, medido na face do quadro que está na cena AGORA:
+     antes do modelo chegar é a caixa desenhada, depois é a do whiteboard.
+     Medir em vez de fixar é o que mantém os dois casos certos — com números
+     fixos, o quadro mudou de tamanho e os cartões ficaram flutuando fora
+     dele, no ar. */
+  const painelDoQuadro = ilha.getObjectByName("project_board_panel");
+  /* A face sai da própria chapa: ela nasce com 2,0 x 1,15 e o encaixe acima
+     só mexeu na escala e na posição dela. Derivar daí é mais simples e mais
+     seguro do que medir caixa por matriz — que foi por onde os cartões
+     sumiram, medindo antes de a chapa se mexer. */
+  const face = painelDoQuadro
+    ? {
+        largura: 2.0 * painelDoQuadro.scale.x,
+        altura: 1.15 * painelDoQuadro.scale.y,
+        centro: painelDoQuadro.position,
+        /* A chapa tem 7 cm de espessura e o que se guarda é o CENTRO dela.
+           Os cartões precisam passar da face, não do centro: dois centímetros
+           à frente do centro é dentro da chapa, e era ali que eles estavam —
+           existindo, na posição certa, e invisíveis. */
+        frente: 0.035 * painelDoQuadro.scale.z,
+      }
+    : null;
+
+  const M = MAPA_DO_QUADRO;
+  const larguraFrac = (M.cartoes.direita - M.cartoes.esquerda - 2 * M.cartoes.vao) / 3;
+  const alturaFrac = (M.cartoes.base - M.cartoes.topo - M.cartoes.vao) / 2;
 
   ORDEM_DAS_NOTAS.forEach(([coluna, linha], i) => {
     const nota = ilha.getObjectByName(`project_note_${coluna}_${linha}`);
@@ -845,9 +976,25 @@ export function aplicarTexturas(
     const escalaAntes = nota.scale.clone();
     const posicaoAntes = nota.position.clone();
     const giroAntes = nota.rotation.z;
-    nota.scale.set(LARGURA_CARTAO / 0.34, ALTURA_CARTAO / 0.22, 1);
-    nota.position.set(COLUNAS[coluna - 1]!, FILEIRAS[linha - 1] ?? nota.position.y, 0.045);
-    nota.rotation.z = 0;
+
+    if (face) {
+      const fx =
+        M.cartoes.esquerda + (larguraFrac + M.cartoes.vao) * (coluna - 1) + larguraFrac / 2;
+      const fy = M.cartoes.topo + (alturaFrac + M.cartoes.vao) * (linha - 1) + alturaFrac / 2;
+
+      nota.scale.set(
+        (larguraFrac * face.largura) / 0.34,
+        (alturaFrac * face.altura) / 0.22,
+        1,
+      );
+      nota.position.set(
+        face.centro.x - face.largura / 2 + fx * face.largura,
+        face.centro.y + face.altura / 2 - fy * face.altura,
+        face.centro.z + face.frente + 0.012,
+      );
+      nota.rotation.z = 0;
+    }
+
     lixo.push({
       dispose: () => {
         nota.scale.copy(escalaAntes);
