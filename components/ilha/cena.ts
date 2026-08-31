@@ -62,6 +62,7 @@ export function construirIlha(): THREE.Group {
     neon:     mat('neonBlue', 0x14224a, { emissive: 0x2f6bff, emissiveIntensity: 1.6, roughness: 0.3 }),
     accent:   mat('accentTeal', 0x1d8fa8, { roughness: 0.5 }),
     cream:    mat('paperCool', 0xa8b3c6, { roughness: 0.8 }),
+    bulb:     mat('bulbWarm', 0xffe6bf, { emissive: 0xffc27a, emissiveIntensity: 2.4, roughness: 0.4 }),
   };
   
   model.name = 'gamer_office_island';
@@ -552,13 +553,35 @@ export function construirIlha(): THREE.Group {
   part('arcade_base_glow', box(0.52, 0.06, 0.64), M.neon, [0, 0.03, 0], [0, 0, 0], arcade);
 
   const fl = group('floor_lamp', hobby);
-  /* Encostado no canto entre o sofá e o fliperama. Onde estava, o abajur
-     ficava exatamente na linha de visão do quadro de projetos: a câmera que
-     enquadra o quadro parava dentro da cúpula. */
-  fl.position.set(-0.35, 0, -1.75);
-  part('floor_lamp_base', cyl(0.16, 0.18, 0.04, 8), M.shell, [0, 0.02, 0], [0, 0, 0], fl);
-  part('floor_lamp_pole', cyl(0.02, 0.02, 1.4, 6), M.metal, [0, 0.7, 0], [0, 0, 0], fl);
-  part('floor_lamp_shade', cyl(0.16, 0.22, 0.26, 8, 1), M.cream, [0, 1.5, 0], [0, 0, 0], fl);
+  /* No vão entre a ponta do sofá e o quadro de projetos.
+     A medida NÃO pode sair das caixas desenhadas logo acima: elas somem
+     quando o .glb entra, e o sofá do arquivo é bem maior. Medido na cena
+     montada, em coordenadas da ilha, o sofá ocupa x de 0,04 a 1,36 e z de
+     -1,35 a 1,85, e o quadro começa em z=-2,69. A lamparina tem 0,42 de
+     diâmetro, então z=-1,65 a encosta no braço com um palmo de folga e
+     ainda deixa 0,8 até o quadro.
+     O x fica na metade da frente do sofá, e não no meio da ilha: a câmera
+     que enquadra o quadro de projetos desce por volta de x=0,5, e foi ela
+     que expulsou a lamparina daqui da primeira vez. */
+  fl.position.set(-0.85, 0, -1.75);
+  part('floor_lamp_base', cyl(0.16, 0.18, 0.04, 8), M.shell, [0, 0.02 + TOPO_DAS_TABUAS, 0], [0, 0, 0], fl);
+  part('floor_lamp_pole', cyl(0.02, 0.02, 1.4, 6), M.metal, [0, 0.7 + TOPO_DAS_TABUAS, 0], [0, 0, 0], fl);
+  part('floor_lamp_shade', cyl(0.16, 0.22, 0.26, 8, 1), M.cream, [0, 1.5 + TOPO_DAS_TABUAS, 0], [0, 0, 0], fl);
+
+  /* A luz da lamparina.
+     Fica no grupo dela, e não solta na cena, para acompanhar a lamparina se
+     ela mudar de lugar de novo. Sem sombra de propósito: uma luz pontual com
+     sombra desenha a cena inteira seis vezes, uma por face do cubo, e o que
+     ela acrescentaria aqui — a sombra do próprio poste — some debaixo do
+     sofá. O alcance de 4,5 m cobre a área gamer e morre antes da mesa de
+     trabalho, do outro lado da ilha. */
+  const luzDaLamparina = new THREE.PointLight(0xffc27a, 17, 6, 2);
+  luzDaLamparina.name = 'floor_lamp_light';
+  luzDaLamparina.position.set(0, 1.44 + TOPO_DAS_TABUAS, 0);
+  fl.add(luzDaLamparina);
+  /* A lâmpada em si, para a cúpula não ficar escura por dentro quando a
+     câmera passa por baixo. */
+  part('floor_lamp_bulb', new THREE.SphereGeometry(0.05, 12, 8), M.bulb, [0, 1.44 + TOPO_DAS_TABUAS, 0], [0, 0, 0], fl);
   model.add(hobby);
 
   model.add(island);

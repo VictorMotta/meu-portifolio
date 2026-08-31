@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { TOPO_DAS_TABUAS } from "@/components/ilha/cena";
 import type { Descartaveis } from "@/components/ilha/texturas";
@@ -736,10 +737,15 @@ export const LUMINARIA: Encaixe = {
   substitui: ["floor_lamp_base", "floor_lamp_pole", "floor_lamp_shade"],
   alvo: { x: 0.45, y: 1.65, z: 0.45 },
   proporcional: true,
-  base: [0, 0, 0],
+  /* Apoiada na madeira, e não no deck de ardósia que fica 3,65 cm abaixo
+     dela. Numa peça de base larga a diferença não aparece; o pé da lamparina
+     é um disco fino, e ali ela some inteira dentro do piso. */
+  base: [0, TOPO_DAS_TABUAS, 0],
   giroY: 0,
-  /* Mesmo caso da TV: branco metálico sem mapa de cor. */
-  recolorir: { lambert2SG: { cor: "#cfc9bb", metal: 0.05, aspereza: 0.85 } },
+  /* Sem `recolorir`: o arquivo TEM mapa de cor — cúpula de tecido e ferro
+     escuro —, ele só não chegava porque a extensão que o descreve saiu do
+     glTF. Quem o traz de volta é `resgatarEspecularAntigo`. Pintar por cima
+     de novo apagaria o desenho debaixo de um bege chapado. */
   prefixo: "luminaria_modelo",
 };
 
@@ -890,9 +896,83 @@ const baixados = new Map<string, Promise<THREE.Group>>();
 function baixar(arquivo: string): Promise<THREE.Group> {
   const guardado = baixados.get(arquivo);
   if (guardado) return guardado;
-  const promessa = new GLTFLoader().loadAsync(arquivo).then((gltf) => gltf.scene);
+  const promessa = new GLTFLoader()
+    .loadAsync(arquivo)
+    .then(async (gltf) => {
+      await resgatarEspecularAntigo(gltf);
+      return gltf.scene;
+    });
   baixados.set(arquivo, promessa);
   return promessa;
+}
+
+/** O que interessa do acabamento antigo, do jeito que ele está no JSON. */
+type EspecularAntigo = {
+  diffuseTexture?: { index: number };
+  diffuseFactor?: [number, number, number, number];
+};
+
+/**
+ * Devolve a textura de cor aos materiais que vieram no acabamento antigo.
+ *
+ * `KHR_materials_pbrSpecularGlossiness` saiu do glTF e o GLTFLoader da three
+ * deixou de lê-lo. Num arquivo que descreve o material SÓ por essa extensão —
+ * é o caso da lamparina — o carregador cai no `pbrMetallicRoughness` do
+ * núcleo, que ali não existe: sai um material branco liso, com o mapa de
+ * normais e mais nada. As imagens continuam dentro do .glb; o que falta é
+ * alguém apontando para elas.
+ *
+ * A textura é pedida ao próprio carregador, pelo índice que a extensão dá, e
+ * entra como `map`. Ela pertence ao arquivo do cache, como o material
+ * emprestado, e por isso NÃO entra no lixo de nenhum encaixe: descartá-la
+ * deixaria a lamparina branca de novo na segunda montagem da ilha.
+ */
+async function resgatarEspecularAntigo(gltf: GLTF): Promise<void> {
+  const definicoes: { name?: string; extensions?: { KHR_materials_pbrSpecularGlossiness?: EspecularAntigo } }[] =
+    gltf.parser.json.materials ?? [];
+  if (!definicoes.some((d) => d.extensions?.KHR_materials_pbrSpecularGlossiness)) return;
+
+  /* Os materiais que a three montou, pelo nome que veio do arquivo. */
+  const porNome = new Map<string, THREE.MeshStandardMaterial[]>();
+  gltf.scene.traverse((no) => {
+    const malha = no as THREE.Mesh;
+    if (!malha.isMesh) return;
+    for (const m of Array.isArray(malha.material) ? malha.material : [malha.material]) {
+      const lista = porNome.get(m.name);
+      if (lista) lista.push(m as THREE.MeshStandardMaterial);
+      else porNome.set(m.name, [m as THREE.MeshStandardMaterial]);
+    }
+  });
+
+  await Promise.all(definicoes.map(async (definicao) => {
+    const antigo = definicao.extensions?.KHR_materials_pbrSpecularGlossiness;
+    const alvos = porNome.get(definicao.name ?? "");
+    if (!antigo?.diffuseTexture || !alvos) return;
+
+    const textura = (await gltf.parser.getDependency(
+      "texture",
+      antigo.diffuseTexture.index,
+    )) as THREE.Texture;
+    /* Quem marca o espaço de cor é o `assignTexture` do carregador, e é
+       justamente ele que não roda para uma extensão que a three não conhece.
+       Sem esta linha o difuso entra como dado linear e a lamparina sai
+       lavada. */
+    textura.colorSpace = THREE.SRGBColorSpace;
+
+    for (const material of alvos) {
+      if (material.map) continue;
+      material.map = textura;
+      const fator = antigo.diffuseFactor;
+      /* Os fatores do glTF são lineares; a cor multiplica a textura. */
+      if (fator) material.color.setRGB(fator[0], fator[1], fator[2], THREE.LinearSRGBColorSpace);
+      /* O especular-brilho não tem tradução direta para metal/aspereza. Em
+         vez de inventar uma, o material fica fosco: é o tecido da cúpula, que
+         é a maior parte do que se vê da lamparina. */
+      material.metalness = 0;
+      material.roughness = 0.7;
+      material.needsUpdate = true;
+    }
+  }));
 }
 
 /** O primeiro material com este nome dentro de um modelo já baixado. */
