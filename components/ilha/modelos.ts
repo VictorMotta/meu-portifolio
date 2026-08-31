@@ -441,26 +441,49 @@ export const MESA_CENTRO: Encaixe = {
  */
 const ALTURA_DA_MESA_DE_CENTRO = 0.462;
 
-/** O tabuleiro de xadrez, em cima da mesa de centro. */
+/**
+ * O meio da mesa de centro, na largura dela.
+ *
+ * O `base` do encaixe é medido no grupo `coffee_table`, e a mesa não está
+ * centrada nesse grupo: ela entra deslocada 0,15 para acertar o vão até o
+ * sofá. Quem escreve 0 aqui não põe a coisa no meio da mesa — põe 15 cm para
+ * o lado do sofá, encostada na borda, que era onde o xadrez e o DS estavam.
+ */
+const MEIO_DA_MESA_DE_CENTRO = 0.15;
+
+/**
+ * O tabuleiro de xadrez, no meio da mesa de centro.
+ *
+ * O alvo não é o tamanho do tabuleiro: o `giroY` de 0,3 entra ANTES da
+ * medida, e a caixa de um quadrado girado 17° é 25% maior que o lado dele.
+ * Com 0,5 de alvo o tabuleiro sai com 0,40 de lado — um tabuleiro de
+ * verdade —, e sobram 0,09 de mesa de cada lado. Era esse desconto que
+ * deixava o de antes com 0,24, menor que o DS ao lado.
+ */
 export const XADREZ: Encaixe = {
   arquivo: "/modelos/wooden_chess_set.glb",
   pai: "coffee_table",
   substitui: [],
-  alvo: { x: 0.3, y: 0.12, z: 0.3 },
+  alvo: { x: 0.5, y: 0.2, z: 0.5 },
   proporcional: true,
-  base: [0, ALTURA_DA_MESA_DE_CENTRO, -0.28],
+  base: [MEIO_DA_MESA_DE_CENTRO, ALTURA_DA_MESA_DE_CENTRO, 0],
   giroY: 0.3,
   prefixo: "xadrez_modelo",
 };
 
-/** O Nintendo DS, na outra ponta da mesa de centro. */
+/**
+ * O Nintendo DS, na ponta da mesa de centro, na mesma linha do xadrez.
+ *
+ * Mesmo desconto de caixa girada do xadrez: com 0,19 de alvo o DS sai com
+ * 0,155 de comprimento aberto, que é o tamanho de um DS.
+ */
 export const NINTENDO: Encaixe = {
   arquivo: "/modelos/nintendo_ds.glb",
   pai: "coffee_table",
   substitui: [],
-  alvo: { x: 0.16, y: 0.12, z: 0.16 },
+  alvo: { x: 0.19, y: 0.12, z: 0.19 },
   proporcional: true,
-  base: [0, ALTURA_DA_MESA_DE_CENTRO, 0.4],
+  base: [MEIO_DA_MESA_DE_CENTRO, ALTURA_DA_MESA_DE_CENTRO, 0.5],
   giroY: -0.5,
   prefixo: "ds_modelo",
 };
@@ -487,6 +510,12 @@ export const MOVEL_TV: Encaixe = {
   proporcional: true,
   base: [0, 0, 0],
   giroY: 0,
+  /* As portas e o nicho aberto do móvel ficam em +X no arquivo, que aqui é o
+     lado de fora da ilha: quem sentava no sofá via as costas dele. O giro é o
+     FINAL, e não o `giroY`, por regra — o `giroY` entra antes da medida — mas
+     meia volta é o caso em que os dois dariam no mesmo, porque a caixa
+     envolvente não muda. */
+  giroFinalY: Math.PI,
   ...madeira(),
   prefixo: "movel_tv_modelo",
 };
@@ -538,6 +567,15 @@ export const PS1: Encaixe = {
   proporcional: true,
   base: [-0.02, ALTURA_DO_MOVEL_TV, -0.45],
   giroY: 0,
+  /* De frente para a mesa de centro, como o móvel debaixo dele.
+     Aqui o quarto de volta não é o mesmo caso do móvel: o console tem a
+     frente — a que traz os "PORT 1" e "PORT 2" — em -Z no arquivo, e não em
+     -X. As duas faces em X são as LATERAIS, as duas ranhuradas, e é por isso
+     que meia volta não resolvia nada: trocava um flanco pelo outro.
+     Continua sendo giro FINAL. No `giroY` ele entraria antes da medida, e o
+     alvo do X (0,26 — a largura de um PS1 de verdade) cairia sobre os 18,5 cm
+     da profundidade: o console sairia um terço maior do que é. */
+  giroFinalY: Math.PI / 2,
   prefixo: "ps1_modelo",
 };
 
@@ -550,10 +588,21 @@ export const FLIPERAMA: Encaixe = {
     "arcade_stick", "arcade_ball", "arcade_button_1", "arcade_button_2",
     "arcade_base_glow",
   ],
-  alvo: { x: 0.72, y: 1.6, z: 0.66 },
+  /* 1,75 de altura, que é a de um fliperama de verdade — dá 0,67 de largura
+     e 0,92 de profundidade, contando o painel de controle que avança.
+     O que mandava antes era o Z, e por acidente: o arquivo é 1,4 vez mais
+     fundo do que largo, então 0,66 de alvo no Z virava um armário de 1,26 de
+     altura, mais baixo que a luminária ao lado. Agora o Y é que aperta, e é
+     ele quem deve apertar: a altura é a medida que se compara com uma pessoa.
+     O X e o Z ficam folgados de propósito. */
+  alvo: { x: 0.72, y: 1.75, z: 1.0 },
   proporcional: true,
   base: [0, 0, 0],
   giroY: Math.PI / 2,
+  /* Meia volta: a tela e o joystick olhavam para fora da ilha. O grupo da
+     cena já vem girado -0,9, e com o giro daqui a frente passa a apontar para
+     o meio do deck com 5° de diferença. */
+  giroFinalY: Math.PI,
   semSombra: true,
   prefixo: "fliperama_modelo",
 };
@@ -700,6 +749,15 @@ export const GABINETE: Encaixe = {
   proporcional: true,
   base: [0, 0, 0],
   giroY: 0,
+  /* Alinhado com a mesa: a frente do gabinete — os materiais do arquivo se
+     chamam "Frente" e "Tras", e a frente é +Z — olhava para a ponta da mesa,
+     atravessada. Um quarto de volta põe a frente em +X, que é o lado de onde
+     a cadeira olha, e o lado comprido do gabinete passa a correr junto com o
+     lado comprido da mesa.
+     Aqui o giro TEM de ser o final. No `giroY` ele entraria antes da medida,
+     e aí o alvo apertado do X (0,32) cairia sobre o lado fundo do gabinete:
+     o PC sairia com 43% do tamanho. */
+  giroFinalY: Math.PI / 2,
   prefixo: "gabinete_modelo",
 };
 
@@ -715,17 +773,29 @@ export const BEBEDOURO: Encaixe = {
   proporcional: true,
   base: [0, 0, 0],
   giroY: 0,
+  /* As torneiras avançam em -Z no arquivo, e o bebedouro está em (3,3; -1,0)
+     na ilha: sem giro, elas apontavam para a borda. O ângulo é o que vira a
+     frente para o meio do deck — `atan2` de (3,3; -1,0) visto de -Z. Não é um
+     número redondo porque a posição do móvel também não é. */
+  giroFinalY: 1.87,
   prefixo: "bebedouro_modelo",
 };
 
-/** A lixeira. Solta no deck, não num grupo: por isso o pai é a ilha. */
+/**
+ * A lixeira. Solta no deck, não num grupo: por isso o pai é a ilha.
+ *
+ * 0,38 de boca, contra os 0,3 de antes. O arquivo é quase tão alto quanto
+ * largo, então quem manda é o X e o Z — o alvo do Y fica de folga.
+ */
 export const LIXEIRA: Encaixe = {
   arquivo: "/modelos/office_trash_can.glb",
   pai: "island",
   substitui: ["trash_bin", "trash_paper"],
-  alvo: { x: 0.3, y: 0.36, z: 0.3 },
+  alvo: { x: 0.38, y: 0.5, z: 0.38 },
   proporcional: true,
-  base: [-0.85, 0, -2.35],
+  /* Apoiada na madeira, como a luminária: o pé dela é um disco estreito, e
+     3,6 cm enterrados num balde de 39 cm aparecem. */
+  base: [-0.85, TOPO_DAS_TABUAS, -2.35],
   giroY: 0.3,
   prefixo: "lixeira_modelo",
 };
