@@ -240,10 +240,305 @@ export const ESCONDIDOS = [
   "keyboard_keys",
   "keyboard_underglow",
   "mouse",
+  /* Os dois controles de videogame: um em cima da mesa de centro, outro
+     caído no chão ao lado do sofá. */
+  "gamepad_1",
+  "gamepad_2",
 ];
 
+/* ---------- zona gamer ---------- */
+
+/** O sofá. A largura corre no Z da cena, daí o quarto de volta. */
+export const SOFA: Encaixe = {
+  arquivo: "/modelos/sofa.glb",
+  pai: "sofa",
+  substitui: [
+    "sofa_base", "sofa_back", "sofa_arm_1", "sofa_arm_2",
+    "sofa_seat_cushion_1", "sofa_seat_cushion_2",
+    "sofa_back_cushion_1", "sofa_back_cushion_2",
+    "throw_pillow",
+    "sofa_foot_1", "sofa_foot_2", "sofa_foot_3", "sofa_foot_4",
+  ],
+  alvo: { x: 0.85, y: 0.86, z: 1.75 },
+  proporcional: true,
+  base: [0, 0, 0],
+  giroY: Math.PI / 2,
+  prefixo: "sofa_modelo",
+};
+
+/**
+ * A mesa de centro, vazia.
+ *
+ * Sai tudo que estava em cima — a tigela, os salgados, a lata — e os dois
+ * controles, que ficavam um na mesa e outro no chão.
+ */
+export const MESA_CENTRO: Encaixe = {
+  arquivo: "/modelos/coofe_table.glb",
+  pai: "coffee_table",
+  substitui: [
+    "coffee_table_top",
+    "coffee_table_leg_1", "coffee_table_leg_2", "coffee_table_leg_3", "coffee_table_leg_4",
+    "snack_bowl", "snack_bowl_inner", "snacks", "soda_can",
+  ],
+  alvo: { x: 0.5, y: 0.4, z: 0.95 },
+  proporcional: true,
+  base: [0, 0, 0],
+  giroY: Math.PI / 2,
+  prefixo: "mesa_centro_modelo",
+};
+
+/** O tabuleiro de xadrez, em cima da mesa de centro. */
+export const XADREZ: Encaixe = {
+  arquivo: "/modelos/wooden_chess_set.glb",
+  pai: "coffee_table",
+  substitui: [],
+  alvo: { x: 0.3, y: 0.12, z: 0.3 },
+  proporcional: true,
+  base: [0, 0.285, -0.2],
+  giroY: 0.3,
+  prefixo: "xadrez_modelo",
+};
+
+/** O Nintendo DS, na outra ponta da mesa de centro. */
+export const NINTENDO: Encaixe = {
+  arquivo: "/modelos/nintendo_ds.glb",
+  pai: "coffee_table",
+  substitui: [],
+  alvo: { x: 0.16, y: 0.12, z: 0.16 },
+  proporcional: true,
+  base: [0, 0.285, 0.28],
+  giroY: -0.5,
+  prefixo: "ds_modelo",
+};
+
+/**
+ * O móvel da TV, em madeira escura.
+ *
+ * O modelo vem com um material só e nenhuma textura, então a madeira entra
+ * pela cor. É a mesma troca por material da cadeira.
+ */
+export const MOVEL_TV: Encaixe = {
+  arquivo: "/modelos/tv_stand.glb",
+  pai: "tv_wall",
+  substitui: ["tv_stand", "tv_stand_top", "tv_stand_shelf"],
+  alvo: { x: 0.48, y: 0.46, z: 1.62 },
+  proporcional: true,
+  base: [0, 0, 0],
+  giroY: 0,
+  recolorir: { "Wood.001": { cor: "#33241a", metal: 0, aspereza: 0.85 } },
+  prefixo: "movel_tv_modelo",
+};
+
+/**
+ * A TV.
+ *
+ * É uma malha só, com a tela dentro da textura — não dá para pintar nela. Por
+ * isso a caixa `tv_screen` desenhada CONTINUA na cena, encostada na frente do
+ * modelo: é ela que os Mods pintam e que a câmera enquadra. Sem isso a seção
+ * perderia o conteúdo e a câmera perderia o alvo.
+ */
+export const TV: Encaixe = {
+  arquivo: "/modelos/tv.glb",
+  pai: "tv_wall",
+  substitui: [
+    "tv_neck", "tv_frame",
+    "speaker_1", "speaker_2", "speaker_cone_1", "speaker_cone_2",
+  ],
+  alvo: { x: 0.2, y: 0.86, z: 1.42 },
+  proporcional: true,
+  base: [0, 0.46, 0],
+  giroY: Math.PI,
+  prefixo: "tv_modelo",
+};
+
+/** O PlayStation, em cima do móvel da TV, no lugar do console desenhado. */
+export const PS1: Encaixe = {
+  arquivo: "/modelos/ps1.glb",
+  pai: "tv_wall",
+  substitui: [
+    "console", "console_led",
+    "game_case_1", "game_case_2", "game_case_3",
+  ],
+  alvo: { x: 0.26, y: 0.09, z: 0.34 },
+  proporcional: true,
+  base: [-0.02, 0.46, -0.45],
+  giroY: 0,
+  prefixo: "ps1_modelo",
+};
+
+/** O fliperama. */
+export const FLIPERAMA: Encaixe = {
+  arquivo: "/modelos/arcade_cabinet.glb",
+  pai: "arcade_cabinet",
+  substitui: [
+    "arcade_body", "arcade_marquee", "arcade_screen", "arcade_panel",
+    "arcade_stick", "arcade_ball", "arcade_button_1", "arcade_button_2",
+    "arcade_base_glow",
+  ],
+  alvo: { x: 0.72, y: 1.6, z: 0.66 },
+  proporcional: true,
+  base: [0, 0, 0],
+  giroY: Math.PI / 2,
+  semSombra: true,
+  prefixo: "fliperama_modelo",
+};
+
+/* ---------- resto da ilha ---------- */
+
+/**
+ * A estante atrás do sofá.
+ *
+ * Sai tudo que estava nela: os quatro cubos de "projeto entregue" no topo e os
+ * doze livros desenhados. O modelo já vem com as próprias fileiras de livros.
+ */
+export const ESTANTE: Encaixe = {
+  arquivo: "/modelos/bookshelf.glb",
+  pai: "divider_shelf",
+  substitui: [
+    "divider_side_left", "divider_side_right", "divider_back",
+    "divider_mid_post", "divider_board_1", "divider_board_2", "divider_board_3",
+    "divider_top",
+    ...[1, 2, 3, 4].flatMap((i) => [`shipped_project_${i}`, `shipped_project_label_${i}`]),
+    ...Array.from({ length: 12 }, (_, i) => `book_${i + 1}`),
+  ],
+  alvo: { x: 0.6, y: 1.5, z: 2.2 },
+  proporcional: true,
+  base: [0, 0, 0],
+  /* O modelo abre para +Z. Meia volta negativa o vira para a zona de
+     trabalho: com o quarto de volta positivo, quem olhava a mesa via só o
+     fundo fechado da estante, um paredão de madeira no meio da ilha. */
+  giroY: -Math.PI / 2,
+  prefixo: "estante_modelo",
+};
+
+/** O globo, em cima da estante. */
+export const GLOBO: Encaixe = {
+  arquivo: "/modelos/globe.glb",
+  pai: "divider_shelf",
+  substitui: [],
+  alvo: { x: 0.26, y: 0.34, z: 0.26 },
+  proporcional: true,
+  base: [0, 1.62, -0.5],
+  giroY: 0.4,
+  prefixo: "globo_modelo",
+};
+
+/** Um livro em pé, ao lado do globo. */
+export const LIVRO: Encaixe = {
+  arquivo: "/modelos/stand_book.glb",
+  pai: "divider_shelf",
+  substitui: [],
+  alvo: { x: 0.2, y: 0.2, z: 0.06 },
+  proporcional: true,
+  base: [0, 1.62, 0.35],
+  giroY: 0.15,
+  prefixo: "livro_modelo",
+};
+
+/** O gabinete, no lugar da torre desenhada. */
+export const GABINETE: Encaixe = {
+  arquivo: "/modelos/pc.glb",
+  pai: "pc_tower",
+  substitui: ["tower_case", "tower_glass", "tower_led"],
+  alvo: { x: 0.32, y: 0.66, z: 0.6 },
+  proporcional: true,
+  base: [0, 0, 0],
+  giroY: 0,
+  prefixo: "gabinete_modelo",
+};
+
+/** O bebedouro. */
+export const BEBEDOURO: Encaixe = {
+  arquivo: "/modelos/water_cooler.glb",
+  pai: "water_cooler",
+  substitui: [
+    "cooler_body", "cooler_bottle", "cooler_bottle_neck",
+    "cooler_tap", "cooler_tray",
+  ],
+  alvo: { x: 0.42, y: 1.45, z: 0.42 },
+  proporcional: true,
+  base: [0, 0, 0],
+  giroY: 0,
+  prefixo: "bebedouro_modelo",
+};
+
+/** A lixeira. Solta no deck, não num grupo: por isso o pai é a ilha. */
+export const LIXEIRA: Encaixe = {
+  arquivo: "/modelos/office_trash_can.glb",
+  pai: "island",
+  substitui: ["trash_bin", "trash_paper"],
+  alvo: { x: 0.3, y: 0.36, z: 0.3 },
+  proporcional: true,
+  base: [-0.85, 0, -2.35],
+  giroY: 0.3,
+  prefixo: "lixeira_modelo",
+};
+
+/** A luminária de chão. */
+export const LUMINARIA: Encaixe = {
+  arquivo: "/modelos/lamp.glb",
+  pai: "floor_lamp",
+  substitui: ["floor_lamp_base", "floor_lamp_pole", "floor_lamp_shade"],
+  alvo: { x: 0.45, y: 1.65, z: 0.45 },
+  proporcional: true,
+  base: [0, 0, 0],
+  giroY: 0,
+  prefixo: "luminaria_modelo",
+};
+
+/**
+ * As plantas.
+ *
+ * Três modelos diferentes para os quatro vasos, e não o mesmo quatro vezes:
+ * a árvore tem 50 mil triângulos e o vaso de folhas 34 mil, então os dois
+ * lugares menos visíveis levam o vaso simples, de 381. Os grupos da cena já
+ * têm escala própria, e o encaixe entra por dentro dela.
+ */
+function planta(arquivo: string, pai: string, alto: number, prefixo: string): Encaixe {
+  return {
+    arquivo: `/modelos/${arquivo}.glb`,
+    pai,
+    substitui: [
+      `${pai}_pot`, `${pai}_pot_rim`, `${pai}_stem`,
+      ...Array.from({ length: 4 }, (_, i) => `${pai}_leaf_${i + 1}`),
+    ],
+    alvo: { x: alto * 0.75, y: alto, z: alto * 0.75 },
+    proporcional: true,
+    base: [0, 0, 0],
+    giroY: 0.5,
+    semSombra: true,
+    prefixo,
+  };
+}
+
+export const PLANTA_1 = planta("green_tree", "office_plant_1", 1.5, "planta_1_modelo");
+export const PLANTA_2 = planta("potted_plant", "office_plant_2", 1.2, "planta_2_modelo");
+export const PLANTA_3 = planta("low_poly_pot", "office_plant_3", 1.1, "planta_3_modelo");
+
+/** A planta da mesa de trabalho tem outros nomes de peça. */
+export const PLANTA_MESA: Encaixe = {
+  arquivo: "/modelos/low_poly_pot.glb",
+  pai: "plant",
+  substitui: [
+    "pot", "pot_rim", "plant_stem",
+    "foliage_1", "foliage_2", "foliage_3", "foliage_4",
+  ],
+  alvo: { x: 0.6, y: 0.95, z: 0.6 },
+  proporcional: true,
+  base: [0, 0, 0],
+  giroY: -0.3,
+  semSombra: true,
+  prefixo: "planta_mesa_modelo",
+};
+
 /** Tudo que a ilha carrega, na ordem em que entra. */
-export const ENCAIXES: Encaixe[] = [MESA_GAMER, MACBOOK, MONITOR_ESQ, MONITOR_DIR, CADEIRA];
+export const ENCAIXES: Encaixe[] = [
+  MESA_GAMER, MACBOOK, MONITOR_ESQ, MONITOR_DIR, CADEIRA,
+  SOFA, MESA_CENTRO, XADREZ, NINTENDO,
+  MOVEL_TV, TV, PS1, FLIPERAMA,
+  ESTANTE, GLOBO, LIVRO, GABINETE, BEBEDOURO, LIXEIRA, LUMINARIA,
+  PLANTA_1, PLANTA_2, PLANTA_3, PLANTA_MESA,
+];
 
 /**
  * Um arquivo baixado uma vez só, mesmo usado em dois lugares.
