@@ -337,13 +337,28 @@ export const MESA_CENTRO: Encaixe = {
     "coffee_table_leg_1", "coffee_table_leg_2", "coffee_table_leg_3", "coffee_table_leg_4",
     "snack_bowl", "snack_bowl_inner", "snacks", "soda_can",
   ],
-  alvo: { x: 0.75, y: 0.5, z: 1.35 },
+  /* Como no sofá, o Z é o eixo que aperta (1,55 / 0,90 do arquivo), então é
+     ele que manda: a mesa sai com 1,55 de comprimento, 0,69 de profundidade e
+     0,46 de altura. */
+  alvo: { x: 0.75, y: 0.5, z: 1.55 },
   proporcional: true,
-  base: [0, 0, 0],
+  /* Adiantada, para o sofá maior não comer o vão entre os dois: assim ficam
+     0,49 de tapete entre a frente do sofá e as costas da mesa, e ainda sobram
+     0,37 até o móvel da TV. */
+  base: [0.15, 0, 0],
   giroY: Math.PI / 2,
   recolorir: { "Material": { cor: "#6b4c33", metal: 0, aspereza: 0.8 } },
   prefixo: "mesa_centro_modelo",
 };
+
+/**
+ * Altura do tampo, que é sobre ela que o xadrez e o DS se apoiam.
+ *
+ * Sai do tamanho do encaixe (0,268 do arquivo x 1,722), e não de um número
+ * escrito à mão: foi assim que o globo e o livro ficaram boiando quando a
+ * estante mudou de tamanho.
+ */
+const ALTURA_DA_MESA_DE_CENTRO = 0.462;
 
 /** O tabuleiro de xadrez, em cima da mesa de centro. */
 export const XADREZ: Encaixe = {
@@ -352,7 +367,7 @@ export const XADREZ: Encaixe = {
   substitui: [],
   alvo: { x: 0.3, y: 0.12, z: 0.3 },
   proporcional: true,
-  base: [0, 0.405, -0.28],
+  base: [0, ALTURA_DA_MESA_DE_CENTRO, -0.28],
   giroY: 0.3,
   prefixo: "xadrez_modelo",
 };
@@ -364,7 +379,7 @@ export const NINTENDO: Encaixe = {
   substitui: [],
   alvo: { x: 0.16, y: 0.12, z: 0.16 },
   proporcional: true,
-  base: [0, 0.405, 0.4],
+  base: [0, ALTURA_DA_MESA_DE_CENTRO, 0.4],
   giroY: -0.5,
   prefixo: "ds_modelo",
 };
