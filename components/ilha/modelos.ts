@@ -289,15 +289,17 @@ export const SOFA: Encaixe = {
     "throw_pillow",
     "sofa_foot_1", "sofa_foot_2", "sofa_foot_3", "sofa_foot_4",
   ],
-  /* O Z é o eixo que aperta (2,7 / 2,03 do arquivo é a menor das três razões),
-     então é ele que manda no tamanho: o sofá sai com 2,7 de comprimento, 1,12
-     de profundidade e 0,96 de altura. O X e o Y estão folgados de propósito —
+  /* O Z é o eixo que aperta (3,2 / 2,03 do arquivo é a menor das três razões),
+     então é ele que manda no tamanho: o sofá sai com 3,2 de comprimento, 1,33
+     de profundidade e 1,13 de altura. O X e o Y estão folgados de propósito —
      apertados, seria um deles a mandar e o comprimento não cresceria. */
-  alvo: { x: 1.3, y: 1.15, z: 2.7 },
+  alvo: { x: 1.5, y: 1.35, z: 3.2 },
   proporcional: true,
-  /* Recuado junto com o crescimento. A mesa de centro começa em x = -0,225 no
-     grupo da zona gamer, e o sofá mais fundo passaria por cima dela. */
-  base: [-0.15, 0, 0],
+  /* Recuado junto com o crescimento, e é o recuo que dá o espaço para crescer:
+     as costas param a 0,19 da frente das estantes e a mesa de centro, que
+     começa em x = -0,225 no grupo da zona gamer, fica 0,31 à frente. Sem
+     recuar, o sofá mais fundo passaria por cima dela. */
+  base: [-0.45, 0, 0],
   giroY: Math.PI / 2,
   /* O tecido tem textura, então a cor MULTIPLICA o desenho dela em vez de
      substituí-lo: por isso os tons escolhidos são bem mais claros do que o
