@@ -486,17 +486,33 @@ export const FLIPERAMA: Encaixe = {
  * doze livros desenhados. O modelo já vem com as próprias fileiras de livros.
  */
 /*
- * Duas estantes iguais, lado a lado, no lugar da divisória.
+ * Três estantes iguais, lado a lado, no lugar da divisória.
  *
  * Uma só, esticada para cobrir o vão, saía desproporcional — alta e larga
- * demais para o resto da ilha. Duas do mesmo tamanho preenchem a mesma
+ * demais para o resto da ilha. Várias do mesmo tamanho preenchem a mesma
  * extensão com a proporção de uma estante de verdade.
- *
- * A altura vale 1,352 (2,38 do arquivo x 0,568 do encaixe), e é sobre ela que
- * o globo e o livro se apoiam — antes eles estavam num número fixo que não
- * acompanhou a mudança de tamanho e ficaram no ar.
  */
-const ALTURA_DA_ESTANTE = 1.352;
+
+/*
+ * O tamanho em que a estante realmente entra na cena.
+ *
+ * Não é o que está escrito no `alvo`: aquilo é uma caixa em que o modelo cabe
+ * DENTRO sem distorcer, e dos três eixos quem manda é o mais apertado — aqui o
+ * X, com 0,5 sobre os 0,879 de profundidade do arquivo. Os outros dois sobram.
+ *
+ * Os três números vivem aqui porque três coisas dependem deles: a altura é
+ * onde o globo se apoia, e a profundidade e o comprimento são o que a estante
+ * de nichos copia para as três ficarem iguais. Enquanto a altura era um número
+ * solto escrito à mão, o globo ficou boiando toda vez que a estante mudou de
+ * tamanho.
+ */
+const ESTANTE = { profundidade: 0.5, altura: 1.352, comprimento: 1.021 };
+
+/*
+ * Quanto uma estante fica da vizinha, de centro a centro. A sobra de 0,08
+ * sobre o comprimento é a fresta entre elas.
+ */
+const PASSO_DA_ESTANTE = 1.1;
 
 /*
  * O quanto as duas recuam na direção da cadeira, no eixo local da divisória.
@@ -504,8 +520,8 @@ const ALTURA_DA_ESTANTE = 1.352;
  * A divisória desenhada nasceu no meio da ilha (x = 0,05 no mundo) e as
  * estantes herdaram esse lugar, longe da mesa. Com o recuo a frente delas fica
  * em x = -0,65, contra as costas da cadeira em -1,08: perto o bastante para
- * quem está sentado alcançar, sem encostar. O globo e o livro andam junto,
- * senão ficam boiando onde a estante estava.
+ * quem está sentado alcançar, sem encostar. O globo anda junto, senão fica
+ * boiando onde a estante estava.
  */
 const ESTANTES_PERTO_DA_CADEIRA = -0.45;
 
@@ -525,7 +541,7 @@ function estante(z: number, prefixo: string, substitui: string[]): Encaixe {
   };
 }
 
-export const ESTANTE_1 = estante(-0.55, "estante_1_modelo", [
+export const ESTANTE_1 = estante(-PASSO_DA_ESTANTE, "estante_1_modelo", [
   "divider_side_left", "divider_side_right", "divider_back",
   "divider_mid_post", "divider_board_1", "divider_board_2", "divider_board_3",
   "divider_top",
@@ -533,7 +549,34 @@ export const ESTANTE_1 = estante(-0.55, "estante_1_modelo", [
   ...Array.from({ length: 12 }, (_, i) => `book_${i + 1}`),
 ]);
 
-export const ESTANTE_2 = estante(0.55, "estante_2_modelo", []);
+export const ESTANTE_3 = estante(PASSO_DA_ESTANTE, "estante_3_modelo", []);
+
+/**
+ * A estante do meio, que é de nichos.
+ *
+ * O arquivo se chama `stand_book` e por isso entrou como enfeite, um livro em
+ * pé de 20 cm em cima da estante. Ele não é um livro: são 1,82 x 1,82 x 0,39,
+ * uma estante de nichos inteira. Aqui ela vira a terceira do conjunto.
+ *
+ * É a única do arquivo que NÃO é proporcional. As outras duas cabem dentro do
+ * `alvo` sem distorcer, e o que sai disso é a caixa medida em `ESTANTE`; esta
+ * recebe essa caixa como medida exata, para ficar do mesmo tamanho e da mesma
+ * grossura das vizinhas. O preço é que os nichos, quadrados no arquivo, ficam
+ * um terço mais altos do que largos — que é o que "do mesmo tamanho" custa num
+ * modelo que nasceu quadrado.
+ */
+export const ESTANTE_2: Encaixe = {
+  arquivo: "/modelos/stand_book.glb",
+  pai: "divider_shelf",
+  substitui: [],
+  alvo: { x: ESTANTE.profundidade, y: ESTANTE.altura, z: ESTANTE.comprimento },
+  proporcional: false,
+  base: [ESTANTES_PERTO_DA_CADEIRA, 0, 0],
+  /* O mesmo quarto de volta das outras: no arquivo a largura corre no X e a
+     profundidade no Z, e na divisória é o contrário. */
+  giroY: -Math.PI / 2,
+  prefixo: "estante_2_modelo",
+};
 
 /** O globo, em cima da estante da esquerda. */
 export const GLOBO: Encaixe = {
@@ -542,21 +585,9 @@ export const GLOBO: Encaixe = {
   substitui: [],
   alvo: { x: 0.26, y: 0.34, z: 0.26 },
   proporcional: true,
-  base: [ESTANTES_PERTO_DA_CADEIRA, ALTURA_DA_ESTANTE, -0.55],
+  base: [ESTANTES_PERTO_DA_CADEIRA, ESTANTE.altura, -PASSO_DA_ESTANTE],
   giroY: 0.4,
   prefixo: "globo_modelo",
-};
-
-/** Um livro em pé, em cima da estante da direita. */
-export const LIVRO: Encaixe = {
-  arquivo: "/modelos/stand_book.glb",
-  pai: "divider_shelf",
-  substitui: [],
-  alvo: { x: 0.2, y: 0.2, z: 0.06 },
-  proporcional: true,
-  base: [ESTANTES_PERTO_DA_CADEIRA, ALTURA_DA_ESTANTE, 0.55],
-  giroY: 0.15,
-  prefixo: "livro_modelo",
 };
 
 /** O gabinete, no lugar da torre desenhada. */
@@ -741,7 +772,7 @@ export const ENCAIXES: Encaixe[] = [
   MESA_GAMER, MACBOOK, MONITOR_ESQ, MONITOR_DIR, CADEIRA,
   SOFA, MESA_CENTRO, XADREZ, NINTENDO,
   MOVEL_TV, TV, PS1, FLIPERAMA,
-  ESTANTE_1, ESTANTE_2, GLOBO, LIVRO, GABINETE, BEBEDOURO, LIXEIRA, LUMINARIA,
+  ESTANTE_1, ESTANTE_2, ESTANTE_3, GLOBO, GABINETE, BEBEDOURO, LIXEIRA, LUMINARIA,
   PLANTA_1, PLANTA_2, PLANTA_3, PLANTA_MESA,
   QUADRO_STACK, QUADRO_PROJETOS, QUADRO_CURRICULO,
 ];
