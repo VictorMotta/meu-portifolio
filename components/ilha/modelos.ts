@@ -394,13 +394,30 @@ export const MOVEL_TV: Encaixe = {
   arquivo: "/modelos/tv_stand.glb",
   pai: "tv_wall",
   substitui: ["tv_stand", "tv_stand_top", "tv_stand_shelf"],
-  alvo: { x: 0.48, y: 0.46, z: 1.62 },
+  /* Um passo maior em tudo — 1,95 x 0,50 x 0,53, contra 1,62 x 0,42 x 0,44 —,
+     porque ao lado da TV o móvel lia como um banquinho.
+     Quem manda no tamanho é o Z, e é ele que tem limite: o bebedouro está a
+     1,25 daqui, e com 1,95 de comprimento a ponta do móvel para a 0,10 dele.
+     Crescer mais exigiria mexer no bebedouro também. O X e o Y ficam folgados
+     de propósito: apertados, um deles mandaria e o comprimento não cresceria.
+     E o modelo não dá para engordar sem esticar: ele é 3,7 vezes mais comprido
+     do que alto, então altura e comprimento andam sempre juntos. */
+  alvo: { x: 0.62, y: 0.62, z: 1.95 },
   proporcional: true,
   base: [0, 0, 0],
   giroY: 0,
   recolorir: { "Wood.001": { cor: "#33241a", metal: 0, aspereza: 0.85 } },
   prefixo: "movel_tv_modelo",
 };
+
+/**
+ * Altura do tampo do móvel, onde a TV e o PS1 se apoiam.
+ *
+ * Sai do tamanho do encaixe (2,950 do arquivo x 0,18062), como a das estantes
+ * e a da mesa de centro: o número escrito à mão é justamente o que deixa as
+ * coisas boiando quando o móvel debaixo muda de tamanho.
+ */
+const ALTURA_DO_MOVEL_TV = 0.533;
 
 /**
  * A TV.
@@ -419,7 +436,7 @@ export const TV: Encaixe = {
   ],
   alvo: { x: 0.2, y: 0.86, z: 1.42 },
   proporcional: true,
-  base: [0, 0.46, 0],
+  base: [0, ALTURA_DO_MOVEL_TV, 0],
   giroY: Math.PI,
   /* O material do arquivo é branco com metalness 1,0 e roughness 1,0, e sem
      textura ligada à cor base — as imagens que o .glb carrega não são o mapa
@@ -438,7 +455,7 @@ export const PS1: Encaixe = {
   ],
   alvo: { x: 0.26, y: 0.09, z: 0.34 },
   proporcional: true,
-  base: [-0.02, 0.46, -0.45],
+  base: [-0.02, ALTURA_DO_MOVEL_TV, -0.45],
   giroY: 0,
   prefixo: "ps1_modelo",
 };
