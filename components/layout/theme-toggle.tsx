@@ -13,7 +13,7 @@ import { useTheme } from "next-themes";
  * errado. O script do next-themes já escreve o atributo antes da primeira
  * pintura, e o CSS resolve o resto.
  *
- * `aria-label` descreve a acao, não o estado — por isso não há aria-pressed:
+ * `aria-label` descreve a acao, não o estado, por isso não há aria-pressed:
  * "alternar entre tema claro e escuro" faz sentido em qualquer um dos dois.
  */
 export function ThemeToggle({ label }: { label: string }) {

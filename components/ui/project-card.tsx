@@ -11,11 +11,11 @@ import type { Project } from "@/lib/projects";
 /**
  * Card de projeto.
  *
- * Mostra só a primeira imagem (_1). O carrossel fica na página de detalhe —
+ * Mostra só a primeira imagem (_1). O carrossel fica na página de detalhe.
  * dentro de um card ele competiria com o link do próprio card.
  *
  * O link do título cobre a área toda com um ::after, então clicar em qualquer
- * ponto funciona — mas o Tab pega um único link, não a área inteira. Os links
+ * ponto funciona, mas o Tab pega um único link, não a área inteira. Os links
  * de repo e demo ficam acima dele no z-index para continuarem clicaveis.
  */
 export function ProjectCard({
@@ -36,7 +36,7 @@ export function ProjectCard({
 
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-colors duration-300 hover:border-[var(--color-border-strong)] ${
+      className={`group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] painel transition-colors duration-300 hover:border-[var(--color-border-strong)] ${
         featured ? "lg:flex-row" : ""
       }`}
     >

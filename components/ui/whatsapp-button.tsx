@@ -8,7 +8,7 @@ import { whatsappUrl } from "@/content/site";
 /**
  * Botão flutuante de WhatsApp.
  *
- * Só aparece depois que a pessoa passa do hero — na primeira tela ele
+ * Só aparece depois que a pessoa passa do hero, na primeira tela ele
  * competiria com os CTAs principais. `safe-bottom` evita que ele fique
  * embaixo da barra de gestos do iPhone.
  */

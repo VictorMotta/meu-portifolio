@@ -15,12 +15,15 @@ import { ACCEPTED_IMAGE_TYPES, MAX_FILES, formatBytes } from "@/lib/validation";
  * e apertar Enter funcionam exatamente como em qualquer formulário.
  */
 export function FileDropzone({
+  id,
   files,
   onChange,
   dict,
   describedBy,
   invalid,
 }: {
+  /** Vem do FormField, que é quem escreve o <label for> correspondente. */
+  id: string;
   files: File[];
   onChange: (files: File[]) => void;
   dict: Dictionary["contact"]["form"];
@@ -31,7 +34,7 @@ export function FileDropzone({
   const [otimizando, setOtimizando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  /* Uma URL de objeto por arquivo, criada no próprio handler de evento — nem
+  /* Uma URL de objeto por arquivo, criada no próprio handler de evento, nem
      durante o render (seria impuro) nem dentro de um efeito (custaria um
      render extra a cada troca). O File mantem a mesma referência enquanto
      estiver na lista, então ele serve de chave.
@@ -128,7 +131,7 @@ export function FileDropzone({
       >
         <input
           ref={inputRef}
-          id="files"
+          id={id}
           type="file"
           multiple
           accept={ACCEPTED_IMAGE_TYPES.join(",")}

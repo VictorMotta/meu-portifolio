@@ -8,12 +8,12 @@ import type { ReactNode } from "react";
  *
  * O deslocamento vertical é uma transformação, e o `reducedMotion="user"` do
  * MotionConfig (em components/providers.tsx) a desliga sozinho para quem pediu
- * menos movimento — sobra só o fade de opacidade, que não provoca desconforto
+ * menos movimento, sobra só o fade de opacidade, que não provoca desconforto
  * vestibular.
  *
  * Importante: não ramificar o JSX aqui. Uma versão "sem animação" renderizada
  * só no cliente divergiria do HTML do servidor, e o React abandonaria o
- * elemento com opacity:0 — deixando a página em branco justamente para quem
+ * elemento com opacity:0, deixando a página em branco justamente para quem
  * ativou a preferência de acessibilidade.
  */
 export function Reveal({

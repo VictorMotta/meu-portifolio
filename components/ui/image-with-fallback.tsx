@@ -8,7 +8,7 @@ import { useState } from "react";
  *
  * Enquanto as imagens reais não estiverem em /public, o next/image devolve
  * erro e sobraria o ícone de imagem quebrada. Aqui o onError troca por um
- * bloco com as iniciais — parece proposital, não parece bug.
+ * bloco com as iniciais, parece proposital, não parece bug.
  *
  * Precisa preencher um pai com `position: relative`: usa `fill`, então quem
  * define a proporção é o container.
@@ -36,8 +36,11 @@ export function ImageWithFallback({
      Quando não há arquivo, o fallback e o único caminho. */
   const semImagem = src.trim() === "";
 
+  /* Só palavras que começam com letra: sem o filtro, "Driven.t. Gerenciador"
+     virava "D—", porque o travessão conta como palavra. */
   const initials = fallbackFrom
-    .split(" ")
+    .split(/\s+/)
+    .filter((word) => /^[\p{L}\p{N}]/u.test(word))
     .slice(0, 2)
     .map((word) => word[0] ?? "")
     .join("")

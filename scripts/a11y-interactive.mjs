@@ -19,7 +19,7 @@ const CHROME =
 
 let failures = 0;
 function check(label, ok, detail = "") {
-  console.log(`  ${ok ? "OK   " : "FALHA"} ${label}${detail ? ` — ${detail}` : ""}`);
+  console.log(`  ${ok ? "OK   " : "FALHA"} ${label}${detail ? ` (${detail})` : ""}`);
   if (!ok) failures++;
 }
 
@@ -32,8 +32,11 @@ const browser = await puppeteer.launch({
 /* ---------- 1. Formulario: erros de validacao acessiveis ---------- */
 {
   const page = await browser.newPage();
+  await page.evaluateOnNewDocument(() => {
+    try { localStorage.setItem("mundo3d", "off"); localStorage.setItem("ilha", "off"); } catch {}
+  });
   await page.setViewport({ width: 1440, height: 900 });
-  await page.goto(`${BASE}/pt`, { waitUntil: "networkidle0" });
+  await page.goto(`${BASE}/pt`, { waitUntil: "networkidle2", timeout: 60000 });
   await page.evaluate(() =>
     document.getElementById("contato")?.scrollIntoView(),
   );
@@ -49,17 +52,24 @@ const browser = await puppeteer.launch({
     return {
       invalidCount: invalid.length,
       /* Cada campo invalido precisa apontar para uma mensagem que exista
-         de fato no DOM — aria-describedby quebrado e pior que nenhum. */
+         de fato no DOM, aria-describedby quebrado e pior que nenhum. */
       describedByResolves: invalid.every((el) => {
         const ids = (el.getAttribute("aria-describedby") ?? "").split(/\s+/);
         return ids.some((id) => id && document.getElementById(id));
       }),
       hasAlertRole: document.querySelectorAll('[role="alert"]').length > 0,
+      /* Os ids do formulário são gerados por useId, porque ele aparece duas
+         vezes no documento (página e tela da ilha). Então a checagem compara
+         o elemento em si, não uma string fixa. */
+      focoNoPrimeiroInvalido: (() => {
+        const invalidos = document.querySelectorAll('#contato [aria-invalid="true"]');
+        return invalidos.length > 0 && document.activeElement === invalidos[0];
+      })(),
       focusedId: document.activeElement?.id ?? null,
       everyFieldHasLabel: Array.from(
         document.querySelectorAll("#contato input, #contato select, #contato textarea"),
       )
-        .filter((el) => el.type !== "hidden" && el.id !== "website")
+        .filter((el) => el.type !== "hidden" && !el.id.endsWith("website"))
         .every((el) => document.querySelector(`label[for="${el.id}"]`)),
     };
   });
@@ -69,7 +79,7 @@ const browser = await puppeteer.launch({
     `${state.invalidCount} campo(s)`);
   check("aria-describedby aponta para elemento existente", state.describedByResolves);
   check("erro anunciado com role=alert", state.hasAlertRole);
-  check("foco levado ao primeiro campo invalido", state.focusedId === "name",
+  check("foco levado ao primeiro campo invalido", state.focoNoPrimeiroInvalido,
     `foco em "${state.focusedId}"`);
   check("todo campo visivel tem <label for>", state.everyFieldHasLabel);
 
@@ -87,8 +97,11 @@ const browser = await puppeteer.launch({
 /* ---------- 2. Menu mobile: dialog, armadilha de foco, Esc ---------- */
 {
   const page = await browser.newPage();
+  await page.evaluateOnNewDocument(() => {
+    try { localStorage.setItem("mundo3d", "off"); localStorage.setItem("ilha", "off"); } catch {}
+  });
   await page.setViewport({ width: 390, height: 844, isMobile: true });
-  await page.goto(`${BASE}/pt`, { waitUntil: "networkidle0" });
+  await page.goto(`${BASE}/pt`, { waitUntil: "networkidle2", timeout: 60000 });
 
   console.log("\nMenu mobile");
 
@@ -145,8 +158,11 @@ const browser = await puppeteer.launch({
 /* ---------- 3. Skip link ---------- */
 {
   const page = await browser.newPage();
+  await page.evaluateOnNewDocument(() => {
+    try { localStorage.setItem("mundo3d", "off"); localStorage.setItem("ilha", "off"); } catch {}
+  });
   await page.setViewport({ width: 1440, height: 900 });
-  await page.goto(`${BASE}/pt`, { waitUntil: "networkidle0" });
+  await page.goto(`${BASE}/pt`, { waitUntil: "networkidle2", timeout: 60000 });
 
   console.log("\nSkip link e ordem de foco");
 

@@ -3,7 +3,7 @@
  *
  * Suficiente para um portfólio: o custo de uma mensagem duplicada é baixo e o
  * honeypot já derruba a maior parte do lixo. A limitação conhecida é que o
- * estado vive no processo — em serverless cada instancia tem o seu contador, e
+ * estado vive no processo, em serverless cada instancia tem o seu contador, e
  * um reinicio zera tudo. Se um dia isso virar problema real, troque o corpo
  * de `hit()` por Upstash Redis; as assinaturas não precisam mudar.
  */

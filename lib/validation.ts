@@ -32,7 +32,7 @@ export type ProjectType = (typeof PROJECT_TYPES)[number];
 /**
  * Formato dos dados do formulário.
  *
- * O schema abaixo entra e sai exatamente neste tipo — sem `.default()` nem
+ * O schema abaixo entra e sai exatamente neste tipo, sem `.default()` nem
  * `.optional()`, que fariam input e output divergirem e quebrariam a tipagem
  * do zodResolver no react-hook-form. Campos "opcionais" chegam como string
  * vazia, que é o que um <input> vazio produz de qualquer forma.
@@ -67,7 +67,7 @@ export function buildContactSchema(t: Dictionary["contact"]["validation"]) {
       .email({ message: t.emailInvalid })
       .max(160, { message: t.emailInvalid }),
 
-    /* Vazio é válido — o campo é opcional na UI. */
+    /* Vazio é válido, o campo é opcional na UI. */
     company: z.string().trim().max(80, { message: t.companyMax }),
 
     projectType: z.enum(PROJECT_TYPES, { message: t.projectTypeInvalid }),

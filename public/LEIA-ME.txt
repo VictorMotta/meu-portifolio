@@ -10,3 +10,8 @@ Arquivos que você precisa colocar aqui
 
   projetos/                       Um .md por projeto, mais as imagens.
                                   Veja projetos/LEIA-ME.txt.
+
+  modelos/                        Modelos 3D (.glb) para a ilha da home.
+                                  Diferente da pasta de projetos: largar o
+                                  arquivo aqui não o coloca na cena sozinho.
+                                  Veja modelos/LEIA-ME.txt.

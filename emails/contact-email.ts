@@ -5,7 +5,7 @@ import type { ProjectType } from "@/lib/validation";
  *
  * Cliente de e-mail não roda CSS moderno: nada de flexbox, grid ou variável
  * CSS. Tabela e style inline são o que funciona no Gmail, Outlook e Apple Mail
- * ao mesmo tempo — por isso o markup parece 2005 de propósito.
+ * ao mesmo tempo, por isso o markup parece 2005 de propósito.
  */
 
 const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
@@ -16,7 +16,7 @@ const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
   other: "Outro",
 };
 
-/** Escapa entidades HTML — o conteúdo vem de um formulário público. */
+/** Escapa entidades HTML, o conteúdo vem de um formulário público. */
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")

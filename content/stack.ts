@@ -8,39 +8,46 @@
  */
 export type SkillLevel = "core" | "strong" | "working";
 
-export type Skill = { name: string; level: SkillLevel };
+export type Skill = {
+  name: string;
+  level: SkillLevel;
+  /** Cor do lutador no palco. Puxada da identidade de cada tecnologia. */
+  cor: string;
+  /** Silhueta do boneco de voxel. Muda o corpo, não só a cor. */
+  porte: "agil" | "pesado" | "tecnico";
+};
 
 export type StackGroup = "frontend" | "backend" | "data" | "tools";
 
 export const stack: Record<StackGroup, Skill[]> = {
   frontend: [
-    { name: "TypeScript", level: "core" },
-    { name: "React", level: "core" },
-    { name: "Next.js", level: "core" },
-    { name: "Tailwind CSS", level: "core" },
-    { name: "HTML & CSS", level: "core" },
-    { name: "React Native", level: "working" },
+    { name: "TypeScript", level: "core", cor: "#3178c6", porte: "tecnico" },
+    { name: "React", level: "core", cor: "#61dafb", porte: "agil" },
+    { name: "Next.js", level: "core", cor: "#c9c9d1", porte: "tecnico" },
+    { name: "Tailwind CSS", level: "core", cor: "#38bdf8", porte: "agil" },
+    { name: "HTML & CSS", level: "core", cor: "#e34f26", porte: "agil" },
+    { name: "React Native", level: "working", cor: "#61dafb", porte: "agil" },
   ],
   backend: [
-    { name: "Node.js", level: "core" },
-    { name: "REST APIs", level: "core" },
-    { name: "Python", level: "strong" },
-    { name: "Autenticação & RBAC", level: "strong" },
-    { name: "WebSockets", level: "working" },
+    { name: "Node.js", level: "core", cor: "#5fa04e", porte: "pesado" },
+    { name: "REST APIs", level: "core", cor: "#4ee1c1", porte: "tecnico" },
+    { name: "Python", level: "strong", cor: "#ffd43b", porte: "tecnico" },
+    { name: "Autenticação & RBAC", level: "strong", cor: "#f0883e", porte: "pesado" },
+    { name: "WebSockets", level: "working", cor: "#a78bfa", porte: "agil" },
   ],
   data: [
-    { name: "PostgreSQL", level: "core" },
-    { name: "SQL", level: "core" },
-    { name: "Supabase", level: "strong" },
-    { name: "Docker", level: "strong" },
-    { name: "Vercel", level: "strong" },
+    { name: "PostgreSQL", level: "core", cor: "#4169e1", porte: "pesado" },
+    { name: "SQL", level: "core", cor: "#7fd4d4", porte: "tecnico" },
+    { name: "Supabase", level: "strong", cor: "#3ecf8e", porte: "pesado" },
+    { name: "Docker", level: "strong", cor: "#2496ed", porte: "pesado" },
+    { name: "Vercel", level: "strong", cor: "#ededf0", porte: "tecnico" },
   ],
   tools: [
-    { name: "Git", level: "core" },
-    { name: "Figma", level: "strong" },
-    { name: "Vitest", level: "strong" },
-    { name: "CI/CD", level: "strong" },
-    { name: "Linux", level: "strong" },
+    { name: "Git", level: "core", cor: "#f05032", porte: "tecnico" },
+    { name: "Figma", level: "strong", cor: "#f24e1e", porte: "agil" },
+    { name: "Vitest", level: "strong", cor: "#a3e635", porte: "agil" },
+    { name: "CI/CD", level: "strong", cor: "#4ee1c1", porte: "pesado" },
+    { name: "Linux", level: "strong", cor: "#fbbf24", porte: "pesado" },
   ],
 };
 
@@ -50,3 +57,16 @@ export const stackGroupOrder: StackGroup[] = [
   "data",
   "tools",
 ];
+
+/** Todos os lutadores numa lista só, que é o que a grade de seleção consome. */
+export const todosOsSkills: (Skill & { grupo: StackGroup })[] =
+  stackGroupOrder.flatMap((grupo) =>
+    stack[grupo].map((s) => ({ ...s, grupo })),
+  );
+
+/** Atributos exibidos como barras, no estilo de ficha de personagem. */
+export const ATRIBUTOS: Record<SkillLevel, { dominio: number; uso: number }> = {
+  core: { dominio: 95, uso: 100 },
+  strong: { dominio: 75, uso: 65 },
+  working: { dominio: 50, uso: 35 },
+};

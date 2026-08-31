@@ -15,7 +15,7 @@ function detectLocale(request: NextRequest): Locale {
   const header = request.headers.get("accept-language");
   if (!header) return defaultLocale;
 
-  /* Accept-Language vem como "pt-BR,pt;q=0.9,en;q=0.8" — ordenamos por q e
+  /* Accept-Language vem como "pt-BR,pt;q=0.9,en;q=0.8", ordenamos por q e
      ficamos com o primeiro idioma que o site tem. */
   const ranked = header
     .split(",")

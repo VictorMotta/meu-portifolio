@@ -36,7 +36,7 @@ function parseLocale(value: FormDataEntryValue | null): Locale {
 }
 
 export async function POST(request: Request) {
-  /* 1. Guarda de rajada antes de qualquer trabalho — não vale parsear 15 MB
+  /* 1. Guarda de rajada antes de qualquer trabalho, não vale parsear 15 MB
      de upload de quem esta martelando o endpoint. O teto e folgado: quem só
      errou o formulário não pode ficar de fora por isso. */
   const clientKey = getClientKey(request.headers);
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   }
 
   /* 4. Revalidacao no servidor com o MESMO schema do formulário. A validação
-     do client e só conforto de UX — esta e a que decide. */
+     do client e só conforto de UX, esta e a que decide. */
   const files = form
     .getAll("files")
     .filter((entry): entry is File => entry instanceof File && entry.size > 0);
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
     });
   }
 
-  /* 6. Config. Sem chave não da para enviar — falhar alto no log do servidor é
+  /* 6. Config. Sem chave não da para enviar, falhar alto no log do servidor é
      melhor do que fingir sucesso para o visitante. */
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.CONTACT_TO_EMAIL;

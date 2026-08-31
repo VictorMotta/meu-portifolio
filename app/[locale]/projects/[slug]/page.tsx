@@ -124,7 +124,7 @@ export default async function ProjectPage({ params }: PageParams) {
             <h2 className="text-[length:var(--text-h3)] text-[var(--color-fg)]">
               {dict.projects.overview}
             </h2>
-            {/* O markdown e escrito pelo Victor, não por visitante — por isso
+            {/* O markdown e escrito pelo Victor, não por visitante, por isso
                 não passa por sanitizador. Se um dia o texto vier de fora,
                 sanitizar aqui deixa de ser opcional. */}
             <div
@@ -134,7 +134,7 @@ export default async function ProjectPage({ params }: PageParams) {
           </div>
 
           <aside className="lg:sticky lg:top-28 lg:self-start">
-            <dl className="space-y-6 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+            <dl className="space-y-6 rounded-[var(--radius-card)] border border-[var(--color-border)] painel p-6">
               <div>
                 <dt className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-wider text-[var(--color-fg-subtle)]">
                   {dict.projects.year}

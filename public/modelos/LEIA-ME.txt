@@ -1,0 +1,96 @@
+Modelos 3D da ilha
+==================
+
+Largue aqui os arquivos de modelo que devem aparecer na ilha (o modo 3D da
+home). Um arquivo por objeto, nome em minúsculas com hífen:
+
+  cadeira-gamer.glb
+  estante.glb
+  teclado.glb
+
+
+ATENÇÃO: esta pasta não funciona como a de projetos
+---------------------------------------------------
+
+Em public/projetos/, largar um .md JÁ cria o projeto: o site lê a pasta no
+build. Aqui não. Um .glb largado nesta pasta não aparece na cena sozinho.
+
+Alguém precisa posicioná-lo: dizer onde ele fica, de que tamanho, se a câmera
+para nele e se tem tela para escrever em cima. Isso é código, em
+components/ilha/. Então: largue o arquivo aqui e peça para ele ser colocado.
+
+
+Formato
+-------
+
+  .glb        <- é este. glTF 2.0 binário, arquivo único.
+
+O .glb já vem com geometria, material e textura dentro de um arquivo só, e é o
+formato que a biblioteca three trata nativamente. O carregador dele já vem
+junto da three, sem instalar nada.
+
+Também servem, mas precisam de conversão antes de entrar:
+
+  .gltf + .bin + texturas    (é o .glb desmontado em vários arquivos)
+  .fbx  .obj + .mtl  .dae  .stl  .ply
+  .blend                     (arquivo do Blender)
+
+Não servem: .max (3ds Max) e .c4d (Cinema 4D). Só abrem no programa que os
+criou. Se for o que você tem, exporte de lá para .glb ou .fbx.
+
+
+O que o modelo precisa ter
+--------------------------
+
+Cada item abaixo é uma coisa que o código da ilha faz pela posição ou pelo
+nome do objeto. Modelo que não atende ainda entra, mas dá trabalho de ajustar.
+
+  Escala em metros
+      A cena é métrica. Referências de lá: o tampo da mesa está a 0,73 m do
+      chão, o monitor tem 0,60 m de altura, a ilha inteira tem uns 8 m.
+      Se o modelo vier em centímetros ou em unidade solta, anote o tamanho
+      real ("essa cadeira tem 1,1 m de altura") que dá para corrigir.
+
+  Origem no pé do objeto, centrada na largura e na profundidade
+      Os objetos são posicionados pelo chão, e um deles pode ser derrubado e
+      cair sobre o deck. Com a origem no meio do volume, o objeto nasce
+      afundado metade no piso.
+
+  Eixo Y para cima
+      É o padrão do exportador glTF do Blender. Só não desmarque a conversão
+      de eixo na hora de exportar.
+
+  Malhas com nome
+      Tudo na ilha é endereçado por nome: é assim que a câmera sabe em que
+      enquadrar e que o texto sabe em que superfície ser pintado. Se o modelo
+      tiver tela, painel, placa ou qualquer face onde deva aparecer conteúdo
+      escrito, essa face precisa ser MALHA SEPARADA COM MATERIAL PRÓPRIO.
+      Sem isso não há onde pintar.
+
+  Poucos triângulos
+      Na casa de alguns milhares. A ilha tem 156 peças e projeta sombra em
+      todas elas. Modelo de scan, com centenas de milhares de triângulos,
+      derruba a taxa de quadros.
+
+  De preferência sem textura de imagem
+      Hoje a ilha não baixa nenhum pixel: as cores são chapadas e o texto das
+      telas é desenhado na hora, no navegador. Modelo sem textura (ou com cor
+      por vértice) é retintado na paleta navy/teal da cena e parece ter
+      nascido lá. Modelo fotorrealista com textura 4K destoa do resto e pesa.
+
+  Até uns 500 KB por arquivo
+      Acima disso vale comprimir a geometria (Draco). Lembre que este arquivo
+      é baixado por quem abre o site, e hoje a ilha não baixa nada.
+
+
+Onde ele vai entrar
+-------------------
+
+Diga junto com o arquivo:
+
+  - Onde fica (substitui a cadeira que já existe? é objeto novo? vai na mesa,
+    no chão, na estante?)
+  - Se a navegação deve ganhar uma parada nova nele
+  - Se tem tela e o que deve estar escrito nela
+
+Sem isso o modelo fica parado aqui na pasta.

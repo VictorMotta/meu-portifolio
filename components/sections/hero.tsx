@@ -18,7 +18,7 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   /* Cada linha do título entra com um pequeno atraso em cascata.
      `y` e uma transformação: o reducedMotion="user" do MotionConfig a
      descarta para quem pediu menos movimento, deixando só o fade. Por isso
-     as props são sempre as mesmas no servidor e no cliente — nada de
+     as props são sempre as mesmas no servidor e no cliente, nada de
      ramificar o JSX aqui, sob pena de o conteúdo ficar invisível. */
   const line = (index: number) => ({
     initial: { opacity: 0, y: "0.35em" },
@@ -55,13 +55,11 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
         </motion.p>
 
         <h1 className="mt-8 text-[length:var(--text-display)] leading-[0.95] tracking-[-0.04em]">
-          {/* O nome e o cargo só aparecem para leitor de tela — visualmente
-              eles já estao no header e na etiqueta acima. A headline em si
-              NÃO e aria-hidden: e conteúdo de verdade, e esconde-la deixaria
-              o h1 com metade do sentido. */}
-          <span className="sr-only">
-            {site.name} — {dict.hero.eyebrow}.{" "}
-          </span>
+          {/* Só o nome vai aqui para o leitor de tela: o cargo já está na própria
+              headline, e repetir soaria "Victor Motta, desenvolvedor full
+              stack. Desenvolvedor full stack." A headline NÃO é aria-hidden:
+              é conteúdo de verdade, e escondê-la deixaria o h1 pela metade. */}
+          <span className="sr-only">{site.name}. </span>
           {dict.hero.headline.map((text, index) => (
             <motion.span
               key={text}

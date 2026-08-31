@@ -2,7 +2,7 @@
  * Reduz a imagem no navegador antes de enviar.
  *
  * Motivo concreto: a Vercel corta qualquer requisição acima de 4,5 MB com um
- * 413 que acontece ANTES do nosso código rodar — não da nem para responder
+ * 413 que acontece ANTES do nosso código rodar, não da nem para responder
  * uma mensagem decente. Três prints de celular já passam disso.
  *
  * Comprimindo aqui, um print de 6 MB vira uns 300 KB e o problema deixa de
@@ -57,7 +57,7 @@ export async function compressImage(file: File): Promise<File> {
     );
 
     /* Se a conversão não ajudou (imagem já otimizada, por exemplo), fica o
-       original — nunca entregar um arquivo maior do que o que entrou. */
+       original, nunca entregar um arquivo maior do que o que entrou. */
     if (!blob || blob.size >= file.size) return file;
 
     const nome = file.name.replace(/\.[^.]+$/, "") + ".webp";

@@ -11,7 +11,7 @@ import type { Locale } from "@/content/site";
  *
  * Uma pasta só, em public/projetos/:
  *
- *   plataforma-corretora.md        texto em português — E O QUE CRIA O PROJETO
+ *   plataforma-corretora.md        texto em português. E O QUE CRIA O PROJETO
  *   plataforma-corretora.en.md     tradução (opcional; sem ela, /en mostra o PT)
  *   plataforma-corretora_1.webp    imagens do carrossel, na ordem
  *   plataforma-corretora_2.webp    a _1 também é a capa no card da home
@@ -74,7 +74,7 @@ function lerPasta(): string[] {
 /**
  * Imagens do projeto, em ordem numérica de verdade.
  *
- * Ordenação alfabetica poria _10 antes de _2 — por isso comparamos o número,
+ * Ordenação alfabetica poria _10 antes de _2, por isso comparamos o número,
  * não a string.
  */
 function imagensDo(slug: string, arquivos: string[], alts: string[]): ProjectImage[] {
@@ -116,7 +116,7 @@ function partirCorpo(markdown: string): {
   let title = "";
   let i = 0;
 
-  /* O primeiro "# " é o título — assim o nome do projeto não precisa ser
+  /* O primeiro "# " é o título, assim o nome do projeto não precisa ser
      repetido no frontmatter. */
   while (i < linhas.length && linhas[i]!.trim() === "") i++;
   if (linhas[i]?.startsWith("# ")) {
@@ -149,7 +149,7 @@ function lerArquivo(slug: string, locale: Locale, arquivos: string[]): Project |
   const { data, content } = matter(bruto);
   const meta = data as Frontmatter;
 
-  /* Ano, stack e links só existem no arquivo em português — a tradução não
+  /* Ano, stack e links só existem no arquivo em português, a tradução não
      precisa repetir metadado que não muda de idioma. */
   const metaPt =
     preferido === nomePt

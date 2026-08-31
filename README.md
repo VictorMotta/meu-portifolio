@@ -1,4 +1,4 @@
-# Portfólio — Victor Motta
+# Portfólio. Victor Motta
 
 Portfólio pessoal full stack: projetos com galeria, currículo, formulário de
 contato que entrega **mensagem + imagens anexadas** por e-mail, e atalho direto
@@ -31,7 +31,7 @@ conforme o idioma do navegador.
 | `NEXT_PUBLIC_SITE_URL` | URL pública. Alimenta canonical, sitemap, robots e Open Graph. |
 
 > **Sem domínio próprio ainda?** Use `CONTACT_FROM_EMAIL="Portfólio <onboarding@resend.dev>"`.
-> Nesse modo a Resend só entrega para o e-mail dono da conta — que é
+> Nesse modo a Resend só entrega para o e-mail dono da conta, que é
 > exatamente o destino do formulário, então funciona desde o primeiro dia.
 > Quando tiver domínio verificado, troque o remetente e nada mais muda.
 >
@@ -39,7 +39,7 @@ conforme o idioma do navegador.
 
 ## O que você precisa preencher
 
-Tudo que é seu está concentrado em quatro arquivos — nenhuma dessas
+Tudo que é seu está concentrado em quatro arquivos, nenhuma dessas
 informações está espalhada pelo código:
 
 | Arquivo | Conteúdo |
@@ -49,7 +49,7 @@ informações está espalhada pelo código:
 | [content/i18n.ts](content/i18n.ts) | Todos os textos do site, nos dois idiomas. |
 | [public/projetos/](public/projetos/) | Um `.md` por projeto, com as imagens ao lado. |
 
-Os PDFs e a foto vão em `public/` — veja [public/LEIA-ME.txt](public/LEIA-ME.txt).
+Os PDFs e a foto vão em `public/`, veja [public/LEIA-ME.txt](public/LEIA-ME.txt).
 Enquanto não existirem, o site mostra placeholders desenhados em vez de imagens
 quebradas.
 
@@ -57,7 +57,7 @@ Procure por `PLACEHOLDER` e `TODO(victor)` para achar o que ainda é fictício.
 
 ## Projetos: uma pasta, sem banco
 
-Os projetos não vivem em código nem em banco de dados — são arquivos em
+Os projetos não vivem em código nem em banco de dados, são arquivos em
 [public/projetos/](public/projetos/), lidos no build por
 [lib/projects.ts](lib/projects.ts):
 
@@ -70,14 +70,14 @@ public/projetos/
 ```
 
 O nome-base amarra o texto às imagens e vira a URL. Para publicar um projeto
-novo, basta adicionar os arquivos — não há índice para atualizar.
+novo, basta adicionar os arquivos, não há índice para atualizar.
 
 Dentro do `.md`, o primeiro `# título` vira o nome do projeto e o primeiro
 parágrafo vira o resumo do card, então o cabeçalho YAML carrega só o que não dá
 para inferir (`year`, `featured`, `role`, `stack`, `repo`, `live`, `alts`). O
 formato completo está em [public/projetos/LEIA-ME.txt](public/projetos/LEIA-ME.txt).
 
-**O site é estático**: um `.md` novo só vai ao ar depois de commit e deploy —
+**O site é estático**: um `.md` novo só vai ao ar depois de commit e deploy.
 largar o arquivo no servidor não pública sozinho. Em compensação, as páginas
 saem como HTML pré-renderizado e o git funciona como CMS, com histórico e
 rollback de graça.
@@ -90,7 +90,7 @@ de `_9`, não entre `_1` e `_2`.
 Não é polimento final, é critério de aceite. O que está garantido:
 
 - Skip link, HTML semântico, um único `<h1>` e hierarquia de headings sem pulos.
-- **Todos** os pares de cor passam WCAG AA — conferidos contra `surface-2`, o
+- **Todos** os pares de cor passam WCAG AA, conferidos contra `surface-2`, o
   pior caso, e anotados em [app/globals.css](app/globals.css).
 - Foco visível em tudo, navegação completa por teclado, menu mobile com
   armadilha de foco, `Esc` fecha e devolve o foco ao gatilho.
@@ -105,7 +105,7 @@ npm run a11y              # axe-core: 2 idiomas x 2 temas x home e projeto
 npm run a11y:interactive  # formulário com erro, menu mobile, foco, skip link
 ```
 
-Os dois saem com código diferente de zero se algo falhar — dá para plugar em CI.
+Os dois saem com código diferente de zero se algo falhar, dá para plugar em CI.
 Se mexer em qualquer cor, rode `npm run a11y` antes de commitar.
 
 ## Formulário de contato
@@ -123,7 +123,7 @@ ContactForm ──FormData(POST)──▶ app/api/contact/route.ts ──▶ Res
   40 MB *depois* do base64, que infla ~33%). Cada imagem vai anexada **e**
   embutida no corpo via `cid`.
 - **Anti-spam:** honeypot invisível, tempo mínimo de preenchimento e rate limit
-  por IP em dois níveis — uma guarda de rajada folgada antes de ler o upload, e
+  por IP em dois níveis, uma guarda de rajada folgada antes de ler o upload, e
   uma cota de envio estrita cobrada só quando a mensagem já passou na validação
   (assim erro de digitação não gasta o limite de ninguém).
 - **`replyTo`** aponta para o visitante: responder no Gmail já endereça certo.
@@ -131,7 +131,7 @@ ContactForm ──FormData(POST)──▶ app/api/contact/route.ts ──▶ Res
 ## Deploy na Vercel
 
 **Não existe back-end separado.** A API Route mora no mesmo projeto e vira uma
-função serverless no mesmo deploy — um repositório, um `git push`, tudo no ar.
+função serverless no mesmo deploy, um repositório, um `git push`, tudo no ar.
 
 O que a Vercel monta a partir do build:
 
@@ -158,7 +158,7 @@ trata o 413 explicitamente, caso ele apareça por outro caminho.
 
 **Rate limit em memória.** [lib/rate-limit.ts](lib/rate-limit.ts) guarda o
 estado no processo. Em serverless cada instância tem o seu contador e um
-reinício zera tudo — ou seja, o limite é mais frouxo em produção do que
+reinício zera tudo, ou seja, o limite é mais frouxo em produção do que
 localmente. Para um portfólio está de bom tamanho (o honeypot derruba a maior
 parte do lixo); se um dia virar problema, troque o corpo de `hit()` por Upstash
 Redis sem mexer no resto.

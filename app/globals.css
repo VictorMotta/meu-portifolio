@@ -4,12 +4,12 @@
    Design tokens
 
    Todo par de cor foi conferido contra WCAG 2.1 AA. O numero entre parenteses
-   e o PIOR caso do token — o contraste contra `surface-2`, o fundo mais claro
+   e o PIOR caso do token: o contraste contra `surface-2`, o fundo mais claro
    do tema escuro (e o mais escuro do tema claro), onde ficam os cards e os
    estados de hover. Conferir so contra `bg` engana: o texto quase sempre
    aparece sobre um card, nao sobre o fundo puro.
 
-   Se mexer em qualquer cor, rode `npm run a11y` antes de commitar — o
+   Se mexer em qualquer cor, rode `npm run a11y` antes de commitar. O
    axe-core reprova contraste insuficiente e o script sai com erro.
    ========================================================================= */
 @theme {
@@ -19,16 +19,16 @@
   --color-surface-2: #1b1b1f;
   --color-border: #26262b;
   --color-border-strong: #3a3a42;
-  --color-fg: #ededf0; /* 14.7:1 — AAA */
-  --color-fg-muted: #a1a1ab; /* 6.7:1 — AAA */
-  --color-fg-subtle: #8a8a92; /* 5.0:1 — AA */
-  --color-accent: #4ee1c1; /* 10.5:1 — AAA */
+  --color-fg: #ededf0; /* 14.7:1, AAA */
+  --color-fg-muted: #a1a1ab; /* 6.7:1, AAA */
+  --color-fg-subtle: #8a8a92; /* 5.0:1, AA */
+  --color-accent: #4ee1c1; /* 10.5:1, AAA */
   --color-accent-dim: #2ba98e;
-  --color-accent-ink: #04120e; /* texto sobre o acento — 11.7:1 */
-  --color-danger: #ff6b6b; /* 6.2:1 — AA */
+  --color-accent-ink: #04120e; /* texto sobre o acento, 11.7:1 */
+  --color-danger: #ff6b6b; /* 6.2:1, AA */
   --color-success: #4ee1c1;
 
-  /* Tipografia — as tres variaveis vem de next/font em app/[locale]/layout.tsx */
+  /* Tipografia: as tres variaveis vem de next/font em app/[locale]/layout.tsx */
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
@@ -46,7 +46,7 @@
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Tema claro — mesmos papeis, valores recalculados.
+/* Tema claro, mesmos papeis com valores recalculados.
    O acento neon puro nao chega perto de 4.5:1 em fundo claro, entao escurece
    para um verde-petroleo que passa tanto como texto quanto como fundo de
    botao com texto branco por cima. */
@@ -56,13 +56,13 @@
   --color-surface-2: #f1f1f3;
   --color-border: #e3e3e7;
   --color-border-strong: #c9c9d1;
-  --color-fg: #131316; /* 16.4:1 — AAA */
-  --color-fg-muted: #55555f; /* 6.5:1 — AAA */
-  --color-fg-subtle: #68686f; /* 4.9:1 — AA */
-  --color-accent: #0d6f5e; /* 5.4:1 — AA */
+  --color-fg: #131316; /* 16.4:1, AAA */
+  --color-fg-muted: #55555f; /* 6.5:1, AAA */
+  --color-fg-subtle: #68686f; /* 4.9:1, AA */
+  --color-accent: #0d6f5e; /* 5.4:1, AA */
   --color-accent-dim: #0a5f50;
-  --color-accent-ink: #ffffff; /* texto sobre o acento — 6.1:1 */
-  --color-danger: #c62828; /* 5.0:1 — AA */
+  --color-accent-ink: #ffffff; /* texto sobre o acento, 6.1:1 */
+  --color-danger: #c62828; /* 5.0:1, AA */
   --color-success: #0f7d6a;
 }
 
@@ -157,6 +157,183 @@
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+
+  /* Órbitas da seção de stack.
+     3D de CSS, não WebGL: os ícones continuam sendo DOM de verdade, então
+     recebem foco, respondem ao teclado e o leitor de tela os enxerga. Fazer
+     isso em canvas custaria acessibilidade sem ganho visual.
+
+     Quatro camadas aninhadas, cada uma com um trabalho:
+       .anel     gira o plano inteiro
+       .orbe     posiciona o item no ângulo e no raio
+       .contra   desfaz o giro do anel, para o ícone não rodar sobre si
+       .levanta  tira o ícone do plano deitado e o vira para a câmera */
+  .orbita {
+    perspective: 1100px;
+    /* container-type habilita as unidades cq*, que fazem raio e pastilha
+       encolherem junto com a caixa. Com raio em pixel fixo a órbita não
+       cabia em 320px e a página rolava de lado. */
+    container-type: inline-size;
+    /* O anel é um quadrado girando: seu retângulo delimitador cresce 41% na
+       diagonal e conta para o scrollWidth, mesmo que a circunferência visível
+       caiba. clip corta esse excesso invisível sem criar área de rolagem.
+       Usar aqui é seguro porque o preserve-3d está no filho, não neste nó. */
+    overflow: clip;
+  }
+
+  .orbita-cena {
+    transform-style: preserve-3d;
+    /* 64 graus: deitado o bastante para virar órbita, em pé o bastante para
+       os itens do fundo ainda serem clicáveis. */
+    transform: rotateX(64deg);
+  }
+
+  .anel {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    animation: orbitar var(--dur) linear infinite;
+  }
+
+  .anel-reverso {
+    animation-direction: reverse;
+  }
+
+  /* A elipse desenhada.
+     Separada do anel que gira por um motivo: mascarar o anel faria o
+     esmaecimento girar junto com ele. Como um círculo girado é idêntico a si
+     mesmo, desenhar a guia parada e deixar só as pastilhas girando dá o mesmo
+     resultado visual e permite apagar a base.
+
+     A máscara fica aqui, e não no container, porque no container ela apagaria
+     as pastilhas também: pastilha invisível mas ainda focável pelo teclado é
+     pior do que não ter o efeito. */
+  .guia {
+    position: absolute;
+    border-radius: 50%;
+    /* Domo, não linha: uma borda suave no topo e um preenchimento que já
+       nasce fraco e some antes da metade. É o que dá o volume do template,
+       em vez de um contorno tracejado chapado. */
+    border: 1px solid color-mix(in srgb, var(--color-fg) 13%, transparent);
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-fg) 6%, transparent) 0%,
+      color-mix(in srgb, var(--color-fg) 2%, transparent) 34%,
+      transparent 66%
+    );
+    /* Apaga cedo e por completo: na foto de referência a metade de baixo do
+       arco simplesmente não existe. */
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 16%,
+      transparent 68%
+    );
+    mask-image: linear-gradient(to bottom, #000 0%, #000 16%, transparent 68%);
+  }
+
+  /* O orbe tem tamanho real e se centraliza por margem negativa, não por
+     posicionamento negativo do filho. Com o filho em left/top negativos, tudo
+     que caía fora do quadrante positivo sumia: o ícone aparecia cortado num
+     canto e o arco da borda no outro. */
+  .orbe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--tam);
+    height: var(--tam);
+    margin: calc(var(--tam) / -2) 0 0 calc(var(--tam) / -2);
+    transform-style: preserve-3d;
+    transform: rotate(var(--a)) translateX(var(--r)) rotate(calc(-1 * var(--a)));
+  }
+
+  .contra {
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    animation: orbitar var(--dur) linear infinite reverse;
+  }
+
+  .anel-reverso .contra {
+    animation-direction: normal;
+  }
+
+  .levanta {
+    width: 100%;
+    height: 100%;
+    transform: rotateX(-64deg);
+  }
+
+  @keyframes orbitar {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* Congela em vez de acelerar: órbita girando é movimento contínuo de
+       tela cheia, exatamente o que a preferência pede para não existir. */
+    .anel,
+    .contra {
+      animation: none;
+    }
+  }
+
+  /* Palco da seleção de personagem.
+     Scanline e vinheta em CSS, por cima do canvas: o que dá a cara de
+     fliperama sem custar um passe de render a mais. */
+  .palco::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        ellipse at center,
+        transparent 42%,
+        color-mix(in srgb, var(--color-bg) 72%, transparent) 100%
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-bg) 22%, transparent) 0 1px,
+        transparent 1px 3px
+      );
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* A scanline é padrão fino de alto contraste, do tipo que incomoda quem
+       tem sensibilidade visual. Some junto com as animações. */
+    .palco::after {
+      background: radial-gradient(
+        ellipse at center,
+        transparent 45%,
+        color-mix(in srgb, var(--color-bg) 70%, transparent) 100%
+      );
+    }
+  }
+
+  /* Painel de vidro: deixa o mundo 3D aparecer por trás dos cards.
+     88% de opacidade não é escolha estética, é o piso calculado: o pior caso
+     é o texto fg-subtle passando sobre a cor mais clara do mundo (#7fd4d4,
+     o vidro dos prédios). Com o mundo a 45% e o painel a 88%, esse pior caso
+     dá 4,58:1 e passa em AA. Baixar qualquer um dos dois reprova.
+
+     O axe não pega isso: ele mede contraste contra o CSS, e não enxerga o que
+     está desenhado no canvas atrás. */
+  .painel {
+    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .painel-fundo {
+    background: color-mix(in srgb, var(--color-surface-2) 88%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
   /* Texto vindo do markdown dos projetos.
@@ -304,4 +481,182 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+}
+
+/* Com a ilha aberta, a versão rolável do portfólio sai do fluxo inteira:
+   cabeçalho, seções e botão flutuante. Some da tela e some também da árvore
+   de acessibilidade — deixar as duas montadas faria o leitor de tela ler o
+   mesmo portfólio duas vezes. O `display: none` é justamente o que faz as
+   duas coisas de uma vez. */
+html[data-ilha="on"] [data-pagina-plana],
+html[data-ilha="on"] [data-cromo-pagina] {
+  display: none;
+}
+
+/* A ilha ocupa a tela toda: rolar a página por baixo dela não leva a lugar
+   nenhum e só atrapalha o gesto de arrastar. */
+html[data-ilha="on"],
+html[data-ilha="on"] body {
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   Superfícies da ilha
+
+   Cada parada da câmera pousa num objeto diferente, e o painel de conteúdo
+   veste o material desse objeto: o monitor mostra uma tela, o quadro de
+   projetos recebe post-its colados, a lousa recebe anotação de marcador e o
+   cavalete, uma folha de papel. Sem isso as seis paradas viram a mesma
+   janelinha escura flutuando, e o 3D vira só um plano de fundo.
+
+   As cores de papel vêm da paleta da própria cena (`components/ilha/cena.ts`),
+   clareadas o suficiente para o texto passar em AA. Os contrastes estão
+   anotados campo a campo — recalcular isso na mão em cada refactor é
+   exatamente o que se esquece de fazer.
+   ------------------------------------------------------------------------ */
+
+.superficie {
+  color: var(--tinta);
+  background: var(--papel);
+}
+
+/* Tela de computador: azul-noite do Dracula, fixo nos dois temas.
+   Antes seguia o tema do site, e no escuro o papel caía em #131316 — um cinza
+   que, ocupando a janela inteira, lê como sujo. Fixar tem o mesmo motivo das
+   outras superfícies: o monitor é um objeto, e o que ele mostra é um app de
+   tema escuro, não o site. Opaco de ponta a ponta — qualquer transparência
+   aqui deixa passar a textura pintada na tela do 3D.
+
+   tinta        #f8f8f2 sobre #21222c -> 14.8:1  AAA
+   tinta-fraca  #9aa5cf sobre #21222c ->  6.5:1  AA
+   tinta-tenue  #8b95bd sobre #21222c ->  5.4:1  AA
+   realce       #4ee1c1 sobre #21222c ->  9.7:1  AAA */
+.sup-tela {
+  --papel: #21222c;
+  --tinta: #f8f8f2;
+  --tinta-fraca: #9aa5cf;
+  --tinta-tenue: #8b95bd;
+  --realce: #4ee1c1;
+  --risco: #383a4d;
+}
+
+/* A barra de título da janela, opaca: um preto a 25% por cima do papel
+   funcionava, mas transparência dentro do painel é exatamente o que foi
+   pedido para sumir. Escurecer o próprio papel dá o mesmo degrau sem vidro. */
+.barra-tela {
+  background: color-mix(in srgb, var(--papel) 78%, black);
+}
+
+/* Quadro de projetos e lousa: papel frio, tinta de marcador.
+   tinta        #171b23 sobre #c3cbd9 -> 10.6:1  AAA
+   tinta-fraca  #3f4854 sobre #c3cbd9 ->  5.6:1  AA
+   realce       #0a5648 sobre #c3cbd9 ->  5.3:1  AA */
+.sup-quadro {
+  --papel: #c3cbd9;
+  --tinta: #171b23;
+  --tinta-fraca: #3f4854;
+  --tinta-tenue: #4c5666;
+  --realce: #0a5648;
+  --risco: #9aa5b8;
+}
+
+/* Lousa: mesma tinta, papel um tom mais claro (é quadro branco, não cartolina).
+   tinta #171b23 sobre #d7dde7 -> 12.7:1  AAA */
+.sup-lousa {
+  --papel: #d7dde7;
+  --tinta: #171b23;
+  --tinta-fraca: #3f4854;
+  --tinta-tenue: #4c5666;
+  --realce: #0a5648;
+  --risco: #adb6c5;
+}
+
+/* Folha do cavalete: papel quente.
+   tinta #1a1a1a sobre #ece9e2 -> 14.6:1  AAA */
+.sup-papel {
+  --papel: #ece9e2;
+  --tinta: #1a1a1a;
+  --tinta-fraca: #45433e;
+  --tinta-tenue: #5c5952;
+  --realce: #0a5648;
+  --risco: #c9c4b8;
+}
+
+/* O brilho que faz a tela parecer acesa em vez de um retângulo colado.
+   Fica por fora do painel, então não interfere no contraste do texto. */
+.sup-tela {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--realce) 30%, transparent),
+    0 0 40px -6px color-mix(in srgb, var(--realce) 35%, transparent);
+}
+
+/* Post-it: papel colorido, uma inclinação de quem colou com a mão e a sombra
+   curta de algo grudado a poucos milímetros do quadro. */
+.postit {
+  background: var(--cor-postit);
+  color: #171b23;
+  box-shadow: 0 6px 10px -6px rgb(0 0 0 / 0.45);
+}
+
+/* A inclinação é decorativa: quem pediu menos movimento não perde nada, mas
+   quem lê com dislexia agradece o texto reto. */
+@media (prefers-reduced-motion: no-preference) {
+  .postit-1 { transform: rotate(-0.8deg); }
+  .postit-2 { transform: rotate(0.6deg); }
+  .postit-3 { transform: rotate(-0.4deg); }
+  .postit-4 { transform: rotate(1deg); }
+}
+
+/* Marcador de lousa: o traço largo e meio transparente por baixo da palavra,
+   como caneta de quadro branco passada por cima. */
+.marca-texto {
+  background-image: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--cor-marca) 55%, transparent) 0.42em,
+    transparent 0.42em
+  );
+}
+
+/* Texto longo dentro de uma superfície da ilha.
+
+   O `.prose` da página usa os tokens do tema, que no tema escuro são claros —
+   e sobre o papel do quadro de projetos isso vira texto branco em fundo claro.
+   Aqui as mesmas regras passam a ler a tinta da superfície. Na tela do
+   monitor não muda nada: lá a tinta É o token do tema. */
+.superficie .prose {
+  color: var(--tinta-fraca);
+}
+
+.superficie .prose h2,
+.superficie .prose h3,
+.superficie .prose strong {
+  color: var(--tinta);
+}
+
+.superficie .prose a {
+  color: var(--realce);
+}
+
+.superficie .prose li::marker {
+  color: var(--realce);
+}
+
+.superficie .prose code,
+.superficie .prose pre {
+  background: color-mix(in srgb, var(--tinta) 8%, transparent);
+  border-color: color-mix(in srgb, var(--tinta) 18%, transparent);
+  color: var(--tinta);
+}
+
+.superficie .prose blockquote {
+  border-color: var(--realce);
+  color: var(--tinta-fraca);
+}
+
+/* Folha grande pregada no quadro: é o post-it do projeto aberto, no tamanho
+   de quem vai ler o caso inteiro em vez da chamada. */
+.folha-projeto {
+  background: #eef3f6;
+  color: #171b23;
+  box-shadow: 0 10px 20px -12px rgb(0 0 0 / 0.5);
 }

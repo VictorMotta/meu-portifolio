@@ -3,7 +3,7 @@
  *
  * TODO(victor): tudo marcado com PLACEHOLDER precisa ser trocado pelos seus
  * dados reais antes de publicar. Não existe nenhuma dessas strings espalhada
- * pelo resto do código — trocar aqui atualiza o site inteiro.
+ * pelo resto do código, trocar aqui atualiza o site inteiro.
  */
 
 /**
@@ -43,17 +43,17 @@ export const site = {
 	monogram: "VM",
 	email: "victormotta@victormotta.dev",
 
-	/** Somente dígitos, com DDI e DDD. Ex.: 5511987654321 — PLACEHOLDER */
+	/** Somente dígitos, com DDI e DDD. Ex.: 5511987654321. PLACEHOLDER */
 	whatsapp: "5521999866488",
 
-	/** PLACEHOLDER — troque pelos seus perfis reais */
+	/** PLACEHOLDER, troque pelos seus perfis reais */
 	github: "https://github.com/VictorMotta",
 	linkedin: "https://www.linkedin.com/in/victor-mottas/",
 
 	/** Usado em metadata, sitemap e robots. Em produção vem do env. */
 	/* SITE_URL sem o prefixo NEXT_PUBLIC_ de propósito: este valor só é lido
 	   no servidor (metadata, sitemap, robots) e nunca vai para o navegador.
-	   Com o prefixo, a Vercel avisa — com razão — que uma variável "pública"
+	   Com o prefixo, a Vercel avisa, com razão, que uma variável "pública"
 	   não pode ser marcada como Secret.
 
 	   NEXT_PUBLIC_SITE_URL continua aceito para não quebrar quem já configurou.
@@ -72,7 +72,7 @@ export const site = {
 		en: "/resume-victor-motta.pdf",
 	},
 
-	/** Ano em que você comecou a programar profissionalmente — vira "X anos" no Sobre. */
+	/** Ano em que você comecou a programar profissionalmente, vira "X anos" no Sobre. */
 	careerStartYear: 2022,
 } as const;
 

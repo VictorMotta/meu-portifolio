@@ -55,7 +55,7 @@ export function ContactSection({
           </Reveal>
 
           <Reveal delay={0.1}>
-            <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 sm:p-8">
+            <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] painel p-6 sm:p-8">
               <h3 className="text-[length:var(--text-h3)] text-[var(--color-fg)]">
                 {dict.contact.directTitle}
               </h3>
@@ -76,7 +76,7 @@ export function ContactSection({
                       {...(external
                         ? { target: "_blank", rel: "noopener noreferrer" }
                         : {})}
-                      className="flex items-center gap-3 rounded-[var(--radius-control)] px-3 py-3 transition-colors hover:bg-[var(--color-surface-2)]"
+                      className="flex items-center gap-3 rounded-[var(--radius-control)] px-3 py-3 transition-colors hover:painel-fundo"
                     >
                       <Icon
                         aria-hidden="true"

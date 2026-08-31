@@ -1,6 +1,6 @@
 /**
  * Primeiro elemento focável da página. Fica invisível até receber foco pelo
- * Tab, e então aparece no topo — quem navega por teclado pula o header inteiro
+ * Tab, e então aparece no topo, quem navega por teclado pula o header inteiro
  * em uma tecla, em vez de tabular por toda a navegação em cada página.
  */
 export function SkipLink({ label }: { label: string }) {

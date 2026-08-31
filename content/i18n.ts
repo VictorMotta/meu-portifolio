@@ -17,13 +17,13 @@ export function format(
 }
 
 /**
- * Dicionário de textos. O objeto `pt` define o formato — `en` é tipado contra
+ * Dicionário de textos. O objeto `pt` define o formato. `en` é tipado contra
  * ele, então esquecer de traduzir uma chave vira erro de compilacao, não um
  * buraco silencioso na página.
  */
 const pt = {
   meta: {
-    title: "Victor Motta — Desenvolvedor Full Stack",
+    title: "Victor Motta | Desenvolvedor Full Stack",
     description:
       "Portfólio de Victor Motta, desenvolvedor full stack. Projetos, stack, currículo e contato direto.",
     localeTag: "pt-BR",
@@ -36,32 +36,35 @@ const pt = {
     stack: "Stack",
     projects: "Projetos",
     contact: "Contato",
+    hobby: "Mods",
     resume: "Currículo",
     openMenu: "Abrir menu de navegação",
     closeMenu: "Fechar menu de navegação",
     toggleTheme: "Alternar entre tema claro e escuro",
     switchLanguage: "Ver este site em inglês",
     languageShort: "EN",
+    ligar3d: "Ligar o 3D",
+    desligar3d: "Desligar o 3D",
   },
 
   hero: {
     eyebrow: "Desenvolvedor Full Stack",
     availability: "Disponível para novos projetos",
-    headline: ["Construo produtos", "que as pessoas", "conseguem usar."],
+    headline: ["Desenvolvedor", "full stack.", "Node, React, AWS."],
     lead:
-      "Do banco de dados à interface. Escrevo software que aguenta produção, carrega rápido e funciona para todo mundo — inclusive para quem navega só pelo teclado.",
+      "Hoje trabalho numa plataforma para clínicas. Antes disso passei três anos na AgriSafe, mexendo com microservices na AWS e análise de imagem de satélite.",
     ctaProjects: "Ver projetos",
     ctaResume: "Baixar currículo",
     scrollHint: "Role para explorar",
   },
 
   about: {
-    eyebrow: "01 — Sobre",
-    title: "Um dev que se importa com o que acontece depois do deploy",
+    eyebrow: "01 / Sobre",
+    title: "Full stack, com mais tempo no back-end",
     paragraphs: [
-      "Sou desenvolvedor full stack e trabalho no ciclo inteiro: modelagem de dados, API, interface e o que quebra às três da manhã. Gosto de problema de verdade — o tipo que exige entender o negócio antes de abrir o editor.",
-      "Acessibilidade e performance não entram no fim do projeto como enfeite. Entram na primeira decisão de arquitetura, porque depois sai caro.",
-      "Quando não estou codando, estou provavelmente refatorando algo que já funcionava.",
+      "Trabalho com desenvolvimento web desde 2022. Comecei no bootcamp da Driven, entrei na AgriSafe como engenheiro de software e agora estou na Tiix.",
+      "Na AgriSafe foram três anos em Node, TypeScript e Python. Construí crawlers, filas com SQS e Redis, e análises geoespaciais com PostGIS e Google Earth Engine. Foi lá que aprendi a lidar com sistema que precisa aguentar volume.",
+      "Gosto mais de back-end, mas não fujo do front. Também dou atenção a acessibilidade: boa parte dos sites que eu abro não funciona direito só com o teclado.",
     ],
     photoAlt: "Retrato de Victor Motta",
     stats: {
@@ -73,23 +76,28 @@ const pt = {
   },
 
   stack: {
-    eyebrow: "02 — Stack",
+    eyebrow: "02 / Stack",
     title: "As ferramentas que uso todo dia",
     lead:
-      "Não é uma lista de tudo que já toquei. É o que eu uso com confiança hoje, em produção.",
+      "O que eu uso no dia a dia. Deixei de fora o que só encostei uma vez.",
     groups: {
       frontend: "Front-end",
       backend: "Back-end",
       data: "Dados & Infra",
       tools: "Ferramentas",
     },
+    selecione: "Escolha uma tecnologia para ver a ficha",
+    dicaSetas: "clique num ícone, ou use as setas do teclado",
+    dominio: "Domínio",
+    frequencia: "Frequência de uso",
+    pontos: "{valor}/100",
   },
 
   projects: {
-    eyebrow: "03 — Projetos",
+    eyebrow: "03 / Projetos",
     title: "Trabalhos selecionados",
     lead:
-      "Alguns projetos que representam bem como eu trabalho. Clique para ver o caso completo.",
+      "Alguns projetos que já entreguei. Clique para ver os detalhes de cada um.",
     featured: "Destaque",
     viewCase: "Ver o caso",
     viewCaseOf: "Ver o caso completo do projeto {title}",
@@ -111,10 +119,10 @@ const pt = {
   },
 
   contact: {
-    eyebrow: "04 — Contato",
+    eyebrow: "05 / Contato",
     title: "Vamos conversar sobre o seu projeto",
     lead:
-      "Descreva o que você precisa e anexe imagens, telas ou referências. Respondo em até um dia útil.",
+      "Me conte o que você precisa. Se tiver telas ou referências, pode anexar. Costumo responder no mesmo dia.",
     directTitle: "Prefere um caminho mais direto?",
     whatsapp: "Chamar no WhatsApp",
     whatsappAria: "Abrir uma conversa comigo no WhatsApp",
@@ -181,13 +189,59 @@ const pt = {
       emailInvalid: "Esse e-mail não parece válido.",
       companyMax: "O nome da empresa passou de 80 caracteres.",
       projectTypeInvalid: "Escolha um tipo de projeto da lista.",
-      messageMin: "Conte um pouco mais — pelo menos 20 caracteres.",
+      messageMin: "Conte um pouco mais. O mínimo é 20 caracteres.",
       messageMax: "A mensagem passou de 5000 caracteres.",
       fileTooMany: "Você pode anexar no máximo 5 imagens.",
       fileTooLarge: 'A imagem "{name}" é grande demais mesmo depois de comprimida.',
       fileTotalTooLarge:
         "As imagens somadas passam do limite de envio. Tire uma e tente de novo.",
       fileWrongType: '"{name}" não é uma imagem PNG, JPG, WebP ou GIF.',
+    },
+  },
+
+  hobby: {
+    eyebrow: "04 / Fora do expediente",
+    title: "Escrevo mods para Project Zomboid",
+    lead:
+      "Jogo Zomboid há anos e acabei descobrindo que dá para mexer no jogo por dentro. O primeiro mod virou algo que outras pessoas usam.",
+    modResumo:
+      "Acelera ações demoradas do jogo (fabricar, construir, reparar, desmontar) sem adiantar o relógio. Vanilla tem o botão de acelerar tempo, mas ele queima o dia inteiro, e em multiplayer nem existe. Cinco velocidades configuráveis, uma por tipo de ação, decididas por quem administra o servidor.",
+    modPreviewAlt: "Ícone do mod Turbo Actions na Oficina da Steam",
+    inscritos: "inscritos na Workshop",
+    favoritos: "favoritos",
+    linhasLua: "linhas de Lua",
+    verNaWorkshop: "Ver na Oficina",
+    verManual: "Manual completo",
+    voltarParaMods: "Voltar para os mods",
+    manualEyebrow: "Manual do mod",
+    comoFunciona: "A parte esperta",
+    comoFuncionaTexto:
+      "Toda ação temporizada do jogo passa por um único método antes de começar. Achar esse ponto foi o trabalho: enganchar nele alcança fabricação, construção, reparo e desmonte de uma vez, sem precisar mexer em cada classe.",
+    jogos: "O que eu jogo",
+  },
+
+  ilha: {
+    titulo: "A ilha",
+    intro: "Escolha um lugar da ilha para explorar.",
+    dica: "Use as setas do teclado para trocar de lugar, ou Esc para voltar à vista geral.",
+    voltar: "Voltar à vista geral",
+    arrumar: "Arrumar a ilha ({n})",
+    dicaMouse: "Arraste para girar. Clique num móvel para abrir a seção, ou numa coisa da mesa para derrubar.",
+    voltarCurto: "Vista geral",
+    fechar: "Fechar este painel",
+    verComoPagina: "Ver como página",
+    verComoPaginaDica: "Sair da ilha e ler o portfólio em formato de página",
+    entrarNaIlha: "Entrar na ilha",
+    carregando: "Montando a ilha…",
+    semWebgl:
+      "Este navegador não consegue desenhar a ilha em 3D. O portfólio continua completo abaixo.",
+    telas: {
+      sobre: "Monitor da esquerda",
+      stack: "Quadro branco",
+      projetos: "Quadro de projetos",
+      mods: "TV da sala",
+      contato: "Monitor da direita",
+      curriculo: "Cavalete",
     },
   },
 
@@ -209,7 +263,7 @@ export type Dictionary = typeof pt;
 
 const en: Dictionary = {
   meta: {
-    title: "Victor Motta — Full Stack Developer",
+    title: "Victor Motta | Full Stack Developer",
     description:
       "Portfolio of Victor Motta, full stack developer. Projects, stack, resume and direct contact.",
     localeTag: "en-US",
@@ -222,32 +276,35 @@ const en: Dictionary = {
     stack: "Stack",
     projects: "Projects",
     contact: "Contact",
+    hobby: "Mods",
     resume: "Resume",
     openMenu: "Open navigation menu",
     closeMenu: "Close navigation menu",
     toggleTheme: "Switch between light and dark theme",
     switchLanguage: "View this site in Portuguese",
     languageShort: "PT",
+    ligar3d: "Turn 3D on",
+    desligar3d: "Turn 3D off",
   },
 
   hero: {
     eyebrow: "Full Stack Developer",
     availability: "Available for new projects",
-    headline: ["I build products", "that people", "can actually use."],
+    headline: ["Full stack", "developer.", "Node, React, AWS."],
     lead:
-      "From the database to the interface. I write software that survives production, loads fast and works for everyone — including people navigating by keyboard alone.",
+      "Right now I work on a platform for medical clinics. Before that I spent three years at AgriSafe, on AWS microservices and satellite imagery analysis.",
     ctaProjects: "View projects",
     ctaResume: "Download resume",
     scrollHint: "Scroll to explore",
   },
 
   about: {
-    eyebrow: "01 — About",
-    title: "A developer who cares about what happens after the deploy",
+    eyebrow: "01 / About",
+    title: "Full stack, with more hours on the back-end",
     paragraphs: [
-      "I'm a full stack developer and I work the whole cycle: data modeling, API, interface, and whatever breaks at three in the morning. I like real problems — the kind that require understanding the business before opening the editor.",
-      "Accessibility and performance aren't decoration bolted on at the end. They go into the first architectural decision, because retrofitting them is expensive.",
-      "When I'm not coding, I'm probably refactoring something that already worked.",
+      "I have been building for the web since 2022. I started at the Driven bootcamp, joined AgriSafe as a software engineer and I am now at Tiix.",
+      "AgriSafe was three years of Node, TypeScript and Python. I built crawlers, queues with SQS and Redis, and geospatial analysis with PostGIS and Google Earth Engine. That is where I learned to handle systems that have to take real volume.",
+      "I lean towards the back-end, but I do not avoid the front. I also pay attention to accessibility: plenty of the sites I open do not work properly with a keyboard alone.",
     ],
     photoAlt: "Portrait of Victor Motta",
     stats: {
@@ -259,23 +316,28 @@ const en: Dictionary = {
   },
 
   stack: {
-    eyebrow: "02 — Stack",
+    eyebrow: "02 / Stack",
     title: "The tools I reach for every day",
     lead:
-      "Not a list of everything I've ever touched. This is what I use with confidence today, in production.",
+      "What I reach for day to day. I left out anything I only touched once.",
     groups: {
       frontend: "Front-end",
       backend: "Back-end",
       data: "Data & Infra",
       tools: "Tooling",
     },
+    selecione: "Pick a technology to see its card",
+    dicaSetas: "click an icon, or use the arrow keys",
+    dominio: "Command",
+    frequencia: "How often I use it",
+    pontos: "{valor}/100",
   },
 
   projects: {
-    eyebrow: "03 — Projects",
+    eyebrow: "03 / Projects",
     title: "Selected work",
     lead:
-      "A few projects that show how I work. Click through for the full case study.",
+      "A few projects I have shipped. Click through for the details of each one.",
     featured: "Featured",
     viewCase: "View case study",
     viewCaseOf: "View the full case study for {title}",
@@ -297,10 +359,10 @@ const en: Dictionary = {
   },
 
   contact: {
-    eyebrow: "04 — Contact",
+    eyebrow: "05 / Contact",
     title: "Let's talk about your project",
     lead:
-      "Describe what you need and attach images, screens or references. I reply within one business day.",
+      "Tell me what you need. If you have screens or references, attach them. I usually reply the same day.",
     directTitle: "Prefer something more direct?",
     whatsapp: "Message on WhatsApp",
     whatsappAria: "Start a WhatsApp conversation with me",
@@ -367,12 +429,58 @@ const en: Dictionary = {
       emailInvalid: "That email doesn't look valid.",
       companyMax: "The company name is over 80 characters.",
       projectTypeInvalid: "Pick a project type from the list.",
-      messageMin: "Tell me a bit more — at least 20 characters.",
+      messageMin: "Tell me a bit more. The minimum is 20 characters.",
       messageMax: "The message is over 5000 characters.",
       fileTooMany: "You can attach at most 5 images.",
       fileTooLarge: 'The image "{name}" is too large even after compression.',
       fileTotalTooLarge: "The images exceed the upload limit. Remove one and try again.",
       fileWrongType: '"{name}" is not a PNG, JPG, WebP or GIF image.',
+    },
+  },
+
+  hobby: {
+    eyebrow: "04 / After hours",
+    title: "I write mods for Project Zomboid",
+    lead:
+      "I have played Zomboid for years and eventually found out you can get inside the game. The first mod turned into something other people use.",
+    modResumo:
+      "Speeds up long in-game actions (crafting, building, repairing, dismantling) without moving the clock. Vanilla has a fast-forward button, but it burns the whole day, and in multiplayer it does not exist at all. Five configurable speeds, one per action type, decided by whoever runs the server.",
+    modPreviewAlt: "Icon of the Turbo Actions mod on the Steam Workshop",
+    inscritos: "Workshop subscribers",
+    favoritos: "favourites",
+    linhasLua: "lines of Lua",
+    verNaWorkshop: "View on Workshop",
+    verManual: "Full manual",
+    voltarParaMods: "Back to mods",
+    manualEyebrow: "Mod manual",
+    comoFunciona: "The clever bit",
+    comoFuncionaTexto:
+      "Every timed action in the game passes through a single method before it starts. Finding that point was the work: hooking it reaches crafting, building, repairing and dismantling at once, without touching each class.",
+    jogos: "What I play",
+  },
+
+  ilha: {
+    titulo: "The island",
+    intro: "Pick a spot on the island to explore.",
+    dica: "Use the arrow keys to move between spots, or Esc to go back to the wide shot.",
+    voltar: "Back to the wide shot",
+    arrumar: "Tidy up the island ({n})",
+    dicaMouse: "Drag to spin. Click a piece of furniture to open its section, or something on the desk to knock it over.",
+    voltarCurto: "Wide shot",
+    fechar: "Close this panel",
+    verComoPagina: "Read as a page",
+    verComoPaginaDica: "Leave the island and read the portfolio as a normal page",
+    entrarNaIlha: "Enter the island",
+    carregando: "Building the island…",
+    semWebgl:
+      "This browser cannot draw the island in 3D. The full portfolio is right below.",
+    telas: {
+      sobre: "Left monitor",
+      stack: "Whiteboard",
+      projetos: "Project board",
+      mods: "Living room TV",
+      contato: "Right monitor",
+      curriculo: "Easel",
     },
   },
 

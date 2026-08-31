@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, CheckCircle2, Loader2, Send } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { FileDropzone } from "@/components/form/file-dropzone";
@@ -32,6 +32,13 @@ export function ContactForm({
   dict: Dictionary;
 }) {
   const t = dict.contact.form;
+
+  /* Prefixo único por instância. O formulário aparece duas vezes no mesmo
+     documento — uma na página rolável e outra na tela da ilha — e ids fixos
+     fariam todo `for=` apontar para o primeiro campo, deixando a segunda cópia
+     sem rótulo para o leitor de tela. */
+  const uid = useId();
+  const campo = (nome: string) => `${uid}-${nome}`;
   const schema = useMemo(
     () => buildContactSchema(dict.contact.validation),
     [dict],
@@ -40,7 +47,7 @@ export function ContactForm({
   const [status, setStatus] = useState<Status>("idle");
   const [errorCode, setErrorCode] = useState<ErrorCode>("server");
 
-  /* Foco vai para o painel de resultado quando o envio termina — sem isso a
+  /* Foco vai para o painel de resultado quando o envio termina, sem isso a
      pessoa que usa leitor de tela não sabe que algo mudou na tela. */
   const feedbackRef = useRef<HTMLDivElement>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
@@ -194,9 +201,9 @@ export function ContactForm({
       {/* Honeypot: fora do fluxo visual, fora da ordem de tabulacao e
           invisível para leitor de tela. Só bot preenche. */}
       <div aria-hidden="true" className="absolute left-[-9999px] top-0">
-        <label htmlFor="website">Website</label>
+        <label htmlFor={campo("website")}>Website</label>
         <input
-          id="website"
+          id={campo("website")}
           type="text"
           tabIndex={-1}
           autoComplete="off"
@@ -205,7 +212,7 @@ export function ContactForm({
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <FormField id="name" label={t.name} error={errors.name?.message}>
+        <FormField id={campo("name")} label={t.name} error={errors.name?.message}>
           {(props) => (
             <input
               {...props}
@@ -219,7 +226,7 @@ export function ContactForm({
         </FormField>
 
         <FormField
-          id="email"
+          id={campo("email")}
           label={t.email}
           hint={t.emailHint}
           error={errors.email?.message}
@@ -237,7 +244,7 @@ export function ContactForm({
         </FormField>
 
         <FormField
-          id="company"
+          id={campo("company")}
           label={t.company}
           optionalLabel={t.companyOptional}
           error={errors.company?.message}
@@ -255,7 +262,7 @@ export function ContactForm({
         </FormField>
 
         <FormField
-          id="projectType"
+          id={campo("projectType")}
           label={t.projectType}
           error={errors.projectType?.message}
         >
@@ -276,7 +283,7 @@ export function ContactForm({
       </div>
 
       <FormField
-        id="message"
+        id={campo("message")}
         label={t.message}
         hint={t.messageHint}
         error={errors.message?.message}
@@ -294,7 +301,7 @@ export function ContactForm({
 
       <div ref={dropzoneRef}>
         <FormField
-          id="files"
+          id={campo("files")}
           label={t.files}
           hint={t.filesHint}
           optionalLabel={t.filesOptional}
@@ -302,6 +309,7 @@ export function ContactForm({
         >
           {(props) => (
             <FileDropzone
+              id={props.id}
               files={files ?? []}
               onChange={(next) =>
                 setValue("files", next, { shouldValidate: true })

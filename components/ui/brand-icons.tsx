@@ -5,7 +5,7 @@ import type { SVGProps } from "react";
  *
  * O lucide-react removeu logos de terceiros na v1 (questao de licença de
  * marca), então GitHub, LinkedIn e WhatsApp vem daqui. A assinatura imita a
- * do lucide — `className` e o resto das props passam direto — para que o uso
+ * do lucide. `className` e o resto das props passam direto, para que o uso
  * seja idêntico ao dos outros ícones.
  */
 

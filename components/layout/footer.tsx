@@ -15,7 +15,7 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   ];
 
   return (
-    <footer className="border-t border-[var(--color-border)] py-12">
+    <footer data-cromo-pagina className="border-t border-[var(--color-border)] py-12">
       <div className="shell flex flex-col items-center gap-8 sm:flex-row sm:justify-between">
         <div className="text-center sm:text-left">
           <p className="text-sm text-[var(--color-fg)]">

@@ -47,7 +47,7 @@ O que cada campo faz:
 
 Sobre o "alts": é o que uma pessoa cega ouve no lugar da imagem. Descreva o que
 se ve ("painel com o funil em colunas"), não o nome do projeto. Se você não
-escrever, entra um texto genérico — funciona, mas é bem pior.
+escrever, entra um texto genérico, funciona, mas é bem pior.
 
 
 A tradução (.en.md)
@@ -56,7 +56,7 @@ A tradução (.en.md)
 Opcional. Sem ela, a versão em inglês do site mostra o texto em português, o
 que é melhor do que página vazia.
 
-Ela só precisa do que muda de idioma — título, texto, "role" e "alts". Ano,
+Ela só precisa do que muda de idioma, título, texto, "role" e "alts". Ano,
 stack e links são herdados do arquivo em português, então não repita.
 
   ---
@@ -79,7 +79,7 @@ Formatos aceitos: .webp  .avif  .png  .jpg  .jpeg
 Maiuscula tanto faz (.JPG funciona igual a .jpg), e da para misturar formatos
 no mesmo projeto: _1.png com _2.webp e _3.jpg convivem numa boa.
 
-Sugestao: WebP de ~1600x1000 (leve e nítido). Mas não se prenda a isso — o
+Sugestao: WebP de ~1600x1000 (leve e nítido). Mas não se prenda a isso, o
 Next converte a imagem para WebP ou AVIF na hora de servir, seja qual for o
 formato que você colocar aqui. Mande o PNG do print direto se for mais rápido.
 
@@ -89,7 +89,7 @@ A numeração pode passar de 9 sem problema: _10 vem depois de _9, não entre
 _1 e _2.
 
 Enquanto um projeto não tiver imagem, o card mostra as iniciais do nome num
-bloco desenhado — não quebra e não fica com ícone de imagem quebrada.
+bloco desenhado, não quebra e não fica com ícone de imagem quebrada.
 
 
 Importante

@@ -9,7 +9,7 @@ import { locales, type Locale } from "@/content/site";
  * Troca de idioma mantendo a página atual: /pt/projects/foo vira
  * /en/projects/foo, e não um retorno para a home.
  *
- * E um <Link> de verdade, não um botão — o idioma alternativo fica no HTML,
+ * E um <Link> de verdade, não um botão, o idioma alternativo fica no HTML,
  * navegável e indexável.
  */
 export function LocaleToggle({

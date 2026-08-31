@@ -34,10 +34,11 @@ export function Header({
     { id: "sobre", label: dict.nav.about },
     { id: "stack", label: dict.nav.stack },
     { id: "projetos", label: dict.nav.projects },
+    { id: "hobby", label: dict.nav.hobby },
     { id: "contato", label: dict.nav.contact },
   ];
 
-  /* Fundo solido só depois de sair do topo — no hero o header flutua. */
+  /* Fundo solido só depois de sair do topo, no hero o header flutua. */
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
@@ -73,7 +74,7 @@ export function Header({
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
-    /* Devolve o foco ao botão que abriu — sem isso o foco volta para o
+    /* Devolve o foco ao botão que abriu, sem isso o foco volta para o
        início da página e a pessoa se perde. */
     triggerRef.current?.focus();
   }, []);
@@ -123,6 +124,7 @@ export function Header({
 
   return (
     <header
+      data-cromo-pagina
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
         scrolled
           ? "border-b border-[var(--color-border)] bg-[var(--color-bg)]/85 backdrop-blur-xl"
@@ -139,7 +141,7 @@ export function Header({
         >
           <span className="text-[var(--color-fg)]">{site.monogram}</span>
           <span className="text-[var(--color-accent)]">.</span>
-          <span className="sr-only">{site.name} — {dict.nav.home}</span>
+          <span className="sr-only">{site.name}, {dict.nav.home}</span>
         </Link>
 
         <nav aria-label={dict.nav.home} className="hidden items-center gap-1 md:flex">

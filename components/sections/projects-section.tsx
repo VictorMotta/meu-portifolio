@@ -41,7 +41,7 @@ export function ProjectsSection({
                       locale={locale}
                       dict={dict}
                       featured
-                      /* A primeira imagem costuma ser o LCP da seção —
+                      /* A primeira imagem costuma ser o LCP da seção.
                          carregar sem lazy melhora a metrica. */
                       priority={index === 0}
                     />
