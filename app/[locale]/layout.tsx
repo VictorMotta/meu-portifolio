@@ -105,7 +105,14 @@ export default async function LocaleLayout({
       suppressHydrationWarning
       className={`${bricolage.variable} ${inter.variable} ${jetbrains.variable}`}
     >
-      <body>
+      {/* E no <body> pelo mesmo motivo, com outro culpado: extensão de
+          navegador. O ColorZilla escreve `cz-shortcut-listen`, o Grammarly
+          escreve os `data-gr-*`, e todas fazem isso antes do React hidratar —
+          o React então acusa um atributo que ele não renderizou, e o erro
+          aparece na máquina de quem tem a extensão e em mais nenhuma.
+          A supressão vale só para os atributos DESTE elemento, um nível: o
+          que estiver errado lá dentro continua sendo acusado. */}
+      <body suppressHydrationWarning>
         <Providers>
           <SkipLink label={dict.nav.skipToContent} />
           <Fundo3D dict={dict} />
