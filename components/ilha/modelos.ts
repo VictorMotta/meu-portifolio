@@ -100,7 +100,18 @@ export type Encaixe = {
    * emprestado a um modelo que já está na cena não baixa nada de novo — e o
    * material continua sendo o do dono, compartilhado, não uma cópia.
    */
-  materialDe?: { arquivo: string; material: string };
+  materialDe?: {
+    arquivo: string;
+    material: string;
+    /**
+     * Quais materiais DESTE modelo dão lugar ao emprestado. Sem isto, todos.
+     *
+     * A estante de livros precisa: o arquivo dela tem a madeira e os livros, e
+     * emprestar a madeira para os dois deixaria as fileiras de livros com cara
+     * de tábua.
+     */
+    troca?: string[];
+  };
   recolorirIlhas?: {
     dentro: { x?: [number, number]; y?: [number, number]; z?: [number, number] };
     cor: string;
@@ -119,6 +130,36 @@ export type Encaixe = {
   /** Prefixo dos nomes das malhas, para elas não colidirem com as da cena. */
   prefixo: string;
 };
+
+/* ---------- a madeira dos móveis ---------- */
+
+/**
+ * O tom da madeira, um só para todos.
+ *
+ * A cor MULTIPLICA a textura, então não é a cor final: o pixel médio do
+ * arquivo é #a47c59 e este tom o escurece para o marrom que se vê.
+ */
+const TOM_DA_MADEIRA = { cor: "#6b4c33", metal: 0, aspereza: 0.8 };
+
+/**
+ * A madeira única dos móveis, emprestada da mesa de centro.
+ *
+ * Dos arquivos daqui, o da mesa de centro é o único com um veio de madeira de
+ * verdade — e ainda por cima uniforme e sem emenda, o que o faz cair bem em
+ * qualquer UV, inclusive nas que não são a dele. O da estante de livros é veio
+ * também, mas mais escuro e chapado; o do móvel da TV e o da estante de nichos
+ * não têm textura nenhuma, são cor lisa.
+ *
+ * A mesa de centro não pede emprestado porque é a dona. A mesa do computador
+ * fica de fora de propósito: ela é preta, não é móvel de madeira.
+ *
+ * `troca` existe por causa da estante de livros, cujo arquivo traz a madeira e
+ * os livros no mesmo modelo.
+ */
+const madeira = (troca?: string[]): Pick<Encaixe, "materialDe" | "recolorir"> => ({
+  materialDe: { arquivo: "/modelos/coofe_table.glb", material: "Material", troca },
+  recolorir: { Material: TOM_DA_MADEIRA },
+});
 
 /**
  * A mesa gamer entra no lugar do tampo desenhado.
@@ -360,7 +401,7 @@ export const MESA_CENTRO: Encaixe = {
      0,37 até o móvel da TV. */
   base: [0.15, 0, 0],
   giroY: Math.PI / 2,
-  recolorir: { "Material": { cor: "#6b4c33", metal: 0, aspereza: 0.8 } },
+  recolorir: { Material: TOM_DA_MADEIRA },
   prefixo: "mesa_centro_modelo",
 };
 
@@ -419,7 +460,7 @@ export const MOVEL_TV: Encaixe = {
   proporcional: true,
   base: [0, 0, 0],
   giroY: 0,
-  recolorir: { "Wood.001": { cor: "#33241a", metal: 0, aspereza: 0.85 } },
+  ...madeira(),
   prefixo: "movel_tv_modelo",
 };
 
@@ -564,6 +605,7 @@ function estante(z: number, prefixo: string, substitui: string[]): Encaixe {
        de trabalho. Viradas para o outro lado, quem olhava a mesa via só o
        fundo fechado — um paredão de madeira no meio da ilha. */
     giroY: -Math.PI / 2,
+    ...madeira(["Shelf__0"]),
     prefixo,
   };
 }
@@ -602,12 +644,7 @@ export const ESTANTE_2: Encaixe = {
   /* O mesmo quarto de volta das outras: no arquivo a largura corre no X e a
      profundidade no Z, e na divisória é o contrário. */
   giroY: -Math.PI / 2,
-  /* A madeira das outras duas, com o mapa de veio junto. O material próprio
-     dela é um bege chapado, sem textura nenhuma — igualar só a cor deixaria
-     uma lisa entre duas desenhadas. A textura da estante de livros é veio
-     corrido, quase igual em toda a imagem, então cai bem numa UV que não é a
-     dela. */
-  materialDe: { arquivo: "/modelos/bookshelf.glb", material: "Shelf__0" },
+  ...madeira(),
   prefixo: "estante_2_modelo",
 };
 
@@ -971,7 +1008,14 @@ export async function encaixarModelo(
 
     if (herdado && encaixe.uvPlano) aplanar.push(malha);
 
-    if (emprestado) malha.material = emprestado;
+    if (emprestado) {
+      const troca = encaixe.materialDe?.troca;
+      const cede = (m: THREE.Material) =>
+        !troca || troca.includes(m.name) ? emprestado : m;
+      malha.material = Array.isArray(malha.material)
+        ? malha.material.map(cede)
+        : cede(malha.material);
+    }
 
     if (encaixe.recolorir) {
       malha.material = Array.isArray(malha.material)

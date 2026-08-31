@@ -105,7 +105,10 @@ export function construirIlha(): THREE.Group {
     m.scale.set(1, 0.7, 1);
   });
   // piso de tábuas
-  const floorMats = [mat('floorPlankA', 0x2c3547, { roughness: 0.55 }), mat('floorPlankB', 0x232b3b, { roughness: 0.6 })];
+  /* O piso na madeira que as estantes tinham. 0x563622 é a cor média daquela
+     textura; a segunda tábua é a mesma um tom abaixo, para as fileiras
+     continuarem se distinguindo uma da outra. */
+  const floorMats = [mat('floorPlankA', 0x563622, { roughness: 0.55 }), mat('floorPlankB', 0x452b1b, { roughness: 0.6 })];
   const FR = 3.78, PW = 0.44;
   const rows = Math.floor((FR * 2) / PW);
   for (let i = 0; i < rows; i++) {
