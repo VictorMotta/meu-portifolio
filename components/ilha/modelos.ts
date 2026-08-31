@@ -74,6 +74,27 @@ export type Encaixe = {
    */
   recolorir?: Record<string, string | { cor: string; metal?: number; aspereza?: number }>;
   /**
+   * Cor nova por peça solta da malha, para quando o material não separa nada.
+   *
+   * O sofá é uma malha só com um material só: pelo nome do material não há
+   * como pintar as almofadas de outra cor. Só que as peças dele são ilhas de
+   * geometria que não se encostam — as três almofadas soltas são três dessas
+   * —, e é por aí que a seleção vai. Cada regra pinta as ilhas que cabem
+   * INTEIRAS dentro da caixa; ilha que só encosta na caixa fica de fora, o
+   * que evita pegar meia almofada.
+   *
+   * A caixa é dada em fração do volume da malha e nos eixos crus do arquivo,
+   * antes do `giroY` e antes do próprio nó do glTF — que é o espaço em que os
+   * vértices estão guardados. Num arquivo Z-para-cima, como o do sofá, o eixo
+   * da altura é o Z e não o Y.
+   */
+  recolorirIlhas?: {
+    dentro: { x?: [number, number]; y?: [number, number]; z?: [number, number] };
+    cor: string;
+    metal?: number;
+    aspereza?: number;
+  }[];
+  /**
    * Refaz a UV das malhas renomeadas como um plano sobre a face.
    *
    * O whiteboard tem UV, mas não uma que abra a face do quadro em 0..1 — é a
@@ -268,15 +289,35 @@ export const SOFA: Encaixe = {
     "throw_pillow",
     "sofa_foot_1", "sofa_foot_2", "sofa_foot_3", "sofa_foot_4",
   ],
-  alvo: { x: 1.0, y: 0.95, z: 2.1 },
+  /* O Z é o eixo que aperta (2,7 / 2,03 do arquivo é a menor das três razões),
+     então é ele que manda no tamanho: o sofá sai com 2,7 de comprimento, 1,12
+     de profundidade e 0,96 de altura. O X e o Y estão folgados de propósito —
+     apertados, seria um deles a mandar e o comprimento não cresceria. */
+  alvo: { x: 1.3, y: 1.15, z: 2.7 },
   proporcional: true,
-  base: [0, 0, 0],
+  /* Recuado junto com o crescimento. A mesa de centro começa em x = -0,225 no
+     grupo da zona gamer, e o sofá mais fundo passaria por cima dela. */
+  base: [-0.15, 0, 0],
   giroY: Math.PI / 2,
   /* O tecido tem textura, então a cor MULTIPLICA o desenho dela em vez de
-     substituí-lo: por isso o tom escolhido é mais claro do que o resultado
-     final. O metalness vinha 1,0 no arquivo — tecido metálico —, o que lavava
-     a textura toda. */
-  recolorir: { "Scene_-_Root": { cor: "#7f8bab", metal: 0, aspereza: 0.9 } },
+     substituí-lo: por isso os tons escolhidos são bem mais claros do que o
+     resultado final. O pixel da textura é #6b7378, o que corta pela metade
+     tudo que se pede aqui. O metalness vinha 1,0 no arquivo — tecido
+     metálico —, o que lavava a textura toda. */
+  recolorir: { "Scene_-_Root": { cor: "#2a2a2f", metal: 0, aspereza: 0.9 } },
+  /* As três almofadas soltas em azul-noite do Dracula, o mesmo acento da
+     cadeira. Elas não têm material próprio — o sofá inteiro é uma malha só —,
+     mas são ilhas de geometria separadas, e a caixa abaixo pega as três e só
+     elas: as almofadas do encosto passam de 0,80 na profundidade e as do
+     assento começam abaixo de 0,45 na altura.
+     Nos eixos crus do arquivo, que é Z-para-cima, Y é a profundidade e Z é a
+     altura. E o azul não chega a #4a5a96 como na cadeira: a textura tem só
+     0,18 de azul em linear, e nem o branco puro multiplicado por ela alcança
+     os 0,30 daquele tom. Este é o mais perto que dá, e ao lado do preto lê
+     como azul do mesmo jeito. */
+  recolorirIlhas: [
+    { dentro: { y: [0.2, 0.8], z: [0.45, 1] }, cor: "#b0c4ff", metal: 0.05, aspereza: 0.75 },
+  ],
   prefixo: "sofa_modelo",
 };
 
@@ -423,6 +464,17 @@ export const FLIPERAMA: Encaixe = {
  */
 const ALTURA_DA_ESTANTE = 1.352;
 
+/*
+ * O quanto as duas recuam na direção da cadeira, no eixo local da divisória.
+ *
+ * A divisória desenhada nasceu no meio da ilha (x = 0,05 no mundo) e as
+ * estantes herdaram esse lugar, longe da mesa. Com o recuo a frente delas fica
+ * em x = -0,65, contra as costas da cadeira em -1,08: perto o bastante para
+ * quem está sentado alcançar, sem encostar. O globo e o livro andam junto,
+ * senão ficam boiando onde a estante estava.
+ */
+const ESTANTES_PERTO_DA_CADEIRA = -0.45;
+
 function estante(z: number, prefixo: string, substitui: string[]): Encaixe {
   return {
     arquivo: "/modelos/bookshelf.glb",
@@ -430,7 +482,7 @@ function estante(z: number, prefixo: string, substitui: string[]): Encaixe {
     substitui,
     alvo: { x: 0.5, y: 1.5, z: 1.2 },
     proporcional: true,
-    base: [0, 0, z],
+    base: [ESTANTES_PERTO_DA_CADEIRA, 0, z],
     /* O modelo abre para +Z; a meia volta negativa vira as duas para a zona
        de trabalho. Viradas para o outro lado, quem olhava a mesa via só o
        fundo fechado — um paredão de madeira no meio da ilha. */
@@ -456,7 +508,7 @@ export const GLOBO: Encaixe = {
   substitui: [],
   alvo: { x: 0.26, y: 0.34, z: 0.26 },
   proporcional: true,
-  base: [0, ALTURA_DA_ESTANTE, -0.55],
+  base: [ESTANTES_PERTO_DA_CADEIRA, ALTURA_DA_ESTANTE, -0.55],
   giroY: 0.4,
   prefixo: "globo_modelo",
 };
@@ -468,7 +520,7 @@ export const LIVRO: Encaixe = {
   substitui: [],
   alvo: { x: 0.2, y: 0.2, z: 0.06 },
   proporcional: true,
-  base: [0, ALTURA_DA_ESTANTE, 0.55],
+  base: [ESTANTES_PERTO_DA_CADEIRA, ALTURA_DA_ESTANTE, 0.55],
   giroY: 0.15,
   prefixo: "livro_modelo",
 };
@@ -806,6 +858,10 @@ export async function encaixarModelo(
         ? malha.material.map(tingir)
         : tingir(malha.material);
     }
+
+    /* Depois do `recolorir`: as ilhas partem do material que a malha ficou
+       tendo, então o sofá preto é a base e as almofadas saem dele. */
+    if (encaixe.recolorirIlhas) pintarIlhas(malha, encaixe.recolorirIlhas, lixo);
   });
 
   pai.add(suporte);
@@ -823,6 +879,129 @@ export async function encaixarModelo(
   }
 
   return lixo;
+}
+
+/**
+ * Pinta ilhas de geometria de uma malha, deixando o resto dela como estava.
+ *
+ * Duas coisas do formato mandam no jeito como isto é feito:
+ *
+ * - **Vértice repetido não é vértice separado.** O arquivo repete o vértice em
+ *   cada canto de UV e em cada quebra de normal, então percorrer só os índices
+ *   quebraria o sofá em centenas de ilhas em vez de doze. A conectividade só
+ *   aparece depois de soldar os vértices que estão no mesmo ponto.
+ * - **Um grupo de material da three é uma faixa contígua do índice.** Os
+ *   triângulos de cada cor estão espalhados pelo índice original, então ele é
+ *   reescrito na ordem das cores antes de os grupos existirem.
+ */
+function pintarIlhas(
+  malha: THREE.Mesh,
+  regras: NonNullable<Encaixe["recolorirIlhas"]>,
+  lixo: Descartaveis,
+) {
+  const original = malha.geometry;
+  const indice = original.index;
+  const pos = original.attributes.position;
+  if (!indice || !pos) return;
+
+  original.computeBoundingBox();
+  const caixa = original.boundingBox;
+  if (!caixa) return;
+  const tamanho = caixa.getSize(new THREE.Vector3());
+
+  const pai = new Int32Array(pos.count);
+  for (let v = 0; v < pos.count; v++) pai[v] = v;
+  const acha = (v: number) => {
+    while (pai[v] !== v) { pai[v] = pai[pai[v]!]!; v = pai[v]!; }
+    return v;
+  };
+  const une = (a: number, b: number) => {
+    const ra = acha(a), rb = acha(b);
+    if (ra !== rb) pai[rb] = ra;
+  };
+
+  /* Solda por posição arredondada: a quarta casa decimal é fina o bastante
+     para não juntar peças vizinhas e grossa o bastante para o mesmo ponto
+     escrito duas vezes cair na mesma chave. */
+  const porPonto = new Map<string, number>();
+  for (let v = 0; v < pos.count; v++) {
+    const k = `${Math.round(pos.getX(v) * 1e4)},${Math.round(pos.getY(v) * 1e4)},${Math.round(pos.getZ(v) * 1e4)}`;
+    const antes = porPonto.get(k);
+    if (antes === undefined) porPonto.set(k, v); else une(antes, v);
+  }
+  const idx = indice.array;
+  for (let t = 0; t < idx.length; t += 3) {
+    une(idx[t]!, idx[t + 1]!);
+    une(idx[t + 1]!, idx[t + 2]!);
+  }
+
+  const ilhas = new Map<number, THREE.Box3>();
+  const ponto = new THREE.Vector3();
+  for (let t = 0; t < idx.length; t += 3) {
+    const raiz = acha(idx[t]!);
+    let c = ilhas.get(raiz);
+    if (!c) { c = new THREE.Box3().makeEmpty(); ilhas.set(raiz, c); }
+    for (let k = 0; k < 3; k++) {
+      const v = idx[t + k]!;
+      c.expandByPoint(ponto.set(pos.getX(v), pos.getY(v), pos.getZ(v)));
+    }
+  }
+
+  const cabe = (c: THREE.Box3, dentro: (typeof regras)[number]["dentro"]) =>
+    (["x", "y", "z"] as const).every((eixo) => {
+      const faixa = dentro[eixo];
+      if (!faixa) return true;
+      if (tamanho[eixo] === 0) return true;
+      const de = (c.min[eixo] - caixa.min[eixo]) / tamanho[eixo];
+      const ate = (c.max[eixo] - caixa.min[eixo]) / tamanho[eixo];
+      return de >= faixa[0] && ate <= faixa[1];
+    });
+
+  const regraDaIlha = new Map<number, number>();
+  for (const [raiz, c] of ilhas) {
+    const i = regras.findIndex((r) => cabe(c, r.dentro));
+    if (i >= 0) regraDaIlha.set(raiz, i);
+  }
+  if (regraDaIlha.size === 0) return;
+
+  /* Faixa 0 é o que fica com a cor de antes; a regra `i` vira a faixa `i + 1`. */
+  const porFaixa: number[][] = [[], ...regras.map(() => [] as number[])];
+  for (let t = 0; t < idx.length; t += 3) {
+    const faixa = (regraDaIlha.get(acha(idx[t]!)) ?? -1) + 1;
+    porFaixa[faixa]!.push(idx[t]!, idx[t + 1]!, idx[t + 2]!);
+  }
+
+  /* Geometria própria antes de reescrever o índice: as cópias do mesmo
+     arquivo compartilham a original, e mexer nela repintaria todas. */
+  const geo = original.clone();
+  lixo.push(geo);
+  malha.geometry = geo;
+
+  const base = Array.isArray(malha.material) ? malha.material[0]! : malha.material;
+  const materiais: THREE.Material[] = [];
+  const juntos = new Uint32Array(idx.length);
+  let inicio = 0;
+  geo.clearGroups();
+  porFaixa.forEach((tris, faixa) => {
+    if (tris.length === 0) return;
+    juntos.set(tris, inicio);
+    geo.addGroup(inicio, tris.length, materiais.length);
+    if (faixa === 0) {
+      materiais.push(base);
+    } else {
+      const { cor, metal, aspereza } = regras[faixa - 1]!;
+      const copia = (base as THREE.MeshStandardMaterial).clone();
+      copia.color.set(cor);
+      if (metal !== undefined) copia.metalness = metal;
+      if (aspereza !== undefined) copia.roughness = aspereza;
+      copia.needsUpdate = true;
+      lixo.push(copia);
+      materiais.push(copia);
+    }
+    inicio += tris.length;
+  });
+  geo.setIndex(new THREE.BufferAttribute(juntos, 1));
+  malha.material = materiais;
 }
 
 /** Tira da cena as peças que não entram em nenhum modelo. */
