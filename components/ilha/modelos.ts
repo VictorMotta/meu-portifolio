@@ -88,6 +88,19 @@ export type Encaixe = {
    * vértices estão guardados. Num arquivo Z-para-cima, como o do sofá, o eixo
    * da altura é o Z e não o Y.
    */
+  /**
+   * Empresta o material de outro arquivo: textura, cor e acabamento juntos.
+   *
+   * O `recolorir` troca só a cor, e cor sozinha não faz duas madeiras
+   * parecerem a mesma. A estante de nichos é um tom chapado sem textura
+   * nenhuma; as de livros têm um mapa de veio. Igualar o número da cor
+   * deixaria uma lisa ao lado de duas com desenho.
+   *
+   * O arquivo emprestado passa pelo mesmo cache dos outros, então pedir
+   * emprestado a um modelo que já está na cena não baixa nada de novo — e o
+   * material continua sendo o do dono, compartilhado, não uma cópia.
+   */
+  materialDe?: { arquivo: string; material: string };
   recolorirIlhas?: {
     dentro: { x?: [number, number]; y?: [number, number]; z?: [number, number] };
     cor: string;
@@ -509,6 +522,20 @@ export const FLIPERAMA: Encaixe = {
 const ESTANTE = { profundidade: 0.5, altura: 1.352, comprimento: 1.021 };
 
 /*
+ * O topo das tábuas do piso.
+ *
+ * O chão da ilha não é o plano y = 0: as tábuas têm 3,5 cm de espessura e o
+ * topo delas fica em 0,0365. Um móvel apoiado em y = 0 tem essa altura
+ * enterrada — e é o caso de quase todos, porque nos que têm base cheia isso
+ * não dá para ver. Na estante de nichos dá: ela é vazada até embaixo, e a
+ * fileira de baixo entrava no chão pela metade.
+ *
+ * As três sobem juntas, senão a corrigida ficaria 3,5 cm mais alta que as
+ * vizinhas — que é pior do que as três enterradas por igual.
+ */
+const TOPO_DAS_TABUAS = 0.0365;
+
+/*
  * Quanto uma estante fica da vizinha, de centro a centro. A sobra de 0,08
  * sobre o comprimento é a fresta entre elas.
  */
@@ -532,7 +559,7 @@ function estante(z: number, prefixo: string, substitui: string[]): Encaixe {
     substitui,
     alvo: { x: 0.5, y: 1.5, z: 1.2 },
     proporcional: true,
-    base: [ESTANTES_PERTO_DA_CADEIRA, 0, z],
+    base: [ESTANTES_PERTO_DA_CADEIRA, TOPO_DAS_TABUAS, z],
     /* O modelo abre para +Z; a meia volta negativa vira as duas para a zona
        de trabalho. Viradas para o outro lado, quem olhava a mesa via só o
        fundo fechado — um paredão de madeira no meio da ilha. */
@@ -571,10 +598,16 @@ export const ESTANTE_2: Encaixe = {
   substitui: [],
   alvo: { x: ESTANTE.profundidade, y: ESTANTE.altura, z: ESTANTE.comprimento },
   proporcional: false,
-  base: [ESTANTES_PERTO_DA_CADEIRA, 0, 0],
+  base: [ESTANTES_PERTO_DA_CADEIRA, TOPO_DAS_TABUAS, 0],
   /* O mesmo quarto de volta das outras: no arquivo a largura corre no X e a
      profundidade no Z, e na divisória é o contrário. */
   giroY: -Math.PI / 2,
+  /* A madeira das outras duas, com o mapa de veio junto. O material próprio
+     dela é um bege chapado, sem textura nenhuma — igualar só a cor deixaria
+     uma lisa entre duas desenhadas. A textura da estante de livros é veio
+     corrido, quase igual em toda a imagem, então cai bem numa UV que não é a
+     dela. */
+  materialDe: { arquivo: "/modelos/bookshelf.glb", material: "Shelf__0" },
   prefixo: "estante_2_modelo",
 };
 
@@ -585,7 +618,7 @@ export const GLOBO: Encaixe = {
   substitui: [],
   alvo: { x: 0.26, y: 0.34, z: 0.26 },
   proporcional: true,
-  base: [ESTANTES_PERTO_DA_CADEIRA, ESTANTE.altura, -PASSO_DA_ESTANTE],
+  base: [ESTANTES_PERTO_DA_CADEIRA, TOPO_DAS_TABUAS + ESTANTE.altura, -PASSO_DA_ESTANTE],
   giroY: 0.4,
   prefixo: "globo_modelo",
 };
@@ -795,6 +828,19 @@ function baixar(arquivo: string): Promise<THREE.Group> {
   return promessa;
 }
 
+/** O primeiro material com este nome dentro de um modelo já baixado. */
+function acharMaterial(raiz: THREE.Object3D, nome: string) {
+  let achado: THREE.Material | undefined;
+  raiz.traverse((no) => {
+    if (achado) return;
+    const malha = no as THREE.Mesh;
+    if (!malha.isMesh) return;
+    const materiais = Array.isArray(malha.material) ? malha.material : [malha.material];
+    achado = materiais.find((m) => m.name === nome);
+  });
+  return achado;
+}
+
 /**
  * Carrega e encaixa um modelo. Devolve o que precisa ser descartado quando a
  * ilha sair: geometria, material e textura vivem na placa de vídeo, e o
@@ -810,6 +856,13 @@ export async function encaixarModelo(
   if (!pai) return lixo;
 
   const modelo = (await baixar(encaixe.arquivo)).clone(true);
+
+  /* O material emprestado NÃO entra no lixo: ele é do arquivo dono, vive no
+     cache junto com ele, e descartá-lo aqui apagaria a madeira das estantes
+     de livros na primeira vez que a ilha fosse desmontada. */
+  const emprestado = encaixe.materialDe
+    ? acharMaterial(await baixar(encaixe.materialDe.arquivo), encaixe.materialDe.material)
+    : undefined;
 
   /* Dois níveis de propósito: o de dentro gira, o de fora escala. Girar e
      escalar no mesmo objeto aplicaria a escala nos eixos do modelo, e um
@@ -917,6 +970,8 @@ export async function encaixarModelo(
     malha.name = herdado ?? `${encaixe.prefixo}_${malha.name || "peca"}`;
 
     if (herdado && encaixe.uvPlano) aplanar.push(malha);
+
+    if (emprestado) malha.material = emprestado;
 
     if (encaixe.recolorir) {
       malha.material = Array.isArray(malha.material)
