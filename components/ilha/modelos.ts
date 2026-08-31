@@ -64,6 +64,15 @@ export type Encaixe = {
    * dobrado enquanto a sombra dele, atrás do próprio monitor, não aparece.
    */
   semSombra?: boolean;
+  /**
+   * Cor nova por nome de material do arquivo. Serve para o modelo entrar na
+   * paleta da ilha sem precisar abrir o .glb num editor.
+   *
+   * Os materiais originais não são tocados: eles vivem no cache, e a cadeira
+   * poderia voltar tingida numa remontagem. Cada um vira uma cópia, uma só
+   * por material, compartilhada entre as malhas que o usavam.
+   */
+  recolorir?: Record<string, string | { cor: string; metal?: number; aspereza?: number }>;
   /** Prefixo dos nomes das malhas, para elas não colidirem com as da cena. */
   prefixo: string;
 };
@@ -201,6 +210,20 @@ export const CADEIRA: Encaixe = {
   base: [0, 0, 0],
   giroY: 0,
   semSombra: true,
+  /* Preta, com os dois acentos em azul-noite do Dracula.
+     O modelo vem com amarelo (`Material.002`) e laranja (`Material`) — 80 mil
+     dos 158 mil triângulos, ou seja, a maior parte do que se vê. Os dois vão
+     para o mesmo azul: no arquivo são peças diferentes (a costura e o
+     estofado), mas na cadeira formam um acento só.
+     O resto vai a preto, incluindo a estrela da base, que era prata. */
+  recolorir: {
+    "Material.002": { cor: "#4a5a96", metal: 0.15, aspereza: 0.55 },
+    "Material": { cor: "#4a5a96", metal: 0.05, aspereza: 0.65 },
+    "Material.001": "#0d0d11",
+    "Material.003": "#1a1a1f",
+    "Material.004": "#08080a",
+    "material_0": "#0d0d11",
+  },
   prefixo: "cadeira_modelo",
 };
 
@@ -322,6 +345,30 @@ export async function encaixarModelo(
     Object.entries(encaixe.renomeia ?? {}).map(([de, para]) => [chave(de), para]),
   );
 
+  /* Uma cópia por material do arquivo, não por malha: a cadeira tem 22
+     malhas e seis materiais, e clonar por malha faria 22 programas de shader
+     onde bastam seis. */
+  const tingidos = new Map<THREE.Material, THREE.Material>();
+  const tingir = (material: THREE.Material) => {
+    const guardado = tingidos.get(material);
+    if (guardado) return guardado;
+    const receita = encaixe.recolorir?.[material.name];
+    if (receita === undefined) return material;
+    const { cor, metal, aspereza } =
+      typeof receita === "string" ? { cor: receita, metal: undefined, aspereza: undefined } : receita;
+    const copia = (material as THREE.MeshStandardMaterial).clone();
+    copia.color.set(cor);
+    /* Metalness alta transforma a cor em brilho: o acento da cadeira vinha com
+       0,77 e, trocado por azul, saía lavanda lavado em vez de azul. Poder
+       baixar isso junto com a cor é o que faz a troca render a cor pedida. */
+    if (metal !== undefined) copia.metalness = metal;
+    if (aspereza !== undefined) copia.roughness = aspereza;
+    copia.needsUpdate = true;
+    tingidos.set(material, copia);
+    lixo.push(copia);
+    return copia;
+  };
+
   modelo.traverse((no) => {
     if (!(no as THREE.Mesh).isMesh) return;
     const malha = no as THREE.Mesh;
@@ -329,6 +376,12 @@ export async function encaixarModelo(
     malha.receiveShadow = true;
     const herdado = renomeia.get(chave(malha.name));
     malha.name = herdado ?? `${encaixe.prefixo}_${malha.name || "peca"}`;
+
+    if (encaixe.recolorir) {
+      malha.material = Array.isArray(malha.material)
+        ? malha.material.map(tingir)
+        : tingir(malha.material);
+    }
   });
 
   pai.add(suporte);
