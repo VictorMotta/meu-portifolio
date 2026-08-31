@@ -268,10 +268,15 @@ export const SOFA: Encaixe = {
     "throw_pillow",
     "sofa_foot_1", "sofa_foot_2", "sofa_foot_3", "sofa_foot_4",
   ],
-  alvo: { x: 0.85, y: 0.86, z: 1.75 },
+  alvo: { x: 1.0, y: 0.95, z: 2.1 },
   proporcional: true,
   base: [0, 0, 0],
   giroY: Math.PI / 2,
+  /* O tecido tem textura, então a cor MULTIPLICA o desenho dela em vez de
+     substituí-lo: por isso o tom escolhido é mais claro do que o resultado
+     final. O metalness vinha 1,0 no arquivo — tecido metálico —, o que lavava
+     a textura toda. */
+  recolorir: { "Scene_-_Root": { cor: "#7f8bab", metal: 0, aspereza: 0.9 } },
   prefixo: "sofa_modelo",
 };
 
@@ -289,10 +294,11 @@ export const MESA_CENTRO: Encaixe = {
     "coffee_table_leg_1", "coffee_table_leg_2", "coffee_table_leg_3", "coffee_table_leg_4",
     "snack_bowl", "snack_bowl_inner", "snacks", "soda_can",
   ],
-  alvo: { x: 0.5, y: 0.4, z: 0.95 },
+  alvo: { x: 0.75, y: 0.5, z: 1.35 },
   proporcional: true,
   base: [0, 0, 0],
   giroY: Math.PI / 2,
+  recolorir: { "Material": { cor: "#6b4c33", metal: 0, aspereza: 0.8 } },
   prefixo: "mesa_centro_modelo",
 };
 
@@ -303,7 +309,7 @@ export const XADREZ: Encaixe = {
   substitui: [],
   alvo: { x: 0.3, y: 0.12, z: 0.3 },
   proporcional: true,
-  base: [0, 0.285, -0.2],
+  base: [0, 0.405, -0.28],
   giroY: 0.3,
   prefixo: "xadrez_modelo",
 };
@@ -315,7 +321,7 @@ export const NINTENDO: Encaixe = {
   substitui: [],
   alvo: { x: 0.16, y: 0.12, z: 0.16 },
   proporcional: true,
-  base: [0, 0.285, 0.28],
+  base: [0, 0.405, 0.4],
   giroY: -0.5,
   prefixo: "ds_modelo",
 };
@@ -357,6 +363,10 @@ export const TV: Encaixe = {
   proporcional: true,
   base: [0, 0.46, 0],
   giroY: Math.PI,
+  /* O material do arquivo é branco com metalness 1,0 e roughness 1,0, e sem
+     textura ligada à cor base — as imagens que o .glb carrega não são o mapa
+     de cor. Isso renderiza um cinza chapado, que foi o que apareceu. */
+  recolorir: { lambert1: { cor: "#0e0e11", metal: 0.25, aspereza: 0.45 } },
   prefixo: "tv_modelo",
 };
 
@@ -400,46 +410,65 @@ export const FLIPERAMA: Encaixe = {
  * Sai tudo que estava nela: os quatro cubos de "projeto entregue" no topo e os
  * doze livros desenhados. O modelo já vem com as próprias fileiras de livros.
  */
-export const ESTANTE: Encaixe = {
-  arquivo: "/modelos/bookshelf.glb",
-  pai: "divider_shelf",
-  substitui: [
-    "divider_side_left", "divider_side_right", "divider_back",
-    "divider_mid_post", "divider_board_1", "divider_board_2", "divider_board_3",
-    "divider_top",
-    ...[1, 2, 3, 4].flatMap((i) => [`shipped_project_${i}`, `shipped_project_label_${i}`]),
-    ...Array.from({ length: 12 }, (_, i) => `book_${i + 1}`),
-  ],
-  alvo: { x: 0.6, y: 1.5, z: 2.2 },
-  proporcional: true,
-  base: [0, 0, 0],
-  /* O modelo abre para +Z. Meia volta negativa o vira para a zona de
-     trabalho: com o quarto de volta positivo, quem olhava a mesa via só o
-     fundo fechado da estante, um paredão de madeira no meio da ilha. */
-  giroY: -Math.PI / 2,
-  prefixo: "estante_modelo",
-};
+/*
+ * Duas estantes iguais, lado a lado, no lugar da divisória.
+ *
+ * Uma só, esticada para cobrir o vão, saía desproporcional — alta e larga
+ * demais para o resto da ilha. Duas do mesmo tamanho preenchem a mesma
+ * extensão com a proporção de uma estante de verdade.
+ *
+ * A altura vale 1,352 (2,38 do arquivo x 0,568 do encaixe), e é sobre ela que
+ * o globo e o livro se apoiam — antes eles estavam num número fixo que não
+ * acompanhou a mudança de tamanho e ficaram no ar.
+ */
+const ALTURA_DA_ESTANTE = 1.352;
 
-/** O globo, em cima da estante. */
+function estante(z: number, prefixo: string, substitui: string[]): Encaixe {
+  return {
+    arquivo: "/modelos/bookshelf.glb",
+    pai: "divider_shelf",
+    substitui,
+    alvo: { x: 0.5, y: 1.5, z: 1.2 },
+    proporcional: true,
+    base: [0, 0, z],
+    /* O modelo abre para +Z; a meia volta negativa vira as duas para a zona
+       de trabalho. Viradas para o outro lado, quem olhava a mesa via só o
+       fundo fechado — um paredão de madeira no meio da ilha. */
+    giroY: -Math.PI / 2,
+    prefixo,
+  };
+}
+
+export const ESTANTE_1 = estante(-0.55, "estante_1_modelo", [
+  "divider_side_left", "divider_side_right", "divider_back",
+  "divider_mid_post", "divider_board_1", "divider_board_2", "divider_board_3",
+  "divider_top",
+  ...[1, 2, 3, 4].flatMap((i) => [`shipped_project_${i}`, `shipped_project_label_${i}`]),
+  ...Array.from({ length: 12 }, (_, i) => `book_${i + 1}`),
+]);
+
+export const ESTANTE_2 = estante(0.55, "estante_2_modelo", []);
+
+/** O globo, em cima da estante da esquerda. */
 export const GLOBO: Encaixe = {
   arquivo: "/modelos/globe.glb",
   pai: "divider_shelf",
   substitui: [],
   alvo: { x: 0.26, y: 0.34, z: 0.26 },
   proporcional: true,
-  base: [0, 1.62, -0.5],
+  base: [0, ALTURA_DA_ESTANTE, -0.55],
   giroY: 0.4,
   prefixo: "globo_modelo",
 };
 
-/** Um livro em pé, ao lado do globo. */
+/** Um livro em pé, em cima da estante da direita. */
 export const LIVRO: Encaixe = {
   arquivo: "/modelos/stand_book.glb",
   pai: "divider_shelf",
   substitui: [],
   alvo: { x: 0.2, y: 0.2, z: 0.06 },
   proporcional: true,
-  base: [0, 1.62, 0.35],
+  base: [0, ALTURA_DA_ESTANTE, 0.55],
   giroY: 0.15,
   prefixo: "livro_modelo",
 };
@@ -492,6 +521,8 @@ export const LUMINARIA: Encaixe = {
   proporcional: true,
   base: [0, 0, 0],
   giroY: 0,
+  /* Mesmo caso da TV: branco metálico sem mapa de cor. */
+  recolorir: { lambert2SG: { cor: "#cfc9bb", metal: 0.05, aspereza: 0.85 } },
   prefixo: "luminaria_modelo",
 };
 
@@ -624,7 +655,7 @@ export const ENCAIXES: Encaixe[] = [
   MESA_GAMER, MACBOOK, MONITOR_ESQ, MONITOR_DIR, CADEIRA,
   SOFA, MESA_CENTRO, XADREZ, NINTENDO,
   MOVEL_TV, TV, PS1, FLIPERAMA,
-  ESTANTE, GLOBO, LIVRO, GABINETE, BEBEDOURO, LIXEIRA, LUMINARIA,
+  ESTANTE_1, ESTANTE_2, GLOBO, LIVRO, GABINETE, BEBEDOURO, LIXEIRA, LUMINARIA,
   PLANTA_1, PLANTA_2, PLANTA_3, PLANTA_MESA,
   QUADRO_STACK, QUADRO_PROJETOS, QUADRO_CURRICULO,
 ];
