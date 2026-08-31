@@ -105,10 +105,16 @@ export function construirIlha(): THREE.Group {
     m.scale.set(1, 0.7, 1);
   });
   // piso de tábuas
-  /* O piso na madeira que as estantes tinham. 0x563622 é a cor média daquela
-     textura; a segunda tábua é a mesma um tom abaixo, para as fileiras
-     continuarem se distinguindo uma da outra. */
-  const floorMats = [mat('floorPlankA', 0x563622, { roughness: 0.55 }), mat('floorPlankB', 0x452b1b, { roughness: 0.6 })];
+  /* O piso na madeira que as estantes tinham: 0x563622 é a cor média daquela
+     textura, e a segunda tábua é a mesma um tom abaixo, para as fileiras
+     continuarem se distinguindo uma da outra.
+     Estes números NÃO são a cor final. O veio da madeira entra por cima, mais
+     tarde, em `amadeirarPiso` — a textura vive dentro de um .glb e aqui ainda
+     não chegou —, e a cor multiplica esse desenho em vez de substituí-lo. Por
+     isso os dois tons são bem mais claros do que o chão que se vê: o pixel
+     médio da textura é #a47c59, e ele corta quase pela metade o que se pede
+     aqui. */
+  const floorMats = [mat('floorPlankA', 0x867b71, { roughness: 0.55 }), mat('floorPlankB', 0x71665f, { roughness: 0.6 })];
   const FR = 3.78, PW = 0.44;
   const rows = Math.floor((FR * 2) / PW);
   for (let i = 0; i < rows; i++) {

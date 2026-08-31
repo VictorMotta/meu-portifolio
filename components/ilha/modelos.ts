@@ -127,6 +127,19 @@ export type Encaixe = {
    * partir da caixa da geometria, o desenho cobre a face.
    */
   uvPlano?: boolean;
+  /**
+   * Reescreve a UV como projeção em caixa, com esta medida em metros por volta
+   * da textura.
+   *
+   * Para modelo cuja UV não foi feita para textura. A da estante de nichos vai
+   * de 0 a 0,625 num eixo e passa de 2 no outro: cada face pega um pedaço
+   * diferente do veio, e os nichos saem partidos em triângulos de tom
+   * diferente. Projetando, o veio corre igual pela peça inteira.
+   *
+   * A medida é em metros do mundo, não em fração da malha, para o veio sair do
+   * mesmo tamanho em móveis que entraram com escalas diferentes.
+   */
+  uvCaixa?: number;
   /** Prefixo dos nomes das malhas, para elas não colidirem com as da cena. */
   prefixo: string;
 };
@@ -156,8 +169,20 @@ const TOM_DA_MADEIRA = { cor: "#6b4c33", metal: 0, aspereza: 0.8 };
  * `troca` existe por causa da estante de livros, cujo arquivo traz a madeira e
  * os livros no mesmo modelo.
  */
+const ARQUIVO_DA_MADEIRA = "/modelos/coofe_table.glb";
+const MATERIAL_DA_MADEIRA = "Material";
+
+/*
+ * Quantos metros de piso cabem numa volta da textura.
+ *
+ * As tábuas têm 0,44 de largura, então dois metros dão pouco mais de quatro
+ * fileiras por volta do veio — perto o bastante para o desenho não se repetir
+ * na cara de quem olha, largo o bastante para não virar listra.
+ */
+const METROS_POR_VOLTA_NO_PISO = 2.0;
+
 const madeira = (troca?: string[]): Pick<Encaixe, "materialDe" | "recolorir"> => ({
-  materialDe: { arquivo: "/modelos/coofe_table.glb", material: "Material", troca },
+  materialDe: { arquivo: ARQUIVO_DA_MADEIRA, material: MATERIAL_DA_MADEIRA, troca },
   recolorir: { Material: TOM_DA_MADEIRA },
 });
 
@@ -645,6 +670,8 @@ export const ESTANTE_2: Encaixe = {
      profundidade no Z, e na divisória é o contrário. */
   giroY: -Math.PI / 2,
   ...madeira(),
+  /* A UV do arquivo quebrava o veio em triângulos dentro de cada nicho. */
+  uvCaixa: 1.2,
   prefixo: "estante_2_modelo",
 };
 
@@ -973,6 +1000,7 @@ export async function encaixarModelo(
      "de cima" da textura é decidido pela orientação no mundo, e antes de o
      suporte entrar na cena essa orientação ainda não existe. */
   const aplanar: THREE.Mesh[] = [];
+  const projetar: THREE.Mesh[] = [];
 
   /* Uma cópia por material do arquivo, não por malha: a cadeira tem 22
      malhas e seis materiais, e clonar por malha faria 22 programas de shader
@@ -1007,6 +1035,7 @@ export async function encaixarModelo(
     malha.name = herdado ?? `${encaixe.prefixo}_${malha.name || "peca"}`;
 
     if (herdado && encaixe.uvPlano) aplanar.push(malha);
+    if (encaixe.uvCaixa !== undefined) projetar.push(malha);
 
     if (emprestado) {
       const troca = encaixe.materialDe?.troca;
@@ -1032,6 +1061,16 @@ export async function encaixarModelo(
   lixo.push({ dispose: () => { suporte.removeFromParent(); } });
 
   suporte.updateWorldMatrix(true, true);
+
+  /* Só agora: a projeção é medida no mundo, e antes de o suporte entrar na
+     cena a malha ainda não tem lugar nem escala. */
+  for (const malha of projetar) {
+    const geo = projetarUV(malha, encaixe.uvCaixa ?? 1);
+    if (geo) lixo.push(geo);
+    const material = malha.material;
+    if (!Array.isArray(material)) malha.material = repetirMapa(material, lixo);
+  }
+
   for (const malha of aplanar) {
     /* Geometria própria antes de mexer na UV. As cópias do mesmo arquivo
        compartilham a geometria, e os três quadros entram em orientações
@@ -1181,6 +1220,80 @@ export function esconder(ilha: THREE.Object3D, nomes: string[]): Descartaveis {
 }
 
 /**
+ * Reescreve a UV de uma malha como projeção em caixa, medida no mundo.
+ *
+ * Para cada triângulo, escolhe o eixo em que a normal é mais forte e usa os
+ * outros dois como U e V. É o que salva um modelo cuja UV não foi feita para
+ * textura — as faces param de pegar cada uma um pedaço diferente do veio.
+ *
+ * A geometria perde o índice: um vértice de canto pertence a triângulos de
+ * eixos diferentes, e cada um deles quer uma UV própria ali.
+ *
+ * Medir no mundo é o que faz o veio sair do mesmo tamanho em móveis que
+ * entraram com escalas diferentes — a estante de nichos, por exemplo, entra
+ * esticada em três eixos por números diferentes.
+ */
+function projetarUV(malha: THREE.Mesh, metrosPorVolta: number) {
+  const solta = malha.geometry.toNonIndexed();
+  const pos = solta.attributes.position;
+  if (!pos) return null;
+
+  malha.updateWorldMatrix(true, false);
+  const mundo = malha.matrixWorld;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  const ab = new THREE.Vector3(), ac = new THREE.Vector3(), n = new THREE.Vector3();
+  const uv = new Float32Array(pos.count * 2);
+
+  for (let t = 0; t + 2 < pos.count; t += 3) {
+    a.fromBufferAttribute(pos, t).applyMatrix4(mundo);
+    b.fromBufferAttribute(pos, t + 1).applyMatrix4(mundo);
+    c.fromBufferAttribute(pos, t + 2).applyMatrix4(mundo);
+    n.crossVectors(ab.subVectors(b, a), ac.subVectors(c, a));
+    const nx = Math.abs(n.x), ny = Math.abs(n.y), nz = Math.abs(n.z);
+    /* Os dois eixos que sobram depois do dominante. Numa face virada para
+       cima, U e V são X e Z — que é o que faz o veio do piso correr no
+       comprimento das tábuas, e não atravessado. */
+    const [eu, ev] = ny >= nx && ny >= nz
+      ? (["x", "z"] as const)
+      : nx >= nz
+        ? (["z", "y"] as const)
+        : (["x", "y"] as const);
+    for (const [i, ponto] of [[t, a], [t + 1, b], [t + 2, c]] as const) {
+      uv[i * 2] = ponto[eu] / metrosPorVolta;
+      uv[i * 2 + 1] = ponto[ev] / metrosPorVolta;
+    }
+  }
+
+  solta.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  malha.geometry = solta;
+  return solta;
+}
+
+/**
+ * Uma cópia do material cuja textura se repete fora do 0..1.
+ *
+ * A UV projetada passa de 1, e o mapa vem do arquivo dono — a mesa de centro
+ * usa o mesmo. Mexer no modo de repetição dele mudaria a mesa junto, então
+ * material e textura viram cópia. A cópia da textura compartilha a imagem já
+ * decodificada; o que ela ganha é o próprio modo de repetição.
+ */
+function repetirMapa(material: THREE.Material, lixo: Descartaveis) {
+  const copia = (material as THREE.MeshStandardMaterial).clone();
+  const mapa = copia.map;
+  if (mapa) {
+    const repetido = mapa.clone();
+    repetido.wrapS = THREE.RepeatWrapping;
+    repetido.wrapT = THREE.RepeatWrapping;
+    repetido.needsUpdate = true;
+    copia.map = repetido;
+    lixo.push(repetido);
+  }
+  copia.needsUpdate = true;
+  lixo.push(copia);
+  return copia;
+}
+
+/**
  * Reescreve a UV de uma malha como um plano sobre os dois eixos maiores dela.
  *
  * A geometria é compartilhada entre as cópias do mesmo arquivo, então isto
@@ -1232,10 +1345,78 @@ export async function encaixarModelos(
   ilha: THREE.Object3D,
   encaixes: Encaixe[],
 ): Promise<Descartaveis> {
-  const listas = await Promise.all(
-    encaixes.map((encaixe) =>
+  const listas = await Promise.all([
+    ...encaixes.map((encaixe) =>
       encaixarModelo(ilha, encaixe).catch(() => [] as Descartaveis),
     ),
-  );
+    /* O piso entra aqui porque depende do mesmo download: a madeira dele é a
+       dos móveis, e ela vem de dentro de um .glb. */
+    amadeirarPiso(ilha).catch(() => [] as Descartaveis),
+  ]);
   return listas.flat();
+}
+
+/**
+ * Põe nas tábuas do piso a mesma madeira dos móveis.
+ *
+ * As tábuas nascem em `cena.ts` com uma cor lisa, porque lá a madeira ainda
+ * não existe — ela mora dentro de um .glb e só chega depois do download. A cor
+ * de cada uma continua sendo a de lá; o que entra aqui é o veio por cima.
+ *
+ * A UV é projetada no mundo, tábua por tábua, com a mesma medida para todas:
+ * é isso que faz o veio atravessar as emendas em vez de recomeçar em cada
+ * tábua — que é o que a UV própria de uma caixa daria, uma volta inteira da
+ * textura em cada pedaço, mais apertada nos pedaços curtos.
+ */
+async function amadeirarPiso(ilha: THREE.Object3D): Promise<Descartaveis> {
+  const lixo: Descartaveis = [];
+  const madeiraDoArquivo = acharMaterial(
+    await baixar(ARQUIVO_DA_MADEIRA),
+    MATERIAL_DA_MADEIRA,
+  );
+  const mapa = (madeiraDoArquivo as THREE.MeshStandardMaterial | undefined)?.map;
+  if (!mapa) return lixo;
+
+  const veio = mapa.clone();
+  veio.wrapS = THREE.RepeatWrapping;
+  veio.wrapT = THREE.RepeatWrapping;
+  veio.needsUpdate = true;
+  lixo.push(veio);
+
+  /* Uma cópia de material por cor de tábua, não por tábua: são mais de duzentas
+     tábuas e duas cores, alternadas. */
+  const porCor = new Map<THREE.Material, THREE.Material>();
+  ilha.updateWorldMatrix(true, true);
+
+  ilha.traverse((no) => {
+    if (!no.name.startsWith("floor_plank_")) return;
+    const malha = no as THREE.Mesh;
+    if (!malha.isMesh || Array.isArray(malha.material)) return;
+
+    /* As tábuas são da cena, não de um modelo: elas continuam vivas depois que
+       a ilha se desfaz. Então geometria e material voltam a ser os de antes no
+       descarte — sem isso, a caixa original de cada tábua ficaria sem dono e a
+       remontagem projetaria por cima de uma projeção. */
+    const geoAntiga = malha.geometry;
+    const geo = projetarUV(malha, METROS_POR_VOLTA_NO_PISO);
+    if (geo) {
+      lixo.push(geo);
+      lixo.push({ dispose: () => { malha.geometry = geoAntiga; } });
+    }
+
+    const original = malha.material;
+    let comVeio = porCor.get(original);
+    if (!comVeio) {
+      const copia = (original as THREE.MeshStandardMaterial).clone();
+      copia.map = veio;
+      copia.needsUpdate = true;
+      lixo.push(copia);
+      porCor.set(original, copia);
+      comVeio = copia;
+    }
+    malha.material = comVeio;
+    lixo.push({ dispose: () => { malha.material = original; } });
+  });
+
+  return lixo;
 }
