@@ -1,6 +1,17 @@
 import * as THREE from "three";
 
 /**
+ * A altura em que a madeira do piso termina — e, portanto, a altura em que
+ * tudo o que fica no chão da ilha se apoia.
+ *
+ * Mora aqui, e não em `modelos.ts`, porque quem decide é a tábua: é a soma do
+ * ponto em que ela começa com a espessura dela. Já esteve escrito à mão nos
+ * dois arquivos, e foi assim que as estantes acabaram enterradas no piso.
+ */
+export const TOPO_DAS_TABUAS = 0.0365;
+const ESPESSURA_DA_TABUA = 0.035;
+
+/**
  * A ilha do escritório.
  *
  * Geometria vinda de um projeto do Claude Design. O original era acoplado a um
@@ -116,16 +127,107 @@ export function construirIlha(): THREE.Group {
      aqui. */
   const floorMats = [mat('floorPlankA', 0x867b71, { roughness: 0.55 }), mat('floorPlankB', 0x71665f, { roughness: 0.6 })];
   const FR = 3.78, PW = 0.44;
-  const rows = Math.floor((FR * 2) / PW);
+  /* A folga em volta de cada tábua. É ela que desenha as frestas. */
+  const FRESTA = 0.01;
+  /* Quantos pontos desenham a curva de uma ponta. */
+  const CURVA = 6;
+  /* Tábua mais fina que isto não é tábua: vira uma lasca do tamanho da fresta. */
+  const FINA = 0.02;
+
+  /**
+   * Uma tábua recortada no círculo do piso.
+   *
+   * O retângulo cru é [xa..xb] x [z0..z1]; o que sai é a parte dele que cabe
+   * dentro do círculo, medida z a z. Nas tábuas do meio isso não muda nada;
+   * nas das pontas, troca o canto reto por um arco.
+   *
+   * Era o canto reto que dava os dois defeitos de uma vez. A largura da
+   * fileira vinha do z do MEIO dela, e a fileira é larga: na borda de fora, o
+   * círculo já é mais estreito ali do que no meio, e o canto passava para fora
+   * do aro. Ao mesmo tempo o retângulo não alcançava o arco entre um canto e
+   * outro, e sobrava um vão contra o aro.
+   */
+  function tabua(xa: number, xb: number, z0: number, z1: number) {
+    /* O que sobra do retângulo cru neste z, depois do corte do círculo. */
+    const largura = (z: number) => {
+      const borda = Math.sqrt(Math.max(FR * FR - z * z, 0)) - FRESTA;
+      return Math.min(xb, borda) - Math.max(xa, -borda);
+    };
+    /* O z em que esta tábua é mais larga: o ponto da fileira mais perto do
+       meio do piso. Dali para as duas pontas ela só afina — o círculo é
+       convexo —, e é isso que faz a bisseção abaixo funcionar. */
+    const cheio = z0 * z1 <= 0 ? 0 : Math.abs(z0) < Math.abs(z1) ? z0 : z1;
+    if (largura(cheio) < FINA) return null;
+
+    /* Onde a tábua afina até sumir, procurado por bisseção em vez de sair do
+       passo fixo da amostragem.
+       O passo fixo era o que deixava a lasca de piso à mostra no topo e na
+       base do círculo: lá a fileira corre rente ao aro, o último ponto do
+       passo já caía fora do círculo e era descartado, e a tábua terminava
+       reta no ponto ANTERIOR — a calota entre ele e o aro ficava sem madeira.
+       Achando a ponta de verdade, o último ponto pousa nela. */
+    const ponta = (fora: number) => {
+      if (largura(fora) >= FINA) return fora;
+      let dentro = cheio, longe = fora;
+      for (let n = 0; n < 24; n++) {
+        const m = (dentro + longe) / 2;
+        if (largura(m) >= FINA) dentro = m;
+        else longe = m;
+      }
+      return dentro;
+    };
+    const za = ponta(z0), zb = ponta(z1);
+    if (zb - za < 1e-4) return null;
+
+    const direita: THREE.Vector2[] = [];
+    const esquerda: THREE.Vector2[] = [];
+    for (let k = 0; k <= CURVA; k++) {
+      const z = za + ((zb - za) * k) / CURVA;
+      const borda = Math.sqrt(Math.max(FR * FR - z * z, 0)) - FRESTA;
+      /* O Z entra negado: a rotação que deita a forma no chão é a mesma que
+         mantém as faces viradas para cima, e ela espelha o eixo. */
+      direita.push(new THREE.Vector2(Math.min(xb, borda), -z));
+      esquerda.push(new THREE.Vector2(Math.max(xa, -borda), -z));
+    }
+    const forma = new THREE.Shape([...direita, ...esquerda.reverse()]);
+    const geo = new THREE.ExtrudeGeometry(forma, { depth: ESPESSURA_DA_TABUA, bevelEnabled: false });
+    /* A forma nasce em pé no XY; deitada, a espessura passa a sair do chão
+       para cima, de y=0 a y=0,035. O deslocamento é o que põe a tábua na
+       altura da caixa que ela substituiu: de 0,0015 a 0,0365.
+       O 0,0365 é o topo, e ele NÃO é opcional — é o `TOPO_DAS_TABUAS` de
+       `modelos.ts`, a altura em que os móveis se apoiam. Deslocar a tábua
+       pelo topo em vez de pela base levanta o piso 3,5 cm e enterra no chão
+       tudo o que estiver em cima dele. */
+    geo.rotateX(-Math.PI / 2);
+    geo.translate(0, TOPO_DAS_TABUAS - ESPESSURA_DA_TABUA, 0);
+    return geo;
+  }
+
+  /* As fileiras cobrem de -3,96 a 3,96, mais do que o círculo, e o recorte se
+     encarrega do resto. Contando só as que cabiam inteiras sobrava uma faixa
+     sem tábua num dos lados. */
+  const rows = Math.ceil((FR * 2) / PW);
   for (let i = 0; i < rows; i++) {
-    const z = -FR + PW / 2 + i * PW;
-    const half = Math.sqrt(Math.max(FR * FR - z * z, 0));
+    const z0 = -(rows * PW) / 2 + i * PW + FRESTA;
+    const z1 = z0 + PW - 2 * FRESTA;
+    /* O corte em pedaços continua saindo da largura no meio da fileira: ele
+       decide só onde ficam as emendas, e o recorte vem depois. */
+    const meio = (z0 + z1) / 2;
+    const half = Math.sqrt(Math.max(FR * FR - meio * meio, 0));
     if (half < 0.15) continue;
     const segs = Math.max(1, Math.round((half * 2) / 1.6));
     const segW = (half * 2) / segs;
     for (let j = 0; j < segs; j++) {
-      const x = -half + segW / 2 + j * segW;
-      part(`floor_plank_${i + 1}_${j + 1}`, box(segW - 0.02, 0.035, PW - 0.02), floorMats[(i + j) % 2]!, [x, 0.019, z], [0, 0, 0], island);
+      /* As duas pontas da fileira correm para fora do círculo de propósito, e
+         quem as encurta é o recorte. Pará-las em `half` deixava justamente o
+         vão que o recorte veio fechar: `half` é a largura no MEIO da fileira,
+         e na borda de dentro dela o círculo já é bem mais largo — 0,80 a mais
+         na fileira da ponta. Só as emendas de dentro saem de `half`. */
+      const xa = j === 0 ? -FR - PW : -half + j * segW + FRESTA;
+      const xb = j === segs - 1 ? FR + PW : -half + (j + 1) * segW - FRESTA;
+      const geo = tabua(xa, xb, z0, z1);
+      if (!geo) continue;
+      part(`floor_plank_${i + 1}_${j + 1}`, geo, floorMats[(i + j) % 2]!, [0, 0, 0], [0, 0, 0], island);
     }
   }
   part('floor_trim', new THREE.TorusGeometry(FR + 0.05, 0.05, 12, 64), M.shellLt, [0, 0.03, 0], [Math.PI / 2, 0, 0], island);

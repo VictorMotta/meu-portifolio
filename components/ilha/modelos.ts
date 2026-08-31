@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { TOPO_DAS_TABUAS } from "@/components/ilha/cena";
 import type { Descartaveis } from "@/components/ilha/texturas";
 
 /**
@@ -598,8 +599,10 @@ const ESTANTE = { profundidade: 0.5, altura: 1.352, comprimento: 1.021 };
  *
  * As três sobem juntas, senão a corrigida ficaria 3,5 cm mais alta que as
  * vizinhas — que é pior do que as três enterradas por igual.
+ *
+ * A altura em si vem de `cena.ts`, de quem constrói a tábua. Repetida aqui,
+ * ela já saiu do lugar uma vez sem ninguém notar.
  */
-const TOPO_DAS_TABUAS = 0.0365;
 
 /*
  * Quanto uma estante fica da vizinha, de centro a centro. A sobra de 0,08
