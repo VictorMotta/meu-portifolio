@@ -1,7 +1,12 @@
 import * as THREE from "three";
 
+import {
+  ALTURA as ALTURA_FLIPERAMA,
+  desenharAtracao,
+} from "@/components/ilha/fliperama";
 import type { Dictionary } from "@/content/i18n";
 import { mod } from "@/content/hobby";
+import type { Locale } from "@/content/site";
 import { stack, stackGroupOrder } from "@/content/stack";
 import type { Project } from "@/lib/projects";
 
@@ -374,22 +379,25 @@ function telaTv(dict: Dictionary) {
   return t.c;
 }
 
-function telaArcade() {
-  const t = tela(620);
+
+/**
+ * A tela do fliperama.
+ *
+ * Só a moldura: quem desenha é `desenharAtracao`, em `fliperama.ts`, que é a
+ * mesma função que o painel chama quando a câmera chega perto. Aqui ela é
+ * chamada no quadro 0 — a tela parada —, porque textura não anima: são
+ * pixels enviados uma vez para a placa de vídeo. O movimento começa quando o
+ * painel pousa em cima dela.
+ *
+ * Em pé, e não deitada como as outras telas: a tela do gabinete tem 0,50 de
+ * largura por 0,59 de altura, e um canvas deitado sairia esticado. Ficou a
+ * favor — shoot'em up de nave é o gênero que roda em tela em pé.
+ */
+function telaArcade(dict: Dictionary, locale: Locale) {
+  const t = tela(ALTURA_FLIPERAMA);
   if (!t) return null;
-  const { c, p } = t;
-  p.fillStyle = "#0a0f1e";
-  p.fillRect(0, 0, LARGURA, 620);
-  p.font = `bold 72px ${MONO}`;
-  p.fillStyle = "#4ee1c1";
-  p.textAlign = "center";
-  p.fillText("INSERT", LARGURA / 2, 260);
-  p.fillText("COIN", LARGURA / 2, 340);
-  p.font = `32px ${MONO}`;
-  p.fillStyle = "#6f8fff";
-  p.fillText("1 PLAYER", LARGURA / 2, 440);
-  p.textAlign = "left";
-  return c;
+  desenharAtracao(t.p, dict, locale, 0);
+  return t.c;
 }
 
 /* ---------- os quadros ---------- */
@@ -744,6 +752,14 @@ function pintar(
   lixo: Descartaveis,
   /** Telas brilham com o próprio desenho; papel e quadro branco, não. */
   acesa: boolean,
+  /**
+   * Tubo de raios catódicos: o preto do desenho tem de continuar preto com a
+   * luminária acesa do lado. Um monitor moderno reflete a sala e o preto dele
+   * vira cinza — num fliperama isso desmancha a tela inteira, porque o fundo
+   * é quase todo preto. Zerar a cor base tira o difuso do caminho: o que se
+   * vê passa a ser só o que a tela emite, que é o que um tubo faz.
+   */
+  tubo = false,
 ): THREE.CanvasTexture | null {
   if (!canvas) return null;
   const alvo = ilha.getObjectByName(nome) as THREE.Mesh | undefined;
@@ -763,6 +779,17 @@ function pintar(
     material.emissive = new THREE.Color(0xffffff);
     material.emissiveMap = textura;
     material.emissiveIntensity = 0.85;
+    if (tubo) {
+      material.color.set(0x000000);
+      /* Fosco e sem metal: o que sobrava depois de zerar a cor era o brilho
+         especular da luminária, uma mancha quente subindo pelo canto de baixo
+         da tela. Vidro de tubo é fosco e não reflete a sala assim. */
+      material.roughness = 1;
+      material.metalness = 0;
+      /* Sem o difuso somando, o desenho precisa acender um pouco mais para
+         chegar ao mesmo branco de antes. */
+      material.emissiveIntensity = 1.15;
+    }
   } else {
     /* Papel não brilha. Alguns post-its do quadro usam o material das telas,
        que é emissivo — sem apagar isso o brilho lava o texto e a nota volta a
@@ -857,6 +884,7 @@ export function apagarTela(ilha: THREE.Object3D, nome: string): () => void {
 export function aplicarTexturas(
   ilha: THREE.Object3D,
   dict: Dictionary,
+  locale: Locale,
   projetos: Project[],
   nome: string,
 ): Descartaveis {
@@ -883,7 +911,7 @@ export function aplicarTexturas(
     if (p) desenharTv(p, dict, imagem);
   }, lixo);
 
-  pintar(ilha, "arcade_screen", telaArcade(), lixo, true);
+  pintar(ilha, "arcade_screen", telaArcade(dict, locale), lixo, true, true);
 
   pintar(ilha, "whiteboard_panel", quadroStack(dict), lixo, false);
   /* A faixa azul do quadro carrega o mesmo chapéu que a barra azul do painel

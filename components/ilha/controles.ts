@@ -20,7 +20,7 @@ const MOVEL_PARA_PONTO: Record<string, ChavePonto> = {
   monitor_right: "contato",
   macbook: "contato",
   tv_wall: "mods",
-  arcade_cabinet: "mods",
+  arcade_cabinet: "jogos",
   sofa: "mods",
   coffee_table: "mods",
   resume_easel: "curriculo",

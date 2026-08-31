@@ -30,6 +30,25 @@ export type Encaixe = {
   /** Peças geradas que este modelo substitui: ficam invisíveis. */
   substitui: string[];
   /**
+   * Peça desenhada que FICA, mas muda de lugar para casar com o modelo.
+   *
+   * A tela do fliperama é o caso. O arquivo dele é uma malha só, com um
+   * material só — a tela, o gabinete e o painel de controle estão todos na
+   * mesma textura, e não há por onde pintar só o retângulo da tela. Então a
+   * chapa desenhada `arcade_screen` continua na cena, como a `tv_screen`
+   * continua encostada na frente da TV, e é nela que `texturas.ts` escreve.
+   *
+   * O que não dá para reaproveitar é o LUGAR: a tela do arquivo não está
+   * onde a do gabinete desenhado estava, nem no mesmo eixo. Os números vêm de
+   * raio lançado contra o modelo já montado e convertido para os eixos do
+   * grupo — é medida, não chute —, e voltam ao que eram no descarte.
+   */
+  recoloca?: Record<string, {
+    posicao: [number, number, number];
+    giro: [number, number, number];
+    escala: [number, number, number];
+  }>;
+  /**
    * A caixa que o modelo deve ocupar, nos eixos locais do pai, em metros.
    * `proporcional` faz o modelo caber dentro dela sem distorcer, o que quase
    * sempre sobra espaço em algum eixo.
@@ -568,14 +587,18 @@ export const PS1: Encaixe = {
   base: [-0.02, ALTURA_DO_MOVEL_TV, -0.45],
   giroY: 0,
   /* De frente para a mesa de centro, como o móvel debaixo dele.
-     Aqui o quarto de volta não é o mesmo caso do móvel: o console tem a
-     frente — a que traz os "PORT 1" e "PORT 2" — em -Z no arquivo, e não em
-     -X. As duas faces em X são as LATERAIS, as duas ranhuradas, e é por isso
-     que meia volta não resolvia nada: trocava um flanco pelo outro.
+     Aqui o quarto de volta não é o mesmo caso do móvel: no arquivo o console
+     tem a frente em +Z, e não em -X. As duas faces em X são as LATERAIS, as
+     duas ranhuradas, e é por isso que meia volta não resolvia nada: trocava
+     um flanco pelo outro.
+     A frente é a que traz os dois "SAVE CARD" numerados e as entradas de
+     controle. A outra face comprida também tem bocas — as escritas "PORT 1"
+     e "PORT 2" —, e é a TRASEIRA: quem for pelo texto vira o console ao
+     contrário, que foi o que aconteceu aqui.
      Continua sendo giro FINAL. No `giroY` ele entraria antes da medida, e o
      alvo do X (0,26 — a largura de um PS1 de verdade) cairia sobre os 18,5 cm
      da profundidade: o console sairia um terço maior do que é. */
-  giroFinalY: Math.PI / 2,
+  giroFinalY: -Math.PI / 2,
   prefixo: "ps1_modelo",
 };
 
@@ -583,11 +606,30 @@ export const PS1: Encaixe = {
 export const FLIPERAMA: Encaixe = {
   arquivo: "/modelos/arcade_cabinet.glb",
   pai: "arcade_cabinet",
+  /* `arcade_screen` NÃO entra aqui: a chapa dela é a superfície onde os
+     jogos são escritos, e some junto com o resto se for substituída. Ela
+     continua, recolocada logo abaixo. */
   substitui: [
-    "arcade_body", "arcade_marquee", "arcade_screen", "arcade_panel",
+    "arcade_body", "arcade_marquee", "arcade_panel",
     "arcade_stick", "arcade_ball", "arcade_button_1", "arcade_button_2",
     "arcade_base_glow",
   ],
+  /* A tela do arquivo é um retângulo de 0,52 x 0,61 deitado 23° para trás,
+     entre 0,885 e 1,445 de altura, e recuado uns 4 cm do friso que o cerca —
+     medido a raio, num varrimento de frente para o gabinete.
+     A chapa desenhada nasce com 0,05 x 0,42 x 0,50 e de pé no eixo X, porque
+     o gabinete desenhado olhava para -X; o do arquivo olha para +Z do grupo.
+     Daí a escala grande no X (0,05 vira 0,50 de largura), a fina no Z (a
+     espessura) e o giro em torno do X, que é o que deita a chapa junto com a
+     tela. Ela para 4 mm à frente do vidro: encostada, as duas superfícies
+     brigam pelo mesmo pixel e a tela pisca. */
+  recoloca: {
+    arcade_screen: {
+      posicao: [0, 1.169, -0.01],
+      giro: [-0.404, 0, 0],
+      escala: [10, 1.405, 0.024],
+    },
+  },
   /* 1,75 de altura, que é a de um fliperama de verdade — dá 0,67 de largura
      e 0,92 de profundidade, contando o painel de controle que avança.
      O que mandava antes era o Z, e por acidente: o arquivo é 1,4 vez mais
@@ -1127,6 +1169,24 @@ export async function encaixarModelo(
     if (!peca) continue;
     peca.visible = false;
     lixo.push({ dispose: () => { peca.visible = true; } });
+  }
+
+  for (const [nome, onde] of Object.entries(encaixe.recoloca ?? {})) {
+    const peca = ilha.getObjectByName(nome);
+    if (!peca) continue;
+    const antes = {
+      posicao: peca.position.clone(),
+      giro: peca.rotation.clone(),
+      escala: peca.scale.clone(),
+    };
+    peca.position.set(...onde.posicao);
+    peca.rotation.set(...onde.giro);
+    peca.scale.set(...onde.escala);
+    lixo.push({ dispose: () => {
+      peca.position.copy(antes.posicao);
+      peca.rotation.copy(antes.giro);
+      peca.scale.copy(antes.escala);
+    } });
   }
 
   for (const alvo of Object.values(encaixe.renomeia ?? {})) {

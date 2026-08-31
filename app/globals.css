@@ -582,6 +582,34 @@ html[data-ilha="on"] body {
   --risco: #c9c4b8;
 }
 
+/* Tela do fliperama: a única superfície da ilha que foge do Dracula, e foge
+   de propósito. Um gabinete de arcade com a paleta do site vira mais um
+   monitor na sala.
+
+   Aqui a superfície é quase só o fundo e a moldura: quem desenha o conteúdo
+   é o canvas de `components/ilha/fliperama.ts`, o mesmo que pinta a textura
+   da chapa em 3D — estrelas, riscas de tubo e letra de bloco saem de lá. O
+   preto liso é o que aparece enquanto o painel entra, e os tokens abaixo
+   vestem o que é HTML de verdade: o botão de fechar e o anel de foco.
+
+   tinta        #ffffff sobre preto -> 21.0:1  AAA
+   tinta-fraca  #3fe0ff sobre preto -> 13.3:1  AAA
+   tinta-tenue  #4dff88 sobre preto -> 16.0:1  AAA
+   realce       #ffd23f sobre preto -> 14.5:1  AAA */
+.sup-fliperama {
+  --papel: #000000;
+  --tinta: #ffffff;
+  --tinta-fraca: #3fe0ff;
+  --tinta-tenue: #4dff88;
+  --realce: #ffd23f;
+  --risco: #23262e;
+
+  background: #000;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--realce) 26%, transparent),
+    0 0 46px -8px color-mix(in srgb, var(--realce) 30%, transparent);
+}
+
 /* O brilho que faz a tela parecer acesa em vez de um retângulo colado.
    Fica por fora do painel, então não interfere no contraste do texto. */
 .sup-tela {

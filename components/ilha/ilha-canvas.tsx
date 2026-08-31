@@ -24,6 +24,7 @@ import { ENCAIXES, ESCONDIDOS, encaixarModelos, esconder } from "@/components/il
 import { arrumar, derrubar, integrar, oQueCai, type Caido } from "@/components/ilha/queda";
 import { apagarTela, aplicarTexturas } from "@/components/ilha/texturas";
 import type { Dictionary } from "@/content/i18n";
+import type { Locale } from "@/content/site";
 import type { Project } from "@/lib/projects";
 
 const FOV = 45;
@@ -58,6 +59,7 @@ type PropsCena = {
   aoInteragir: () => void;
   /** O que vai escrito nas telas e nos quadros da cena. */
   dict: Dictionary;
+  locale: Locale;
   projetos: Project[];
   nomeDoMod: string;
   nome: string;
@@ -82,6 +84,7 @@ function Ilha({
   aoMudarCursor,
   aoInteragir,
   dict,
+  locale,
   projetos,
   nomeDoMod,
   nome,
@@ -129,7 +132,7 @@ function Ilha({
      alcança nenhum dos dois. */
   useEffect(() => {
     let vivo = true;
-    let lixoTexturas = aplicarTexturas(ilha, dict, projetos, nome);
+    let lixoTexturas = aplicarTexturas(ilha, dict, locale, projetos, nome);
     let lixoModelos: { dispose: () => void }[] = [];
     /* As peças que só saem não dependem de download: somem no primeiro
        quadro, sem piscar na tela enquanto os .glb chegam. */
@@ -143,7 +146,7 @@ function Ilha({
       }
       lixoModelos = novo;
       for (const item of lixoTexturas) item.dispose();
-      lixoTexturas = aplicarTexturas(ilha, dict, projetos, nome);
+      lixoTexturas = aplicarTexturas(ilha, dict, locale, projetos, nome);
       setObstaculos(mapearObstaculos(ilha));
       invalidate();
     });
@@ -154,7 +157,7 @@ function Ilha({
       for (const item of lixoModelos) item.dispose();
       for (const item of lixoEscondidos) item.dispose();
     };
-  }, [ilha, dict, projetos, nomeDoMod, nome, invalidate]);
+  }, [ilha, dict, locale, projetos, nomeDoMod, nome, invalidate]);
 
 
   /* A altura do deck: é onde as coisas derrubadas param de cair. */
@@ -438,8 +441,14 @@ function Ilha({
        aqui, então a tela apagando por baixo já está coberta e não pisca. Na
        volta acende na hora, e a tela se reacende enquanto a câmera recua. */
     const pontoDoVoo = destinoAtual.current ? PONTOS[destinoAtual.current] : null;
+    /* Tela de computador e tela de fliperama apagam; quadro, lousa e papel
+       não têm o que apagar. Sem o fliperama nesta conta sobrava uma tira da
+       textura pintada em volta do painel — a mesma lista escrita duas vezes,
+       em dois tamanhos, na mesma tela. */
     const deveApagar =
-      pontoDoVoo !== null && pontoDoVoo.superficie === "tela" && t >= 0.8;
+      pontoDoVoo !== null &&
+      (pontoDoVoo.superficie === "tela" || pontoDoVoo.superficie === "fliperama") &&
+      t >= 0.8;
 
     /* O controle é pelo MATERIAL, não pelo nome do móvel. A pintura das
        texturas troca o material do alvo por um novo — e trocou de verdade,

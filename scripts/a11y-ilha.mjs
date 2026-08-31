@@ -37,7 +37,35 @@ for (const tema of TEMAS) {
 
   /* "caso" não é uma parada da câmera: é o projeto aberto dentro do quadro,
      que troca todo o conteúdo do painel e precisa da própria medida. */
-  for (const alvo of ["geral", "sobre", "stack", "projetos", "caso", "mods", "contato", "curriculo"]) {
+  for (const alvo of ["geral", "sobre", "stack", "projetos", "caso", "mods", "jogos", "contato", "curriculo"]) {
+    /* O fliperama nao tem botao na navegacao de proposito: e parada so de
+       clique, como o curriculo. Entao chega-se nele clicando no gabinete, na
+       vista geral. As coordenadas valem porque a orbita inicial e fixa; se um
+       dia deixar de valer, a checagem do titulo abaixo acusa em vez de deixar
+       a parada passar sem auditoria. */
+    if (alvo === "jogos") {
+      await p.evaluate(() => {
+        const b = [...document.querySelectorAll("nav button")]
+          .find(x => /vista geral|wide shot/i.test(x.textContent.trim()));
+        b?.click();
+      });
+      await new Promise(r => setTimeout(r, 2400));
+      await p.mouse.click(1030, 430);
+      await new Promise(r => setTimeout(r, 2600));
+      const chegou = await p.evaluate(() =>
+        !!document.querySelector('[role="dialog"] [data-fliperama]'));
+      if (!chegou) { console.log("   !! o clique no fliperama nao abriu o painel"); falhas++; continue; }
+      await p.evaluate(axe);
+      const rf = await p.evaluate(async () => {
+        const res = await window.axe.run(document, { resultTypes: ["violations"] });
+        return res.violations.map(v => ({ id: v.id, impact: v.impact, n: v.nodes.length,
+          alvo: v.nodes.slice(0,2).map(n => n.target.join(" ")) }));
+      });
+      console.log(`  ${rf.length === 0 ? "OK   " : "FALHA"} ${tema.padEnd(5)} jogos${rf.length ? ` — ${rf.length} violacao(oes)` : ""}`);
+      for (const v of rf) console.log(`         [${v.impact}] ${v.id} x${v.n}  ${v.alvo.join(" | ").slice(0,120)}`);
+      if (rf.length) falhas += rf.length;
+      continue;
+    }
     if (alvo === "caso") {
       const abriu = await p.evaluate(() => {
         const b = [...document.querySelectorAll('[role="dialog"] ul button')][0];

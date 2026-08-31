@@ -37,6 +37,9 @@ const pt = {
     projects: "Projetos",
     contact: "Contato",
     hobby: "Mods",
+    /* Só o fliperama usa: é o título da parada dele na ilha, que não tem
+       item de menu. Mora aqui porque é rótulo de parada, como os outros. */
+    games: "Jogos",
     resume: "Currículo",
     openMenu: "Abrir menu de navegação",
     closeMenu: "Fechar menu de navegação",
@@ -240,8 +243,22 @@ const pt = {
       stack: "Quadro branco",
       projetos: "Quadro de projetos",
       mods: "TV da sala",
+      jogos: "Fliperama",
       contato: "Monitor da direita",
       curriculo: "Cavalete",
+    },
+    /* A tela do fliperama é a única parada que também é brinquedo. `comandos`
+       é desenhado dentro da tela, na fonte de bloco, que não tem acento nem
+       minúscula — por isso já vem escrito assim. O resto é falado por leitor
+       de tela, e aí vale a grafia certa. */
+    fliperama: {
+      tela: "Fliperama: um joguinho de nave. Aperte Enter ou clique para jogar.",
+      jogando:
+        "Jogando. As setas ou WASD movem a nave, espaço atira, Esc fecha o painel.",
+      comandos: "SETAS OU WASD MOVEM  ESPACO ATIRA",
+      perdeuVida: "Nave atingida. Restam {n} vidas.",
+      fim: "Fim de jogo, {n} pontos.",
+      venceu: "Fase concluída, {n} pontos.",
     },
   },
 
@@ -277,6 +294,9 @@ const en: Dictionary = {
     projects: "Projects",
     contact: "Contact",
     hobby: "Mods",
+    /* Only the arcade uses it: the title of its island stop, which has no
+       menu item. It lives here because it is a stop label, like the rest. */
+    games: "Games",
     resume: "Resume",
     openMenu: "Open navigation menu",
     closeMenu: "Close navigation menu",
@@ -479,8 +499,18 @@ const en: Dictionary = {
       stack: "Whiteboard",
       projetos: "Project board",
       mods: "Living room TV",
+      jogos: "Arcade cabinet",
       contato: "Right monitor",
       curriculo: "Easel",
+    },
+    fliperama: {
+      tela: "Arcade cabinet: a little shoot'em up. Press Enter or click to play.",
+      jogando:
+        "Playing. Arrow keys or WASD move the ship, space fires, Esc closes the panel.",
+      comandos: "ARROWS OR WASD MOVE  SPACE FIRES",
+      perdeuVida: "Ship hit. {n} lives left.",
+      fim: "Game over, {n} points.",
+      venceu: "Stage cleared, {n} points.",
     },
   },
 

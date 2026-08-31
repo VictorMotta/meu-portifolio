@@ -13,6 +13,7 @@ import {
   PainelSobre,
   PainelStack,
 } from "@/components/ilha/paineis";
+import { PainelJogos } from "@/components/ilha/painel-fliperama";
 import { PainelTela } from "@/components/ilha/painel-tela";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -117,9 +118,17 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
         }
       }
       if (evento.key !== "ArrowLeft" && evento.key !== "ArrowRight") return;
-      /* Dentro de um campo de texto as setas são do campo, não da ilha. */
+      /* Dentro de um campo de texto as setas são do campo, não da ilha — e
+         dentro do fliperama são da nave. Sem esta guarda, mirar para a
+         esquerda no jogo mandava a câmera para a parada anterior. */
       const alvo = evento.target as HTMLElement | null;
-      if (alvo?.closest("input, textarea, select, [contenteditable]")) return;
+      if (
+        alvo?.closest(
+          "input, textarea, select, [contenteditable], [data-fliperama]",
+        )
+      ) {
+        return;
+      }
 
       const atual = destino ? ORDEM_PONTOS.indexOf(destino) : -1;
       const passo = evento.key === "ArrowRight" ? 1 : -1;
@@ -218,6 +227,7 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
           aoMudarCursor={setCursor}
           aoInteragir={marcarInteracao}
           dict={dict}
+          locale={locale}
           projetos={projetos}
           nomeDoMod={mod.nome}
           nome={site.name}
@@ -274,6 +284,9 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
             />
           ) : null}
           {ponto.chave === "mods" ? <PainelMods dict={dict} locale={locale} /> : null}
+          {ponto.chave === "jogos" ? (
+            <PainelJogos dict={dict} locale={locale} />
+          ) : null}
           {ponto.chave === "contato" ? (
             <PainelContato dict={dict} locale={locale} />
           ) : null}
@@ -293,6 +306,7 @@ function rotuloNav(chave: ChavePonto) {
     stack: "stack",
     projetos: "projects",
     mods: "hobby",
+    jogos: "games",
     contato: "contact",
     curriculo: "resume",
   } as const;

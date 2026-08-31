@@ -17,6 +17,7 @@ export type ChavePonto =
   | "stack"
   | "projetos"
   | "mods"
+  | "jogos"
   | "contato"
   | "curriculo";
 
@@ -24,7 +25,7 @@ export type ChavePonto =
  * O material da superfície onde o conteúdo pousa. É o que faz cada parada
  * parecer o objeto que ela é, em vez de a mesma janela flutuando seis vezes.
  */
-export type Superficie = "tela" | "quadro" | "lousa" | "papel";
+export type Superficie = "tela" | "quadro" | "lousa" | "papel" | "fliperama";
 
 export type Ponto = {
   chave: ChavePonto;
@@ -96,6 +97,28 @@ export const PONTOS: Record<ChavePonto, Ponto> = {
     recuo: 1.45,
     altura: 0,
     ocupacao: 1,
+  },
+  /* Tela do fliperama: os jogos.
+     Parada só de clique, como o currículo — não entra em `ORDEM_PONTOS` nem
+     na navegação, que já tem cinco itens. Antes o fliperama levava a "mods",
+     e clicar nele voava para a TV do outro lado da sala: o visitante clicava
+     num gabinete e chegava numa televisão.
+
+     `frente` é [0,0,1] porque a chapa está deitada 23° para trás, e a normal
+     dela é o +Z LOCAL depois desse giro — a matriz do mundo faz o resto. E a
+     tela é em pé (0,50 x 0,59), a única da ilha: o recuo é maior que o da TV
+     porque numa tela alta e estreita quem estoura primeiro é a largura. */
+  jogos: {
+    chave: "jogos",
+    /* Superfície própria, e é a única da ilha que não é Dracula: o painel
+       daqui é a tela do gabinete, preta e em letra de bloco. Ver
+       `.sup-fliperama` no globals.css. */
+    superficie: "fliperama",
+    alvo: "arcade_screen",
+    frente: [0, 0, 1],
+    recuo: 1.6,
+    altura: 0,
+    ocupacao: 0.97,
   },
   /* Monitor da direita: o formulário de contato. O notebook da mesa também
      tem tela, mas ela é pequena e inclinada — um formulário com anexo não
