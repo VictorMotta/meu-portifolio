@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-import { construirIlha } from "@/components/ilha/cena";
+import { construirIlha, mostrarMobilia } from "@/components/ilha/cena";
 import {
   afastarFundo,
   ajustarEstrelas,
@@ -68,7 +68,17 @@ function Cena({ reduzido, escuro }: { reduzido: boolean; escuro: boolean }) {
 
   /* A ilha entra na terceira órbita, no lugar da Terra. O sistema deixa a casa
      vazia porque ele não conhece a ilha; quem tem as duas é este componente. */
-  useEffect(() => encaixarIlhaNoSistema(sistema, ilha, ESCALA_DA_ILHA), [sistema, ilha]);
+  /* A ilha entra VAZIA: casco, deck, domo e as pedras. Aqui os `.glb` nunca
+     chegam — são 13 MB, e o fundo de uma página de texto não pode custar isso
+     —, e a mobília desenhada, que era o que sobrava, é uma sala de blocos
+     quadriculados vista de longe. Vazio é melhor que feio: o que se vê é um
+     planeta sob a cúpula, que é exatamente o que ele é aqui.
+
+     Se um dia os modelos entrarem no fundo também, é só tirar esta linha. */
+  useEffect(() => {
+    mostrarMobilia(ilha, false);
+    return encaixarIlhaNoSistema(sistema, ilha, ESCALA_DA_ILHA);
+  }, [sistema, ilha]);
   const { camera, gl, invalidate } = useThree();
 
   /* Alvo e valor atual: a câmera persegue o alvo com suavização, senão o

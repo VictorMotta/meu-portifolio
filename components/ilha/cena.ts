@@ -22,6 +22,58 @@ const ESPESSURA_DA_TABUA = 0.035;
  * NÃO reescrever à mão: se a ilha mudar no Design, exporte de novo e refaça o
  * corte do acoplamento (o resto do arquivo é geometria e não deve ser tocado).
  */
+/**
+ * O que é ESTRUTURA da ilha, e não mobília.
+ *
+ * O casco, o piso, o friso, as pedras e o domo. São peças desenhadas à mão que
+ * ficam para sempre — nenhum `.glb` as substitui —, e por isso são as únicas
+ * que podem aparecer antes de os modelos chegarem.
+ *
+ * Serve para `mostrarMobilia`, logo abaixo.
+ */
+function ehEstrutura(nome: string) {
+  return (
+    nome.startsWith("island_") ||
+    nome.startsWith("floor_") ||
+    nome.startsWith("rock_chunk_") ||
+    nome.startsWith("floating_rock_") ||
+    nome === "domo"
+  );
+}
+
+/**
+ * Esconde (ou devolve) tudo que não é estrutura.
+ *
+ * Isto existe por causa dos primeiros segundos. A ilha desenhada à mão é a
+ * ilha de verdade em miniatura: sofá de caixas, monitores de retângulos,
+ * plantas de bolas. Ela nasceu como o que se via enquanto os 13 MB de `.glb`
+ * desciam — melhor algo do que nada, era o raciocínio.
+ *
+ * Só que "algo" aqui é uma sala de blocos quadriculados, e numa internet lenta
+ * ela fica na tela tempo suficiente para ser a primeira impressão do
+ * portfólio. Com o casco de ferro e o domo prontos, a ilha VAZIA já é uma
+ * imagem acabada: um planeta sob a cúpula, esperando. É bem melhor primeira
+ * impressão que móveis de papelão.
+ *
+ * A busca é só nos filhos diretos e nos netos: mobília é grupo (`work_zone`,
+ * `whiteboard`, `office_plant_1`) ou peça solta do `island`, e esconder o grupo
+ * já esconde o que está dentro. E esconder o PAI não apaga a marca de quem
+ * está dentro dele — quando isto devolve a visibilidade, as peças que os
+ * modelos substituíram continuam escondidas, cada uma com o próprio `visible`.
+ */
+export function mostrarMobilia(ilha: THREE.Object3D, visivel: boolean) {
+  for (const zona of ilha.children) {
+    if (zona.name === "island") {
+      for (const peca of zona.children) {
+        if (ehEstrutura(peca.name)) continue;
+        peca.visible = visivel;
+      }
+      continue;
+    }
+    zona.visible = visivel;
+  }
+}
+
 export function construirIlha(): THREE.Group {
   const model = new THREE.Group();
   model.name = "ilha";

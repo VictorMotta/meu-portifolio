@@ -13,7 +13,7 @@ import {
   suavizar,
   type Pose,
 } from "@/components/ilha/camera-ilha";
-import { construirIlha } from "@/components/ilha/cena";
+import { construirIlha, mostrarMobilia } from "@/components/ilha/cena";
 import {
   ajustarCeu,
   ambienteDoCeu,
@@ -153,16 +153,23 @@ function Ilha({
      nome que a pintura procura. Pintar uma vez só, antes, escreveria na caixa
      que vai ser escondida.
 
-     Mesmo assim a primeira pintura acontece já: são 13 MB de modelo, e
-     esperar o download para escrever nas telas deixaria a ilha muda por
-     segundos. Quando os arquivos chegam, a pintura é refeita sobre as telas
-     novas. O que a pintura cria precisa ser descartado quando a ilha sair:
-     material e textura vivem na placa de vídeo, e o coletor do JavaScript não
-     alcança nenhum dos dois. */
+     A pintura acontece já, antes dos modelos, e é refeita quando eles chegam:
+     ela é barata e não depende de download. O que a pintura cria precisa ser
+     descartado quando a ilha sair — material e textura vivem na placa de
+     vídeo, e o coletor do JavaScript não alcança nenhum dos dois.
+
+     Mas a MOBÍLIA desenhada não aparece mais nesse meio-tempo. Ela existia
+     como o que se via enquanto os 13 MB desciam, e o raciocínio era "melhor
+     algo do que nada". O algo, porém, é uma sala de blocos quadriculados: numa
+     internet lenta ela fica na tela tempo bastante para ser a primeira
+     impressão do portfólio. Agora entra escondida e é revelada de uma vez, com
+     os modelos — a ilha vazia sob o domo já é uma imagem acabada, e vazio é
+     melhor que feio. Ver `mostrarMobilia`. */
   const [modelosProntos, setModelosProntos] = useState(0);
 
   useEffect(() => {
     let vivo = true;
+    mostrarMobilia(ilha, false);
     let lixoTexturas = aplicarTexturas(ilha, dict, locale, projetos, nome);
     let lixoModelos: { dispose: () => void }[] = [];
     /* As peças que só saem não dependem de download: somem no primeiro
@@ -178,6 +185,10 @@ function Ilha({
       lixoModelos = novo;
       for (const item of lixoTexturas) item.dispose();
       lixoTexturas = aplicarTexturas(ilha, dict, locale, projetos, nome);
+      /* Tudo de uma vez, e só agora. Revelar peça por peça conforme cada
+         arquivo chega faria a sala se montar aos pulos na frente do
+         visitante. */
+      mostrarMobilia(ilha, true);
       setObstaculos(mapearObstaculos(ilha));
       setModelosProntos((n) => n + 1);
       invalidate();
@@ -188,6 +199,10 @@ function Ilha({
       for (const item of lixoTexturas) item.dispose();
       for (const item of lixoModelos) item.dispose();
       for (const item of lixoEscondidos) item.dispose();
+      /* Devolve a mobília: o grupo `ilha` sobrevive ao efeito (vem de um
+         `useMemo`), e deixá-lo escondido faria a próxima montagem começar com
+         a sala apagada e nunca mais acender. */
+      mostrarMobilia(ilha, true);
     };
   }, [ilha, dict, locale, projetos, nomeDoMod, nome, invalidate]);
 
