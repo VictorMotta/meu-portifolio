@@ -235,7 +235,7 @@ const pt = {
 		voltar: "Voltar à vista geral",
 		arrumar: "Arrumar a ilha ({n})",
 		dicaMouse:
-			"Arraste para girar. Clique num móvel para abrir a seção, ou numa coisa da mesa para derrubar.",
+			"Arraste para girar. Clique num móvel para abrir a seção, numa lamparina para acender ou apagar, ou numa coisa da mesa para derrubar.",
 		voltarCurto: "Vista geral",
 		fechar: "Fechar este painel",
 		verComoPagina: "Ver como página",
@@ -489,7 +489,7 @@ const en: Dictionary = {
 		voltar: "Back to the wide shot",
 		arrumar: "Tidy up the island ({n})",
 		dicaMouse:
-			"Drag to spin. Click a piece of furniture to open its section, or something on the desk to knock it over.",
+			"Drag to spin. Click a piece of furniture to open its section, a lamp to switch it on or off, or something on the desk to knock it over.",
 		voltarCurto: "Wide shot",
 		fechar: "Close this panel",
 		verComoPagina: "Read as a page",

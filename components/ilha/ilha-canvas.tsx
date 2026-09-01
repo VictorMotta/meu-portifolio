@@ -1,7 +1,14 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import * as THREE from "three";
 
 import {
@@ -31,7 +38,12 @@ import {
 } from "@/components/ilha/controles";
 import { PONTOS, type ChavePonto } from "@/components/ilha/pontos";
 import { ENCAIXES, ESCONDIDOS, SUBSTITUIDAS, encaixarModelos, esconder } from "@/components/ilha/modelos";
-import { acenderLamparinas } from "@/components/ilha/luzes";
+import {
+  acenderLamparinas,
+  acesasPeloTema,
+  aLamparinaDe,
+  type Lamparina,
+} from "@/components/ilha/luzes";
 import { girarOCeu, orbitarPedras, orbitarPlanetas } from "@/components/ilha/orbitas";
 import { arrumar, derrubar, integrar, oQueCai, type Caido } from "@/components/ilha/queda";
 import { DURACAO_DA_TRANSICAO } from "@/lib/preferencia-ilha";
@@ -215,14 +227,40 @@ function Ilha({
     };
   }, [ilha, dict, locale, projetos, nomeDoMod, nome, invalidate]);
 
-  /* As lamparinas seguem o tema. `modelosProntos` entra na lista só como
-     relógio: a lamparina de teto só existe depois que o .glb chega, e o
-     efeito precisa rodar de novo ali para apagá-la. Quem conta é o efeito
-     acima, quando `encaixarModelos` resolve. */
+  /* Quais lamparinas estão acesas AGORA — e para qual tema esse estado foi
+     montado.
+
+     O tema dá o ponto de partida (de noite acesas, de dia apagadas) e o
+     visitante manda a partir dali, clicando em cada uma. Guardar o tema junto
+     é o que permite recomeçar quando ele muda: acender a luz do quarto é
+     evento maior que o interruptor de um abajur, então a troca de tema
+     devolve as duas ao padrão em vez de preservar a escolha anterior.
+
+     O ajuste é em RENDER, e não num efeito: num efeito o quadro sairia uma vez
+     com a lamparina no estado do tema antigo e só então corrigiria — que é o
+     piscar que essa mesma ilha já teve com o céu. */
+  const [luzes, setLuzes] = useState(() => ({
+    tema: escuro,
+    acesas: acesasPeloTema(escuro),
+  }));
+  if (luzes.tema !== escuro) {
+    setLuzes({ tema: escuro, acesas: acesasPeloTema(escuro) });
+  }
+
+  const alternarLamparina = useCallback((qual: Lamparina) => {
+    setLuzes((antes) => ({
+      ...antes,
+      acesas: { ...antes.acesas, [qual]: !antes.acesas[qual] },
+    }));
+  }, []);
+
+  /* `modelosProntos` entra na lista só como relógio: a lamparina de teto só
+     existe depois que o .glb chega, e o efeito precisa rodar de novo ali para
+     apagá-la. Quem conta é o efeito acima, quando `encaixarModelos` resolve. */
   useEffect(() => {
-    acenderLamparinas(ilha, escuro);
+    acenderLamparinas(ilha, luzes.acesas);
     invalidate();
-  }, [ilha, escuro, modelosProntos, invalidate]);
+  }, [ilha, luzes.acesas, modelosProntos, invalidate]);
 
   /* O céu troca junto: de noite estrelas cheias e a Lua; de dia o Sol e as
      mesmas estrelas atrás da claridade. Não depende dos modelos — ele é todo
@@ -481,7 +519,9 @@ function Ilha({
         const acerto = primeiroAcerto(evento);
         const alvo = acerto?.object ?? null;
         definirCursor(
-          alvo && (pontoDoObjeto(alvo) || oQueCai(alvo)) ? "pointer" : "grab",
+          alvo && (pontoDoObjeto(alvo) || oQueCai(alvo) || aLamparinaDe(alvo))
+            ? "pointer"
+            : "grab",
         );
         return;
       }
@@ -544,6 +584,15 @@ function Ilha({
         return;
       }
 
+      /* A lamparina antes da seção, e sem disputa: nenhuma das duas está em
+         `MOVEL_PARA_PONTO`, então isto não rouba clique de móvel nenhum. */
+      const lamparina = aLamparinaDe(acerto.object);
+      if (lamparina) {
+        alternarLamparina(lamparina);
+        invalidate();
+        return;
+      }
+
       const chave = pontoDoObjeto(acerto.object);
       if (chave) aoEscolher(chave);
     }
@@ -573,7 +622,7 @@ function Ilha({
       tela.removeEventListener("pointercancel", aoSubir);
       tela.removeEventListener("wheel", aoRolar);
     };
-  }, [camera, ilha, refPalco, aoEscolher, aoDerrubar, aoMudarCursor, aoInteragir, invalidate]);
+  }, [camera, ilha, refPalco, aoEscolher, aoDerrubar, aoMudarCursor, aoInteragir, alternarLamparina, invalidate]);
 
   const vetorAux = useMemo(() => new THREE.Vector3(), []);
 
