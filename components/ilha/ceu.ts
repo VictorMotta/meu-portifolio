@@ -97,12 +97,16 @@ function pontoNaEsfera(aleatorio: () => number) {
 /**
  * O campo de estrelas.
  *
+ * Exportado porque o fundo da página rolável usa o MESMO campo: é a mesma
+ * constelação vista do mesmo lugar, e duas nuvens de estrelas diferentes no
+ * mesmo site seriam dois céus.
+ *
  * Cor por vértice, e não um material por tom: três materiais seriam três
  * chamadas de desenho e três nuvens sobrepostas. O tamanho varia por estrela
  * pelo mesmo motivo de sempre — céu com todas as estrelas do mesmo tamanho
  * parece grade, não céu.
  */
-function campoDeEstrelas() {
+export function construirEstrelas() {
   const aleatorio = sorteio(0x51A17A);
   const posicoes = new Float32Array(ESTRELAS * 3);
   const cores = new Float32Array(ESTRELAS * 3);
@@ -197,12 +201,12 @@ function campoDeEstrelas() {
  * embaixo dela não há chão nenhum.
  */
 const PLANETAS = [
-  { nome: "planeta_azul",     volta: -3.9, elevacao:  0.012, dist: 74, raio: 3.4, cor: 0x3f6ea8, anel: false },
-  { nome: "planeta_ocre",     volta:  1.1, elevacao: -0.10,  dist: 58, raio: 4.6, cor: 0xb07a4a, anel: true },
-  { nome: "planeta_pequeno",  volta:  2.9, elevacao:  0.02,  dist: 88, raio: 2.2, cor: 0x8a6f9e, anel: false },
-  { nome: "planeta_gelo",     volta: -0.5, elevacao: -0.34,  dist: 66, raio: 2.6, cor: 0x9fc4cf, anel: false },
-  { nome: "planeta_rubro",    volta:  0.3, elevacao: -0.62,  dist: 78, raio: 3.6, cor: 0xa8523f, anel: false },
-  { nome: "planeta_verde",    volta: -1.4, elevacao: -0.24,  dist: 52, raio: 1.8, cor: 0x4f8f72, anel: false },
+  { nome: "planeta_azul",     volta: -3.9, altura:   6, dist: 74, raio: 3.4, cor: 0x3f6ea8, anel: false },
+  { nome: "planeta_ocre",     volta:  1.1, altura:  -1, dist: 58, raio: 4.6, cor: 0xb07a4a, anel: true },
+  { nome: "planeta_pequeno",  volta:  2.9, altura:   7, dist: 88, raio: 2.2, cor: 0x8a6f9e, anel: false },
+  { nome: "planeta_gelo",     volta: -0.5, altura: -18, dist: 66, raio: 2.6, cor: 0x9fc4cf, anel: false },
+  { nome: "planeta_rubro",    volta:  0.3, altura: -42, dist: 78, raio: 3.6, cor: 0xa8523f, anel: false },
+  { nome: "planeta_verde",    volta: -1.4, altura: -12, dist: 52, raio: 1.8, cor: 0x4f8f72, anel: false },
 ] as const;
 
 /**
@@ -232,7 +236,7 @@ function planetas() {
     });
     const corpo = new THREE.Mesh(new THREE.IcosahedronGeometry(p.raio, 2), material);
     corpo.name = p.nome;
-    corpo.position.copy(noCeu(p.volta, p.elevacao, p.dist));
+    corpo.position.copy(noCeu(p.volta, p.altura, p.dist));
     corpo.castShadow = false;
     corpo.receiveShadow = false;
 
@@ -331,15 +335,41 @@ function texturaDaLua() {
  * é de um tema, e opostos garantem que trocar de tema troque o céu inteiro em
  * vez de piscar uma bola no mesmo lugar.
  */
-const ELEVACAO_DO_CEU = 0.028;
-const DISTANCIA_DO_CEU = 62;
+/**
+ * A altura da Lua e do Sol, em Y do mundo — e por que é um número absoluto e
+ * não um ângulo.
+ *
+ * O grupo `ilha` é deslocado para que a base dele fique em y=0, então o DECK
+ * está em y ≈ 5,03 e a mobília vai até uns 7,1. O céu não sofre esse
+ * deslocamento. Enquanto a Lua e o Sol saíam de um ângulo de elevação sobre a
+ * origem, os dois caíam em y = 1,74: abaixo do piso da sala. Estavam
+ * literalmente embaixo da ilha, e por isso não pareciam estar no céu.
+ *
+ * As duas alturas saem de onde cada astro CABE, e são diferentes porque as
+ * distâncias são diferentes: o mesmo Y visto de 38 sobe mais no quadro do que
+ * visto de 110. Com a órbita em 0,30 rad, o topo do quadro fica 5,3° acima do
+ * horizonte e o olho da câmera a 7,54; a Lua em 5 aparece a 19% do topo e o
+ * Sol em 3 a 17%, os dois inteiros, acima da sala e abaixo da borda.
+ */
+const ALTURA_DA_LUA = 5;
+const ALTURA_DO_SOL = 3;
 
-function noCeu(volta: number, elevacao = ELEVACAO_DO_CEU, distancia = DISTANCIA_DO_CEU) {
-  const horizontal = Math.cos(elevacao) * distancia;
+/**
+ * A Lua é perto e o Sol é longe, como no céu de verdade.
+ *
+ * A Lua a 38 com 3,6 de raio ocupa 4,6° do céu; o Sol a 110 com 13 ocupa 6,3°.
+ * Ele é quase quatro vezes mais distante e mais de três vezes maior — e
+ * aparece um pouco maior, que é o que "o Sol é longe mesmo, grandão" quer
+ * dizer. Trocar as duas distâncias faria a Lua virar um segundo sol.
+ */
+const DISTANCIA_DA_LUA = 38;
+const DISTANCIA_DO_SOL = 110;
+
+function noCeu(volta: number, altura: number, distancia: number) {
   return new THREE.Vector3(
-    Math.sin(volta) * horizontal,
-    Math.sin(elevacao) * distancia,
-    Math.cos(volta) * horizontal,
+    Math.sin(volta) * distancia,
+    altura,
+    Math.cos(volta) * distancia,
   );
 }
 
@@ -395,7 +425,7 @@ const OLHAR_INICIAL = 0.6 + Math.PI + 0.34;
 function lua() {
   const grupo = new THREE.Group();
   grupo.name = "lua";
-  grupo.position.copy(noCeu(OLHAR_INICIAL));
+  grupo.position.copy(noCeu(OLHAR_INICIAL, ALTURA_DA_LUA, DISTANCIA_DA_LUA));
 
   const material = new THREE.MeshStandardMaterial({
     name: "lua_superficie",
@@ -430,19 +460,19 @@ function lua() {
 function sol() {
   const grupo = new THREE.Group();
   grupo.name = "sol";
-  grupo.position.copy(noCeu(OLHAR_INICIAL));
+  grupo.position.copy(noCeu(OLHAR_INICIAL, ALTURA_DO_SOL, DISTANCIA_DO_SOL));
 
   /* Dourado, e não o creme quase branco que era antes: o fundo do tema claro é
      quase branco, e um sol pálido nele simplesmente não existe. `MeshBasic`
      porque o Sol não é iluminado por nada — ele É a luz. */
   const corpo = new THREE.Mesh(
-    new THREE.SphereGeometry(4.2, 40, 28),
+    new THREE.SphereGeometry(13, 48, 32),
     new THREE.MeshBasicMaterial({ name: "sol_corpo", color: 0xffc23f }),
   );
   corpo.name = "sol_corpo";
   grupo.add(corpo);
 
-  const brilho = halo("rgba(255,186,74,0.85)", 30, "sol_halo");
+  const brilho = halo("rgba(255,186,74,0.85)", 84, "sol_halo");
   if (brilho) grupo.add(brilho);
   return grupo;
 }
@@ -450,7 +480,7 @@ function sol() {
 export function construirCeu(): THREE.Group {
   const ceu = new THREE.Group();
   ceu.name = "ceu";
-  ceu.add(campoDeEstrelas());
+  ceu.add(construirEstrelas());
   ceu.add(planetas());
   ceu.add(lua());
   ceu.add(sol());
@@ -478,16 +508,7 @@ export function construirCeu(): THREE.Group {
  */
 export function ajustarCeu(ceu: THREE.Object3D, escuro: boolean) {
   const estrelas = ceu.getObjectByName("estrelas") as THREE.Points | undefined;
-  if (estrelas) {
-    const material = estrelas.material as THREE.ShaderMaterial;
-    material.uniforms.opacidade!.value = escuro ? 1 : 0.5;
-    material.uniforms.escala!.value = escuro ? 1 : 0.8;
-    /* No claro a soma clareia o que já é claro e a estrela some: somar luz
-       sobre um fundo quase branco não muda nada. A mistura normal é a única
-       que escurece, e é ela que faz a constelação aparecer de dia. */
-    material.blending = escuro ? THREE.AdditiveBlending : THREE.NormalBlending;
-    material.needsUpdate = true;
-  }
+  if (estrelas) ajustarEstrelas(estrelas, escuro);
 
   const luaVisivel = escuro;
   const lua = ceu.getObjectByName("lua");
@@ -633,4 +654,288 @@ export function refletirNoFerro(
       material.needsUpdate = true;
     }
   };
+}
+
+/**
+ * De onde a luz de fora vem.
+ *
+ * Do lado do Sol de dia e do lado da Lua de noite — os dois moram na mesma
+ * volta do horizonte (`OLHAR_INICIAL`), então o que muda entre os temas não é
+ * a direção, é a cor e a força. A direcional apontava para (4, 7, 5), um canto
+ * escolhido a olho, e as sombras da sala caíam para um lado enquanto o astro
+ * estava no outro.
+ *
+ * A ELEVAÇÃO daqui não é a do astro, e isso é deliberado. O Sol e a Lua ficam
+ * quase na linha do horizonte porque é só lá que a câmera os enxerga (ver
+ * `ALTURA_NO_CEU`); uma luz rasante assim deixaria a sala em contraluz, com
+ * sombras de dois metros atravessando o deck e a mobília toda escura de
+ * frente. O que o pedido quer é que a luz venha DO LADO do astro — e isso a
+ * volta resolve sozinha. A altura fica com o ângulo que ilumina uma sala.
+ */
+export function direcaoDaLuz(): [number, number, number] {
+  const ELEVACAO = 0.86;
+  const DISTANCIA = 13;
+  const horizontal = Math.cos(ELEVACAO) * DISTANCIA;
+  return [
+    Math.sin(OLHAR_INICIAL) * horizontal,
+    Math.sin(ELEVACAO) * DISTANCIA,
+    Math.cos(OLHAR_INICIAL) * horizontal,
+  ];
+}
+
+/**
+ * As estrelas seguem o tema.
+ *
+ * No claro elas precisam ESCURECER para aparecer sobre um fundo quase branco,
+ * e `AdditiveBlending` não escurece nada — somar luz sobre branco devolve
+ * branco. A mistura normal é a única que consegue, e é ela que faz a
+ * constelação existir de dia, atrás da claridade.
+ *
+ * Separada de `ajustarCeu` porque o fundo da página rolável usa só a nuvem de
+ * estrelas, sem Lua, Sol nem planetas: as duas telas compartilham esta regra
+ * em vez de cada uma ter a sua.
+ */
+export function ajustarEstrelas(estrelas: THREE.Points, escuro: boolean) {
+  const material = estrelas.material as THREE.ShaderMaterial;
+  material.uniforms.opacidade!.value = escuro ? 1 : 0.5;
+  material.uniforms.escala!.value = escuro ? 1 : 0.8;
+  material.blending = escuro ? THREE.AdditiveBlending : THREE.NormalBlending;
+  material.needsUpdate = true;
+}
+
+/**
+ * Um quadro do fundo da página rolável: a constelação girando e a ilha
+ * passando por dentro dela, as duas conforme a rolagem.
+ *
+ * Mora aqui, e não no componente, por dois motivos. O céu é assunto deste
+ * arquivo; e o compilador do React barra escrever em objeto que veio de um
+ * hook — passar o objeto para uma função é como a ilha já resolve isso em
+ * `acenderLamparinas` e `integrar`.
+ *
+ * `progresso` vai de 0 (topo da página) a 1 (fim).
+ */
+export function passarOFundo(
+  estrelas: THREE.Object3D,
+  ilha: THREE.Object3D,
+  progresso: number,
+) {
+  /* Quase uma volta inteira de céu de ponta a ponta da página: é o que faz
+     passar estrelas DIFERENTES conforme se desce, em vez de olhar o mesmo
+     pedaço do começo ao fim. A inclinação junto evita que elas corram todas
+     na horizontal, como letreiro. */
+  estrelas.rotation.y = progresso * 2.4;
+  estrelas.rotation.x = progresso * 0.35;
+
+  /* A ilha DESCE pela margem direita conforme a página rola, girando sobre o
+     próprio eixo. A margem é onde ela cabe: o conteúdo da página é uma coluna
+     opaca no meio, e no meio ela simplesmente sumia atrás dos cartões de
+     projeto. Aqui ela fica grande, um pouco cortada pela borda — planeta
+     passando ao lado, que é o que dá a ênfase sem disputar com o texto.
+
+     Descer, e não subir: a leitura desce, e um corpo subindo contra a rolagem
+     puxa o olho para trás. */
+  ilha.rotation.y = 0.6 + progresso * 2.0;
+  ilha.position.set(11.4 - progresso * 1.8, 2.6 - progresso * 6.4, 0);
+}
+
+/**
+ * O afastamento da câmera do fundo, como fator de distância.
+ *
+ * 1 é o repouso. Abaixo de 1 a câmera está PERTO da ilha, que é como ela
+ * chega quando o visitante acaba de sair do modo 3D — e é de onde ela sai
+ * quando ele está voltando para lá. Acima de 1 seria longe demais para o
+ * fundo de uma página.
+ *
+ * 0,3 é o quanto do caminho a metade da página cobre: o resto do zoom é
+ * coberto pela metade da ilha, que vai de 3,2 até 1 na órbita dela. Dividir
+ * assim é o que faz as duas metades parecerem um movimento só, em vez de duas
+ * animações discutindo.
+ */
+export const PERTO_DA_ILHA = 0.3;
+
+/**
+ * Aplica o afastamento movendo a câmera na direção em que ela já olha.
+ *
+ * Mexer na distância e não no campo de visão porque `fov` deforma: aproximar
+ * por lente achata a cena e denuncia que é truque. E como a mira é fixa, a
+ * direção sai da diferença entre o olho e o alvo, uma vez.
+ */
+export function afastarFundo(
+  camera: THREE.Camera,
+  descanso: THREE.Vector3,
+  mira: THREE.Vector3,
+  fator: number,
+) {
+  camera.position.copy(mira).addScaledVector(descanso.clone().sub(mira), fator);
+  camera.lookAt(mira);
+}
+
+/* ---------- o sistema solar do fundo da página ---------- */
+
+/**
+ * O raio de cada órbita, e qual delas é a da ilha.
+ *
+ * A ilha fica na TERCEIRA, que é onde fica a Terra — foi o pedido, e é o que
+ * dá a piada: o mundo dele no lugar do nosso. As outras quatro distribuem-se
+ * com espaçamento crescente, como num sistema de verdade, onde os intervalos
+ * abrem conforme se afasta do Sol.
+ *
+ * São CINCO órbitas e não sete, e o motivo é a ilha. Com sete o sistema ficava
+ * inteiro no quadro, mas a câmera tinha de recuar para 125 e a ilha virava um
+ * ponto de 48 pixels — o corpo de que a página trata era o menos visível de
+ * todos, que é o contrário da ideia. Com cinco a câmera vem para 89 e ela
+ * quase dobra. Sistema solar se lê por ter um Sol no meio com órbitas em
+ * volta, não por contar os planetas.
+ *
+ * O vão entre a segunda e a quarta (11,5 e 23) também é a ilha: com raio 4 ela
+ * ocupa de 13 a 21, e órbitas mais juntas seriam atravessadas por ela.
+ */
+const ORBITAS = [7, 11.5, 17, 23, 29];
+export const ORBITA_DA_ILHA = 2;
+
+/** Uma volta de linha fina, para a órbita ser vista sem virar um anel opaco. */
+function traçoDaOrbita(raio: number, escuro: boolean) {
+  const pontos: THREE.Vector3[] = [];
+  for (let i = 0; i <= 128; i++) {
+    const a = (i / 128) * Math.PI * 2;
+    pontos.push(new THREE.Vector3(Math.cos(a) * raio, 0, Math.sin(a) * raio));
+  }
+  const linha = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(pontos),
+    new THREE.LineBasicMaterial({
+      name: "traçoOrbita",
+      color: escuro ? 0x5f7099 : 0x9aa7bd,
+      transparent: true,
+      opacity: escuro ? 0.34 : 0.42,
+    }),
+  );
+  linha.name = `orbita_${raio}`;
+  return linha;
+}
+
+/**
+ * O sistema solar que o fundo da página rolável mostra.
+ *
+ * O Sol no meio, as órbitas desenhadas e um corpo em cada uma — e a terceira
+ * vazia, esperando a ilha, que o componente encaixa lá. Cada corpo mora num
+ * PIVÔ na origem: girar o pivô leva o corpo pela órbita sem que ninguém
+ * precise recalcular seno e cosseno, e é o pivô que `moverSistema` roda.
+ *
+ * Não é o mesmo céu do modo 3D visto de outro lugar: lá a ilha é o centro e o
+ * Sol está no horizonte dela, aqui o Sol é o centro e a ilha é um dos corpos.
+ * São duas escalas da mesma história — a sala, e o lugar da sala no mundo.
+ */
+export function construirSistemaSolar(escuro: boolean): THREE.Group {
+  const sistema = new THREE.Group();
+  sistema.name = "sistema";
+
+  const sol = new THREE.Mesh(
+    new THREE.SphereGeometry(4.5, 48, 32),
+    new THREE.MeshBasicMaterial({ name: "sistema_sol", color: escuro ? 0xffb648 : 0xffc23f }),
+  );
+  sol.name = "sistema_sol";
+  sistema.add(sol);
+  const brilho = halo("rgba(255,186,74,0.8)", 30, "sistema_sol_halo");
+  if (brilho) sistema.add(brilho);
+
+  ORBITAS.forEach((raio, i) => {
+    sistema.add(traçoDaOrbita(raio, escuro));
+
+    const pivo = new THREE.Group();
+    pivo.name = `pivo_${i}`;
+    /* Cada órbita entra com a própria fase, senão os sete nascem alinhados
+       numa fileira, que é a única disposição que um sistema solar nunca tem. */
+    pivo.rotation.y = i * 1.37;
+    sistema.add(pivo);
+
+    if (i === ORBITA_DA_ILHA) {
+      /* A casa da ilha fica vazia aqui: quem a põe dentro é o componente, que
+         é quem tem a ilha. */
+      const casa = new THREE.Group();
+      casa.name = "casa_da_ilha";
+      casa.position.set(raio, 0, 0);
+      pivo.add(casa);
+      return;
+    }
+
+    const p = PLANETAS[i < ORBITA_DA_ILHA ? i : i - 1]!;
+    const corpo = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(p.raio * 0.42, 2),
+      new THREE.MeshStandardMaterial({
+        name: `sistema_${p.nome}`,
+        color: p.cor,
+        roughness: 0.9,
+        metalness: 0,
+        emissive: p.cor,
+        emissiveIntensity: escuro ? 0.3 : 0.08,
+        flatShading: true,
+      }),
+    );
+    corpo.name = `sistema_${p.nome}`;
+    corpo.position.set(raio, 0, 0);
+    pivo.add(corpo);
+
+    if (p.anel) {
+      const anel = new THREE.Mesh(
+        new THREE.RingGeometry(p.raio * 0.63, p.raio * 0.97, 40),
+        new THREE.MeshBasicMaterial({
+          color: 0xd8b48a, transparent: true, opacity: 0.5,
+          side: THREE.DoubleSide, depthWrite: false,
+        }),
+      );
+      anel.rotation.set(-1.1, 0.4, 0.2);
+      corpo.add(anel);
+    }
+  });
+
+  sistema.traverse((no) => { no.castShadow = false; no.receiveShadow = false; });
+  return sistema;
+}
+
+/**
+ * O sistema anda: cada órbita no seu passo, e a rolagem adianta o relógio.
+ *
+ * `progresso` (0 no topo da página, 1 no fim) entra somado ao tempo, com peso
+ * grande: descer a página é atravessar meses do sistema. É o que faz a
+ * rolagem MOVER alguma coisa em vez de só existir enquanto o fundo gira no
+ * ritmo dele.
+ *
+ * O período cresce com o raio, como manda a terceira lei de Kepler — não é a
+ * potência certa (seria 1,5), e sim 1,1, porque com a de verdade os de fora
+ * ficariam parados na escala de tempo de quem lê uma página.
+ */
+export function moverSistema(sistema: THREE.Object3D, tempo: number, progresso: number) {
+  const relogio = tempo + progresso * 240;
+  ORBITAS.forEach((raio, i) => {
+    const pivo = sistema.getObjectByName(`pivo_${i}`);
+    if (!pivo) return;
+    const periodo = 70 * Math.pow(raio / ORBITAS[0]!, 1.1);
+    pivo.rotation.y = i * 1.37 + (relogio * 2 * Math.PI) / periodo;
+  });
+
+  /* A ilha gira sobre o próprio eixo enquanto percorre a órbita, como faz um
+     planeta — e é esse giro que mostra a sala de todos os lados. Vive aqui, e
+     não no componente, porque o compilador do React barra escrever em objeto
+     que veio de um hook. */
+  const casa = sistema.getObjectByName("casa_da_ilha");
+  const ilha = casa?.children[0];
+  if (ilha) ilha.rotation.y = tempo * 0.06 + progresso * 3;
+}
+
+/**
+ * Põe a ilha na terceira órbita, no tamanho em que ela é desenhada ali.
+ *
+ * O sistema deixa a casa vazia porque não conhece a ilha; quem tem as duas é
+ * quem monta a cena. Devolve a função que tira, para a ilha não ficar presa a
+ * um sistema que já foi descartado.
+ */
+export function encaixarIlhaNoSistema(
+  sistema: THREE.Object3D,
+  ilha: THREE.Object3D,
+  escala: number,
+) {
+  const casa = sistema.getObjectByName("casa_da_ilha");
+  ilha.scale.setScalar(escala);
+  casa?.add(ilha);
+  return () => { casa?.remove(ilha); };
 }

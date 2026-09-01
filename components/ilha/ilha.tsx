@@ -22,6 +22,7 @@ import { ORDEM_PONTOS, PONTOS, type ChavePonto } from "@/components/ilha/pontos"
 import { format, type Dictionary } from "@/content/i18n";
 import { mod } from "@/content/hobby";
 import { site, type Locale } from "@/content/site";
+import { DURACAO_DA_TRANSICAO } from "@/lib/preferencia-ilha";
 import type { Project } from "@/lib/projects";
 
 /* O canvas só desce depois da hidratação. O portfólio inteiro já está no HTML
@@ -53,6 +54,17 @@ type Props = {
 };
 
 export function Ilha({ dict, locale, projetos, aoSair }: Props) {
+  /* Sair não é imediato: a câmera se afasta primeiro, e a troca de modo
+     acontece no fim desse movimento. É a primeira metade do zoom que o fundo
+     da página rolável termina. Ver `anunciarTransicao`. */
+  const [saindo, setSaindo] = useState(false);
+  const sairAnimado = useCallback(() => setSaindo(true), []);
+  useEffect(() => {
+    if (!saindo) return;
+    const t = window.setTimeout(aoSair, DURACAO_DA_TRANSICAO);
+    return () => window.clearTimeout(t);
+  }, [saindo, aoSair]);
+
   /* As lamparinas da ilha acendem no escuro. `resolvedTheme` só existe depois
      que o next-themes monta; até lá vale escuro, que é o padrão do CSS e o que
      o servidor renderiza — assim a ilha não começa apagada para escurecer no
@@ -211,6 +223,13 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
 
   const ponto = destino ? PONTOS[destino] : null;
 
+  /* Só a INTERFACE apaga na saída, e não a cena. Apagar tudo junto foi a
+     primeira tentativa e engoliu o movimento: em menos de meio segundo a tela
+     estava preta e o afastamento da câmera acontecia atrás de um véu, sem
+     ninguém para ver. O canvas fica; o que sai é o HTML colado por cima, que
+     viajando junto com o zoom entregaria que é HTML colado por cima. */
+  const sumindo = saindo ? "pointer-events-none opacity-0" : "opacity-100";
+
   return (
     <div className="fixed inset-0 z-30 bg-bg">
       {/* aria-hidden: é cenário. O conteúdo de verdade é o HTML dos painéis.
@@ -227,6 +246,7 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
           reduzido={reduzido}
           folha={folha}
           escuro={escuro}
+          saindo={saindo}
           aoChegar={aoChegar}
           aoAtualizarQuadro={aoAtualizarQuadro}
           aoEscolher={irPara}
@@ -243,16 +263,18 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
         />
       </div>
 
-      <NavIlha
-        dict={dict}
-        locale={locale}
-        destino={destino}
-        irPara={irPara}
-        aoSair={aoSair}
-      />
+      <div className={`transition-opacity duration-500 ${sumindo}`}>
+        <NavIlha
+          dict={dict}
+          locale={locale}
+          destino={destino}
+          irPara={irPara}
+          aoSair={sairAnimado}
+        />
+      </div>
 
       {!interagiu && destino === null ? (
-        <p className="pointer-events-none absolute inset-x-0 bottom-20 z-40 mx-auto max-w-md px-6 text-center text-xs text-fg-muted lg:bottom-8">
+        <p className={`pointer-events-none absolute inset-x-0 bottom-20 z-40 mx-auto max-w-md px-6 text-center text-xs text-fg-muted transition-opacity duration-500 lg:bottom-8 ${sumindo}`}>
           {dict.ilha.dicaMouse}
         </p>
       ) : null}
@@ -261,7 +283,7 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
         <button
           type="button"
           onClick={arrumarIlha}
-          className="safe-bottom pointer-events-auto absolute bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-full border border-border bg-surface/90 px-4 py-2 text-sm text-fg shadow-lg backdrop-blur transition hover:bg-surface-2"
+          className={`safe-bottom pointer-events-auto absolute bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-full border border-border bg-surface/90 px-4 py-2 text-sm text-fg shadow-lg backdrop-blur transition duration-500 hover:bg-surface-2 ${sumindo}`}
         >
           <Brush aria-hidden="true" className="size-4 text-accent" />
           {format(dict.ilha.arrumar, { n: derrubados })}
@@ -270,6 +292,7 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
 
       {ponto ? (
         <PainelTela
+          className={sumindo}
           refPainel={painelRef}
           aberto
           ativo={chegou}
@@ -401,11 +424,11 @@ function NavIlha({
             nome de degrau esconderia essa relação. */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 font-[family-name:var(--font-display)] text-lg font-bold tracking-tight text-fg min-[1360px]:block"
+          className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-fg min-[1360px]:block"
         >
-          {site.monogram.toLowerCase()}
+          {site.monogram}
           <span className="text-accent">.</span>
-          dev
+          DEV
         </span>
 
         {/* Tema e idioma vivem no cabeçalho da página rolável, que fica

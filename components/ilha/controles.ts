@@ -46,7 +46,14 @@ export type Orbita = {
 
 export const ORBITA_INICIAL: Orbita = {
   angulo: 0.6,
-  elevacao: 0.4,
+  /* 0,30 e não 0,40, e a diferença é céu.
+     A abertura vertical da câmera é 45°, então o topo do quadro fica sempre a
+     `elevacao − 22,5°`. Em 0,40 rad (22,9°) isso dava 0,4° ABAIXO da linha do
+     horizonte: a ilha aparecia inteira, mas não sobrava um grau de céu acima
+     dela, e o Sol vivia cortado pela borda de cima. Em 0,30 (17,2°) abrem-se
+     5,3° de céu de verdade — o bastante para o Sol e a Lua caberem inteiros
+     acima da sala. A ilha continua vista de cima, só que um pouco menos. */
+  elevacao: 0.3,
   zoom: 1,
 };
 

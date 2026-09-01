@@ -7,8 +7,10 @@ import { Ilha } from "@/components/ilha/ilha";
 import type { Dictionary } from "@/content/i18n";
 import type { Locale } from "@/content/site";
 import {
+  anunciarTransicao,
   assinarIlha,
   definirIlha,
+  DURACAO_DA_TRANSICAO,
   lerIlha,
   lerIlhaNoServidor,
 } from "@/lib/preferencia-ilha";
@@ -45,8 +47,18 @@ export function ModoIlha({
     };
   }, [estado]);
 
+  /* Sair já vem animado: quem chama é a própria ilha, depois de afastar a
+     câmera. Ver `aoSair` em `ilha.tsx`. */
   const sair = useCallback(() => definirIlha("off"), []);
-  const entrar = useCallback(() => definirIlha("on"), []);
+
+  /* Entrar avisa PRIMEIRO e troca depois. O aviso faz o fundo da página se
+     aproximar da ilha durante a espera; a troca acontece no fim desse
+     movimento, e a ilha continua o mesmo zoom de onde a página parou.
+     Sem a espera, a página sumiria no meio do próprio movimento. */
+  const entrar = useCallback(() => {
+    anunciarTransicao("ilha");
+    window.setTimeout(() => definirIlha("on"), DURACAO_DA_TRANSICAO);
+  }, []);
 
   if (estado === "indisponivel") return null;
 

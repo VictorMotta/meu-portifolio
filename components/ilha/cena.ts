@@ -115,7 +115,11 @@ export function construirIlha(): THREE.Group {
   const island = group('island');
   const R = 4.15, SEG = 14, ROT = Math.PI / SEG;
 
-  part('island_top', cyl(R, R * 0.98, 0.22, SEG), M.snow, [0, -0.11, 0], [0, ROT, 0], island);
+  /* 0,25 de altura, e não 0,22: em 0,22 a base ficava em -0,22 e o topo da
+     crosta em -0,25, no MESMO raio de 4,067 — um anel de 3 cm de nada dando a
+     volta na ilha, por onde se via o outro lado. O vão sempre esteve lá; o
+     ferro e o tema claro é que o revelaram. */
+  part('island_top', cyl(R, R * 0.98, 0.25, SEG), M.snow, [0, -0.125, 0], [0, ROT, 0], island);
   part('island_crust', cyl(R * 0.98, R * 0.86, 0.34, SEG), M.crust, [0, -0.42, 0], [0, ROT, 0], island);
 
   /* O fundo é uma calota, e não mais o funil de dois troncos de cone com a
@@ -131,7 +135,14 @@ export function construirIlha(): THREE.Group {
      baixo se alinham em vez de brigar. */
   const calota = new THREE.SphereGeometry(R * 0.86, SEG, 7, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
   calota.scale(1, 0.82, 1);
-  const fundo = part('island_bowl', calota, M.rock, [0, -0.59, 0], [0, ROT, 0], island);
+  /* Giro ZERO, e não o `ROT` das outras peças. Não é descuido: `CylinderGeometry`
+     põe o primeiro vértice a 90° e `SphereGeometry` a 180°, e 90° são 3,5 dos
+     14 segmentos — meio passo. Com o mesmo `ROT` das outras, as facetas da
+     calota caíam 12,9° fora das da crosta: os dois anéis tinham o mesmo raio
+     (3,569) e a mesma altura (−0,59), mas os vértices de uma ficavam no meio
+     das arestas da outra, e sobravam fendas triangulares por onde se via o
+     outro lado da ilha. */
+  const fundo = part('island_bowl', calota, M.rock, [0, -0.59, 0], [0, 0, 0], island);
   fundo.name = 'island_bowl';
 
   // blocos de rocha salientes
@@ -140,10 +151,29 @@ export function construirIlha(): THREE.Group {
     const m = part(`rock_chunk_${i + 1}`, new THREE.DodecahedronGeometry(r, 0), i % 2 ? M.rock : M.rockDark, [x, y, z], [i, i * 0.8, i * 0.4], island);
     m.scale.set(1, 0.75, 1.05);
   });
-  // rochas flutuantes
+  /* Rochas flutuantes: elas ORBITAM a ilha, e não ficam paradas ao lado dela.
+     A posição escrita aqui é onde cada uma COMEÇA; o raio, o ângulo e a altura
+     saem dela e ficam guardados em `userData.orbita`, que é o que `orbitas.ts`
+     lê a cada quadro. Guardar aqui, e não lá, porque quem sabe onde a pedra
+     nasce é quem a põe na cena.
+
+     As velocidades são diferentes e não são múltiplas umas das outras: com o
+     mesmo período, as quatro andariam em formação, como um carrossel. Quanto
+     mais longe, mais devagar — não é a lei de Kepler de verdade, mas é o
+     bastante para o olho ler "órbita" em vez de "peças girando juntas". */
   ([[3.7, -1.7, -0.9, 0.34], [-3.4, -2.9, 1.3, 0.26], [1.3, -4.6, 1.1, 0.3], [-2.4, -4.2, -1.6, 0.22]] as [number, number, number, number][]).forEach(([x, y, z, r], i) => {
     const m = part(`floating_rock_${i + 1}`, new THREE.DodecahedronGeometry(r, 0), M.rock, [x, y, z], [i, i * 1.3, i], island);
     m.scale.set(1, 0.7, 1);
+    const raio = Math.hypot(x, z);
+    m.userData.orbita = {
+      raio,
+      angulo: Math.atan2(z, x),
+      altura: y,
+      /* Rad/s. O 1,15 divide o passo entre as quatro sem que duas coincidam. */
+      velocidade: (0.19 / Math.sqrt(raio)) * (1 + i * 0.15) * (i % 2 ? -1 : 1),
+      /* Um giro próprio, para a pedra não passear sempre com a mesma face. */
+      giro: 0.12 + i * 0.05,
+    };
   });
   // piso de tábuas
   /* O piso na madeira que as estantes tinham: 0x563622 é a cor média daquela

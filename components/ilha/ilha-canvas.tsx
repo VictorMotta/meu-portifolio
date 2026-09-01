@@ -17,6 +17,7 @@ import { construirIlha } from "@/components/ilha/cena";
 import {
   ajustarCeu,
   ambienteDoCeu,
+  direcaoDaLuz,
   construirCeu,
   descartarCeu,
   refletirNoFerro,
@@ -31,7 +32,9 @@ import {
 import { PONTOS, type ChavePonto } from "@/components/ilha/pontos";
 import { ENCAIXES, ESCONDIDOS, encaixarModelos, esconder } from "@/components/ilha/modelos";
 import { acenderLamparinas } from "@/components/ilha/luzes";
+import { girarOCeu, orbitarPedras, orbitarPlanetas } from "@/components/ilha/orbitas";
 import { arrumar, derrubar, integrar, oQueCai, type Caido } from "@/components/ilha/queda";
+import { DURACAO_DA_TRANSICAO } from "@/lib/preferencia-ilha";
 import { apagarTela, aplicarTexturas } from "@/components/ilha/texturas";
 import type { Dictionary } from "@/content/i18n";
 import type { Locale } from "@/content/site";
@@ -79,6 +82,12 @@ type PropsCena = {
   /** Tema escuro: é o que acende as duas lamparinas. Ver `luzes.ts`. */
   escuro: boolean;
   /**
+   * A ilha está indo embora: a câmera se afasta até virar ponto, e só então o
+   * modo troca. É a primeira metade do zoom que termina no fundo da página
+   * rolável — ver `anunciarTransicao`, em `preferencia-ilha.ts`.
+   */
+  saindo: boolean;
+  /**
    * O elemento que embrulha o canvas. Os gestos moram nele, e não no canvas:
    * o canvas pertence ao renderizador, e mexer no estilo dele é mexer num
    * valor que veio de um hook.
@@ -103,6 +112,7 @@ function Ilha({
   reduzido,
   folha,
   escuro,
+  saindo,
   refPalco,
 }: PropsCena) {
   const ilha = useMemo(() => construirIlha(), []);
@@ -259,6 +269,14 @@ function Ilha({
      isso por estado do React redesenharia a árvore 60 vezes por segundo. */
   const orbita = useRef<Orbita>({ ...ORBITA_INICIAL });
   const girandoSozinha = useRef(true);
+
+  /* O afastamento da entrada e da saída, como fator do raio da órbita.
+     Começa em 3,2 — a ilha entra de longe, continuando o mergulho que o fundo
+     da página começou — e caminha para 1. Na saída ele volta a 3,2, e quando
+     chega lá o modo troca. É por isso que ele multiplica o raio em vez de
+     mexer no zoom da órbita: o zoom é do visitante, tem limites próprios, e
+     misturar os dois faria a roda do mouse brigar com a animação. */
+  const afastamento = useRef(3.2);
   const partida = useRef<Pose | null>(null);
   const chegada = useRef<Pose | null>(null);
   const tempo = useRef(1);
@@ -470,8 +488,16 @@ function Ilha({
 
   const vetorAux = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame((_, delta) => {
+  useFrame((estado, delta) => {
     const dt = Math.min(delta, 0.05);
+
+    /* O relógio do R3F, em segundos desde que a cena montou. As órbitas saem
+       dele e não de um acumulador próprio: ver o cabeçalho de `orbitas.ts`.
+       Chama-se `relogio` porque `tempo` já é o cronômetro do voo da câmera. */
+    const relogio = estado.clock.elapsedTime;
+    orbitarPedras(ilha, relogio);
+    orbitarPlanetas(ceu, relogio);
+    girarOCeu(ceu, relogio);
 
     integrar(caidos.current, obstaculos, chao, dt);
 
@@ -481,8 +507,14 @@ function Ilha({
       orbita.current.angulo += dt * 0.06;
     }
 
+    /* 4,6 por segundo é o mesmo ritmo do fundo da página: as duas metades do
+       zoom precisam ter a mesma velocidade, senão a emenda aparece. */
+    const alvoDoAfastamento = saindo ? 3.2 : 1;
+    afastamento.current += (alvoDoAfastamento - afastamento.current) *
+      (reduzido ? 1 : 1 - Math.exp(-(4600 / DURACAO_DA_TRANSICAO) * dt));
+
     const geral = poseGeral(
-      raioBase * orbita.current.zoom,
+      raioBase * orbita.current.zoom * afastamento.current,
       enquadramento.alturaFoco,
       orbita.current.angulo,
       orbita.current.elevacao,
@@ -592,10 +624,18 @@ function Ilha({
 
   return (
     <>
-      <hemisphereLight args={[0xffffff, 0xd8d2c4, 1]} />
+      {/* A luz de fora vem do lado do astro que está no céu: do Sol de dia, da
+          Lua de noite. Ver `direcaoDaLuz`. A cor e a força é que trocam — luz
+          de sol é quente e forte, luar é frio e fraco. Ele não apaga de noite
+          porque é ele que mantém o portfólio legível; quem faz a atmosfera são
+          as lamparinas de dentro, que acendem no escuro. */}
+      <hemisphereLight
+        args={[escuro ? 0x9fb3d9 : 0xffffff, escuro ? 0x20283a : 0xd8d2c4, escuro ? 0.75 : 1]}
+      />
       <directionalLight
-        position={[4, 7, 5]}
-        intensity={2.2}
+        position={direcaoDaLuz()}
+        intensity={escuro ? 1.35 : 2.6}
+        color={escuro ? 0xcdddff : 0xfff2dc}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -606,7 +646,14 @@ function Ilha({
         shadow-camera-bottom={-6}
         shadow-camera-far={30}
       />
-      <directionalLight position={[-5, 3, -4]} intensity={0.5} color={0xfff4e6} />
+      {/* Preenchimento do lado oposto ao astro, para o lado escuro dos móveis
+          não virar silhueta. Fraco de propósito: passando disso ele apaga a
+          direção que a luz principal acabou de ganhar. */}
+      <directionalLight
+        position={direcaoDaLuz().map((v) => -v) as [number, number, number]}
+        intensity={escuro ? 0.22 : 0.5}
+        color={escuro ? 0xbcd0ff : 0xfff4e6}
+      />
       <primitive object={ceu} />
       <primitive object={ilha} />
       {/* Não há plano de sombra. Existia um, 60 x 60 em y=0, cinco metros

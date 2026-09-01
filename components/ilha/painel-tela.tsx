@@ -29,6 +29,7 @@ import type { Dictionary } from "@/content/i18n";
  * larga a tela e vira uma folha normal, ancorada embaixo.
  */
 export function PainelTela({
+  className = "",
   refPainel,
   aberto,
   ativo,
@@ -40,6 +41,8 @@ export function PainelTela({
   dict,
   children,
 }: {
+  /** Classes de fora. Hoje só o desaparecimento na saída da ilha usa. */
+  className?: string;
   refPainel: RefObject<HTMLDivElement | null>;
   /** O painel existe (a câmera está indo ou já chegou). */
   aberto: boolean;
@@ -70,7 +73,8 @@ export function PainelTela({
       aria-modal="false"
       aria-label={`${titulo} — ${legenda}`}
       className={[
-        "superficie fixed z-40 flex flex-col overflow-hidden",
+        "superficie fixed z-40 flex flex-col overflow-hidden transition-opacity duration-500",
+        className,
         `sup-${superficie}`,
         /* A tela tem cantos e brilho de monitor. As outras superfícies são o
            próprio objeto, então nada de borda: qualquer moldura entregaria
