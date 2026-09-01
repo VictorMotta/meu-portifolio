@@ -1246,10 +1246,17 @@ export const QUADRO_PROJETOS = quadro(
     "project_board_frame", "project_board_header",
     "project_board_leg_1", "project_board_leg_2",
     "project_board_foot_1", "project_board_foot_2",
-    /* Os seis post-its desenhados. Ficavam de fora desta lista e continuavam
-       na cena, cartõezinhos de geometria colados por cima do kanban que a
-       textura já desenha — o mesmo conteúdo duas vezes, um em relevo. */
-    ...[1, 2, 3].flatMap((c) => [`project_note_${c}_1`, `project_note_${c}_2`]),
+    /* Os seis post-its (`project_note_*`) NÃO entram aqui, e já entraram uma
+       vez: a justificativa era que a textura do quadro já desenhava o kanban e
+       os cartões seriam o mesmo conteúdo duas vezes, um em relevo. Ela estava
+       errada. `corpoDoQuadro`, em `texturas.ts`, desenha a faixa azul, o
+       título e a chamada — e para por aí; `MAPA_DO_QUADRO.cartoes` existe só
+       para POSICIONAR estes post-its. Escondidos, o quadro fica com o
+       cabeçalho e mais nada, que foi o que apareceu na ilha.
+
+       Cada post-it é pintado com um projeto em `aplicarTexturas`, e é ele que
+       leva o kanban. Quem for mexer aqui de novo: procure quem desenha os
+       cartões antes de decidir que há dois. */
   ],
   "quadro_projetos_modelo",
   2.1,
