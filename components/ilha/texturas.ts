@@ -287,12 +287,20 @@ function telaTerminal() {
 }
 
 /**
+ * O vidro da TV tem proporção 1,814 (1,248 x 0,688 dentro da moldura do
+ * `tv.glb`). Antes eram 500 px de altura, para a chapa de 1,36 x 0,66 que a
+ * cena desenhava — e essa chapa passou a ser o vidro do modelo. Sem trocar
+ * aqui junto, o desenho entraria esticado 13% na horizontal.
+ */
+const ALTURA_TV = Math.round(LARGURA / 1.814);
+
+/**
  * A TV como o painel dos Mods mostra: chapéu, título, chamada, o cartão do
  * mod com ícone, nome, resumo, etiquetas e botões, e a linha de rodapé.
  */
 function desenharTv(p: Pincel, dict: Dictionary, icone: CanvasImageSource | null) {
   const t = dict.hobby;
-  const ALTURA = 500;
+  const ALTURA = ALTURA_TV;
 
   const g = p.createLinearGradient(0, 0, LARGURA, ALTURA);
   g.addColorStop(0, "#1a1b2b");
@@ -373,7 +381,7 @@ function desenharTv(p: Pincel, dict: Dictionary, icone: CanvasImageSource | null
 }
 
 function telaTv(dict: Dictionary) {
-  const t = tela(500);
+  const t = tela(ALTURA_TV);
   if (!t) return null;
   desenharTv(t.p, dict, null);
   return t.c;
@@ -509,6 +517,7 @@ const MAPA_DO_QUADRO = {
 /** A face do whiteboard tem proporção 1,573 (2,876 x 1,828 no arquivo). */
 const ALTURA_QUADRO = Math.round(LARGURA / 1.573);
 
+
 /**
  * O corpo do quadro de projetos: a faixa azul, o título e a chamada — na
  * mesma ordem do painel. A faixa era uma peça de geometria à parte; com o
@@ -540,11 +549,41 @@ function corpoDoQuadro(dict: Dictionary) {
 }
 
 /**
+ * A espessura com que a chapa escrita encosta na lousa do modelo.
+ *
+ * A chapa é uma CAIXA, e caixa tem seis faces com o mesmo material: o texto
+ * que se lê na frente está também na face de trás, espelhado. Enquanto a
+ * chapa era mais grossa que a lousa do modelo, essa face de trás aparecia por
+ * fora do quadro — dava para ler a stack e o kanban de costas, do outro lado
+ * da ilha.
+ *
+ * 1,2 cm contra os 2,3 cm da lousa do modelo: com o recuo abaixo, a chapa
+ * inteira mora dentro da espessura da lousa, menos os 7 mm que sobram para a
+ * frente e que são o que se vê.
+ */
+const ESPESSURA_DA_CHAPA = 0.012;
+
+/**
+ * Quanto a chapa entra na lousa do modelo.
+ *
+ * É o que garante que a face de trás fique escondida DENTRO da lousa, e não
+ * atrás dela. Não gera briga de profundidade: nenhuma das duas faces da chapa
+ * cai no mesmo plano da face da lousa.
+ */
+const RECUO_DA_CHAPA = 0.005;
+
+/**
  * Encosta a chapa desenhada na face do whiteboard que entrou no lugar dela.
  *
  * O modelo é o móvel; a chapa é onde o conteúdo é escrito. Ela sobrevive ao
  * encaixe justamente porque a UV do modelo não serve para pintar — mesmo
  * motivo pelo qual a tela da TV desenhada continua na frente da TV modelada.
+ *
+ * A espessura da chapa é REESCRITA aqui, e não herdada do desenho: as três
+ * nasceram com 7, 7 e 2 cm, medidas escolhidas para o quadro desenhado que
+ * existe antes de o .glb chegar. Contra a lousa do modelo, que tem 2,3 cm,
+ * duas delas sobravam por trás. Normalizar aqui mantém o quadro desenhado
+ * como era e resolve o encontro num lugar só.
  *
  * `espessa` diz qual eixo da chapa é a espessura, porque as três nasceram
  * diferentes: a lousa é fina no X, o quadro e a folha são finos no Z.
@@ -571,12 +610,25 @@ function encostarNoQuadro(
   const escalaAntes = painel.scale.clone();
   const posicaoAntes = painel.position.clone();
 
+  /* A espessura crua sai da geometria, não de `face`: `face` são as duas
+     medidas da superfície escrita, e a terceira é justamente a que muda. */
+  const geometria = (painel as THREE.Mesh).geometry;
+  geometria.computeBoundingBox();
+  const cru = geometria.boundingBox;
+  if (!cru) return;
+  const espessuraCrua = espessa === "x" ? cru.max.x - cru.min.x : cru.max.z - cru.min.z;
+  const fina = ESPESSURA_DA_CHAPA / espessuraCrua;
+  /* O centro da chapa fica ATRÁS da face da lousa: recuo para dentro, mais
+     meia espessura. Assim a face de trás some dentro do modelo e só a da
+     frente aparece. */
+  const meio = ESPESSURA_DA_CHAPA / 2 - RECUO_DA_CHAPA;
+
   if (espessa === "x") {
-    painel.scale.set(1, tamanho.y / face[1], largura / face[0]);
-    painel.position.set(caixa.max.x + 0.006, centro.y, centro.z);
+    painel.scale.set(fina, tamanho.y / face[1], largura / face[0]);
+    painel.position.set(caixa.max.x + meio, centro.y, centro.z);
   } else {
-    painel.scale.set(largura / face[0], tamanho.y / face[1], 1);
-    painel.position.set(centro.x, centro.y, caixa.max.z + 0.006);
+    painel.scale.set(largura / face[0], tamanho.y / face[1], fina);
+    painel.position.set(centro.x, centro.y, caixa.max.z + meio);
   }
 
   lixo.push({
@@ -667,6 +719,22 @@ function postIt(projeto: Project, dict: Dictionary, fundo: string) {
 /**
  * A folha do currículo como o painel mostra: foto, nome, a barra do cargo,
  * um filete, os dois primeiros parágrafos e os dois botões.
+ *
+ * O desenho é PAISAGEM, em `ALTURA_QUADRO`, como o da stack e o do kanban. Era
+ * retrato — 1024 x 1360 —, e a face do quadro é 1,573 de proporção: a arte
+ * chegava esticada 2,09 vezes mais larga do que alta, que é o currículo
+ * achatado que se via de longe. A textura não tem como saber a proporção da
+ * face; quem sabe é aqui.
+ *
+ * Virar a folha não é só trocar a altura: em 651 px de altura não cabe a
+ * mesma coluna única de antes, que ia a 860. Os parágrafos passaram a correr
+ * lado a lado, que é o que a largura sobrando pede — e é o mesmo arranjo em
+ * colunas do quadro da stack, ao lado.
+ *
+ * São TRÊS colunas, uma por parágrafo, e não mais os dois primeiros de
+ * `about`. O corte em dois existia para a folha retrato; em paisagem o
+ * terceiro cabe, e sem ele sobrava um palmo de lousa em branco embaixo do
+ * texto — quadro pela metade parece esquecido, não sóbrio.
  */
 function desenharCurriculo(
   p: Pincel,
@@ -674,60 +742,67 @@ function desenharCurriculo(
   nome: string,
   foto: CanvasImageSource | null,
 ) {
-  const ALTURA = 1360;
+  const MARGEM = 72;
+  const DIREITA = LARGURA - MARGEM;
   p.fillStyle = "#ece9e2";
-  p.fillRect(0, 0, LARGURA, ALTURA);
+  p.fillRect(0, 0, LARGURA, ALTURA_QUADRO);
 
-  const LARGURA_FOTO = 216;
-  const ALTURA_FOTO = 252;
+  const LARGURA_FOTO = 120;
+  const ALTURA_FOTO = 140;
   if (foto) {
-    p.drawImage(foto, 90, 120, LARGURA_FOTO, ALTURA_FOTO);
+    p.drawImage(foto, MARGEM, 56, LARGURA_FOTO, ALTURA_FOTO);
   } else {
     p.fillStyle = "#d5d0c6";
-    p.fillRect(90, 120, LARGURA_FOTO, ALTURA_FOTO);
+    p.fillRect(MARGEM, 56, LARGURA_FOTO, ALTURA_FOTO);
   }
 
-  const x = 90 + LARGURA_FOTO + 34;
-  p.font = `bold 66px ${SANS}`;
+  const x = MARGEM + LARGURA_FOTO + 30;
+  p.font = `bold 46px ${SANS}`;
   p.fillStyle = "#1a1a1a";
-  p.fillText(nome, x, 190);
+  p.fillText(nome, x, 116);
 
-  p.font = `bold 24px ${MONO}`;
+  p.font = `bold 18px ${MONO}`;
   const cargo = dict.hero.eyebrow.toUpperCase();
-  const largoCargo = p.measureText(cargo).width + 32;
+  const largoCargo = p.measureText(cargo).width + 26;
   p.fillStyle = "#1d4ed8";
-  p.fillRect(x, 214, largoCargo, 42);
+  p.fillRect(x, 138, largoCargo, 34);
   p.fillStyle = "#ffffff";
-  p.fillText(cargo, x + 16, 244);
+  p.fillText(cargo, x + 13, 162);
 
   p.fillStyle = "#c9c4b8";
-  p.fillRect(90, 424, LARGURA - 180, 2);
+  p.fillRect(MARGEM, 212, DIREITA - MARGEM, 2);
 
-  p.font = `30px ${SANS}`;
+  /* Três colunas, uma por parágrafo. O vão de 32 é o que separa as colunas sem
+     que a linha de uma pareça continuar na outra. */
+  const VAO = 32;
+  const coluna = (DIREITA - MARGEM - 2 * VAO) / 3;
+  p.font = `20px ${SANS}`;
   p.fillStyle = "#45433e";
-  let y = 486;
-  for (const paragrafo of dict.about.paragraphs.slice(0, 2)) {
-    y = escrever(p, paragrafo, 90, y, LARGURA - 180, 44, 6) + 30;
-  }
+  dict.about.paragraphs.slice(0, 3).forEach((paragrafo, i) => {
+    escrever(p, paragrafo, MARGEM + i * (coluna + VAO), 252, coluna, 28, 10);
+  });
 
-  /* Os mesmos dois botões do painel: baixar o currículo e o GitHub. */
-  p.font = `bold 26px ${SANS}`;
-  const largoBaixar = p.measureText(dict.nav.resume).width + 52;
+  /* Os mesmos dois botões do painel: baixar o currículo e o GitHub. Em y fixo,
+     e não depois do texto: as duas colunas terminam em alturas diferentes, e
+     seguir a mais longa deixaria os botões dançando conforme o idioma. */
+  const BOTOES = 536;
+  p.font = `bold 24px ${SANS}`;
+  const largoBaixar = p.measureText(dict.nav.resume).width + 48;
   p.fillStyle = "#0a5648";
-  p.fillRect(90, y + 16, largoBaixar, 56);
+  p.fillRect(MARGEM, BOTOES, largoBaixar, 52);
   p.fillStyle = "#ffffff";
-  p.fillText(dict.nav.resume, 90 + 26, y + 52);
+  p.fillText(dict.nav.resume, MARGEM + 24, BOTOES + 34);
 
-  const largoGithub = p.measureText("GitHub").width + 52;
+  const largoGithub = p.measureText("GitHub").width + 48;
   p.strokeStyle = "#c9c4b8";
   p.lineWidth = 2;
-  p.strokeRect(90 + largoBaixar + 16, y + 16, largoGithub, 56);
+  p.strokeRect(MARGEM + largoBaixar + 16, BOTOES, largoGithub, 52);
   p.fillStyle = "#1a1a1a";
-  p.fillText("GitHub", 90 + largoBaixar + 16 + 26, y + 52);
+  p.fillText("GitHub", MARGEM + largoBaixar + 16 + 24, BOTOES + 34);
 }
 
 function folhaDoCurriculo(dict: Dictionary, nome: string) {
-  const t = tela(1360);
+  const t = tela(ALTURA_QUADRO);
   if (!t) return null;
   desenharCurriculo(t.p, dict, nome, null);
   return t.c;

@@ -99,10 +99,15 @@ export const PONTOS: Record<ChavePonto, Ponto> = {
     ocupacao: 1,
   },
   /* Tela do fliperama: os jogos.
-     Parada só de clique, como o currículo — não entra em `ORDEM_PONTOS` nem
-     na navegação, que já tem cinco itens. Antes o fliperama levava a "mods",
-     e clicar nele voava para a TV do outro lado da sala: o visitante clicava
-     num gabinete e chegava numa televisão.
+     Tem item de menu, e isso importa mais do que parece: era a única parada
+     sem NENHUM caminho de teclado — fora de `ORDEM_PONTOS`, fora da
+     navegação e fora do ciclo das setas, alcançável só clicando no gabinete
+     em 3D. Quem navega por teclado ou leitor de tela não chegava na lista de
+     jogos, que existe justamente para ser lida. O `axe` não acusa isso porque
+     não sabe testar alvo de clique dentro de um canvas.
+
+     Antes o fliperama levava a "mods", e clicar nele voava para a TV do outro
+     lado da sala: o visitante clicava num gabinete e chegava numa televisão.
 
      `frente` é [0,0,1] porque a chapa está deitada 23° para trás, e a normal
      dela é o +Z LOCAL depois desse giro — a matriz do mundo faz o resto. E a
@@ -145,10 +150,19 @@ export const PONTOS: Record<ChavePonto, Ponto> = {
   },
 };
 
+/**
+ * A ordem do menu e do ciclo das setas.
+ *
+ * "jogos" entra depois de "mods" porque os dois são a mesma parte da história
+ * — o que se faz fora do expediente — e o fliperama fica ao lado da TV na
+ * própria sala. O currículo continua de fora: ele tem botão próprio, no grupo
+ * da direita, junto com tema e idioma.
+ */
 export const ORDEM_PONTOS: ChavePonto[] = [
   "sobre",
   "stack",
   "projetos",
   "mods",
+  "jogos",
   "contato",
 ];

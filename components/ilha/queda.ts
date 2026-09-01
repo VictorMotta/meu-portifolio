@@ -37,8 +37,25 @@ export type Caido = {
 
 /* Objetos que são de pegar: pequenos, apoiados em alguma superfície e sem
    função estrutural. Derrubar o sofá ou o monitor seria engraçado uma vez e
-   destruiria a cena para sempre. */
-const GRUPOS_SOLTOS = new Set(["mug"]);
+   destruiria a cena para sempre.
+
+   Os `_modelo` são grupos de encaixe (ver `Encaixe.prefixo` em modelos.ts):
+   um .glb vira um grupo com esse nome, e o clique acerta uma malha lá dentro.
+   Por isso eles entram aqui, e não em `SOLTOS` — a busca daqui sobe pelos
+   pais até achar o grupo, então o clique em qualquer pedaço do boneco derruba
+   o boneco inteiro em vez de arrancar um pé dele.
+
+   O globo entra junto com o cubo e o cogumelo mesmo não sendo novidade: os
+   três dividem o topo das estantes, e dois caírem e o terceiro não pareceria
+   defeito. O Sonic já está no chão e não tem de onde cair — o que ele faz é
+   ser empurrado e rolar, que é o mesmo gesto. */
+const GRUPOS_SOLTOS = new Set([
+  "mug",
+  "controle_1_modelo", "controle_2_modelo",
+  "cubo_modelo", "cogumelo_modelo", "globo_modelo",
+  "livros_comoda_modelo",
+  "sonic_modelo",
+]);
 
 const SOLTOS = [
   /^book_\d+$/,
@@ -64,15 +81,30 @@ export function oQueCai(objeto: THREE.Object3D): THREE.Object3D | null {
 /**
  * Tira o objeto do móvel e o joga para longe de quem clicou.
  *
+ * A lista entra aqui porque é ela que guarda a regra: **um registro por
+ * objeto**. Clicar de novo numa coisa já caída é um empurrão, não uma queda
+ * nova — o Sonic no chão é justamente isso, ser chutado de novo.
+ *
+ * Guardar um segundo registro do mesmo objeto guardaria como "lugar original"
+ * o lugar onde ele JÁ tinha caído, porque a essa altura ele está na raiz da
+ * ilha e não mais no móvel. E `arrumar` percorre a lista na ordem: devolvia o
+ * objeto para a prateleira pelo primeiro registro e o mandava de volta ao chão
+ * pelo segundo. Era o que fazia a ilha não voltar ao estado inicial — e o que
+ * fazia o contador dizer "2" com uma coisa só no chão, porque ele conta o
+ * tamanho desta lista.
+ *
  * `attach` preserva a posição no mundo: sem ele o objeto saltaria para a
- * origem da ilha no instante do clique.
+ * origem da ilha no instante do clique. Só vale na primeira queda; na segunda
+ * o objeto já mora na raiz.
  */
 export function derrubar(
+  caidos: Caido[],
   raiz: THREE.Object3D,
   objeto: THREE.Object3D,
   daCamera: THREE.Vector3,
-): Caido {
-  const estado: Caido = {
+) {
+  const jaCaido = caidos.find((c) => c.objeto === objeto);
+  const estado: Caido = jaCaido ?? {
     objeto,
     pai: objeto.parent ?? raiz,
     posicao: objeto.position.clone(),
@@ -82,7 +114,14 @@ export function derrubar(
     parado: false,
   };
 
-  raiz.attach(objeto);
+  if (!jaCaido) {
+    raiz.attach(objeto);
+    caidos.push(estado);
+  }
+
+  /* Volta a simular: quem já tinha assentado está com `parado`, e sem isto o
+     empurrão do segundo clique não sairia do lugar. */
+  estado.parado = false;
 
   /* Empurrão na direção em que o clique veio, achatado no plano do chão, mais
      um tranco para cima: sem ele o objeto só escorregaria em vez de tombar. */
@@ -96,7 +135,6 @@ export function derrubar(
     (Math.random() - 0.5) * 11,
     (Math.random() - 0.5) * 11,
   );
-  return estado;
 }
 
 const caixa = new THREE.Box3();
@@ -195,7 +233,13 @@ export function integrar(
   }
 }
 
-/** Devolve tudo para o lugar de onde saiu. */
+/**
+ * Devolve tudo para o lugar de onde saiu.
+ *
+ * Depende da regra de um registro por objeto que `derrubar` mantém: com dois
+ * registros da mesma coisa, o último a ser aplicado é quem manda, e ele
+ * guardaria o chão como lugar de origem.
+ */
 export function arrumar(caidos: Caido[]) {
   for (const c of caidos) {
     c.pai.add(c.objeto);

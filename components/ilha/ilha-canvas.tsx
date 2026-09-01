@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
 
 import {
+  aparece,
+  foraDaMedida,
   mapearObstaculos,
   poseDaTela,
   poseGeral,
@@ -12,6 +14,13 @@ import {
   type Pose,
 } from "@/components/ilha/camera-ilha";
 import { construirIlha } from "@/components/ilha/cena";
+import {
+  ajustarCeu,
+  ambienteDoCeu,
+  construirCeu,
+  descartarCeu,
+  refletirNoFerro,
+} from "@/components/ilha/ceu";
 import {
   LIMIAR_DE_CLIQUE,
   ORBITA_INICIAL,
@@ -21,6 +30,7 @@ import {
 } from "@/components/ilha/controles";
 import { PONTOS, type ChavePonto } from "@/components/ilha/pontos";
 import { ENCAIXES, ESCONDIDOS, encaixarModelos, esconder } from "@/components/ilha/modelos";
+import { acenderLamparinas } from "@/components/ilha/luzes";
 import { arrumar, derrubar, integrar, oQueCai, type Caido } from "@/components/ilha/queda";
 import { apagarTela, aplicarTexturas } from "@/components/ilha/texturas";
 import type { Dictionary } from "@/content/i18n";
@@ -66,6 +76,8 @@ type PropsCena = {
   reduzido: boolean;
   /** Modo folha: o painel cobre a parte de baixo, então a tela sobe no quadro. */
   folha: boolean;
+  /** Tema escuro: é o que acende as duas lamparinas. Ver `luzes.ts`. */
+  escuro: boolean;
   /**
    * O elemento que embrulha o canvas. Os gestos moram nele, e não no canvas:
    * o canvas pertence ao renderizador, e mexer no estilo dele é mexer num
@@ -90,10 +102,17 @@ function Ilha({
   nome,
   reduzido,
   folha,
+  escuro,
   refPalco,
 }: PropsCena) {
   const ilha = useMemo(() => construirIlha(), []);
-  const { camera, size, invalidate } = useThree();
+  /* O céu é irmão da ilha, não filho. Ver o cabeçalho de `ceu.ts`: as três
+     medidas que varrem a ilha inteira (enquadramento, obstáculos da câmera e
+     chão da física) engoliriam uma esfera de 115 de raio. */
+  const ceu = useMemo(() => construirCeu(), []);
+
+  useEffect(() => () => descartarCeu(ceu), [ceu]);
+  const { camera, gl, size, invalidate } = useThree();
   /* As caixas dos móveis, para a câmera não parar dentro de um deles.
      Refeitas quando os modelos entram: eles trocam móveis de lugar e escondem
      os desenhados, então o mapa da montagem descreve uma cena que deixou de
@@ -130,6 +149,8 @@ function Ilha({
      novas. O que a pintura cria precisa ser descartado quando a ilha sair:
      material e textura vivem na placa de vídeo, e o coletor do JavaScript não
      alcança nenhum dos dois. */
+  const [modelosProntos, setModelosProntos] = useState(0);
+
   useEffect(() => {
     let vivo = true;
     let lixoTexturas = aplicarTexturas(ilha, dict, locale, projetos, nome);
@@ -148,6 +169,7 @@ function Ilha({
       for (const item of lixoTexturas) item.dispose();
       lixoTexturas = aplicarTexturas(ilha, dict, locale, projetos, nome);
       setObstaculos(mapearObstaculos(ilha));
+      setModelosProntos((n) => n + 1);
       invalidate();
     });
 
@@ -159,6 +181,36 @@ function Ilha({
     };
   }, [ilha, dict, locale, projetos, nomeDoMod, nome, invalidate]);
 
+  /* As lamparinas seguem o tema. `modelosProntos` entra na lista só como
+     relógio: a lamparina de teto só existe depois que o .glb chega, e o
+     efeito precisa rodar de novo ali para apagá-la. Quem conta é o efeito
+     acima, quando `encaixarModelos` resolve. */
+  useEffect(() => {
+    acenderLamparinas(ilha, escuro);
+    invalidate();
+  }, [ilha, escuro, modelosProntos, invalidate]);
+
+  /* O céu troca junto: de noite estrelas cheias e a Lua; de dia o Sol e as
+     mesmas estrelas atrás da claridade. Não depende dos modelos — ele é todo
+     construído aqui, sem download. */
+  useEffect(() => {
+    ajustarCeu(ceu, escuro);
+    invalidate();
+  }, [ceu, escuro, invalidate]);
+
+  /* O casco de ferro reflete o céu. Sem `scene.environment` o metal resolve
+     para preto — ver `ambienteDoCeu`. A textura é gerada aqui e descartada na
+     troca: ela vive na placa de vídeo, e trocar de tema sem soltar a anterior
+     vazaria um mapa por clique no interruptor. */
+  useEffect(() => {
+    const ambiente = ambienteDoCeu(gl, escuro);
+    const desfazer = refletirNoFerro(ilha, ambiente);
+    invalidate();
+    return () => {
+      desfazer();
+      ambiente?.dispose();
+    };
+  }, [gl, ilha, escuro, invalidate]);
 
   /* A altura do deck: é onde as coisas derrubadas param de cair. */
   const chao = useMemo(() => {
@@ -170,9 +222,21 @@ function Ilha({
   /* Enquadramento da vista geral. Não dá para usar a esfera envolvente da
      cena inteira: a ilha tem uma ponta de rocha comprida embaixo, e mirar no
      centro dela deixaria os móveis lá em cima, minúsculos. Então o alvo é a
-     largura do deck e a altura fica na altura da mobília. */
+     largura do deck e a altura fica na altura da mobília.
+
+     Quem tem `userData.foraDaMedida` fica de fora: a lamparina de teto e o
+     domo de vidro. Os dois ficam bem acima de tudo, e `alturaFoco` sai de
+     `max.y` — contando com eles a mira sobe junto e a ilha inteira desce no
+     quadro, com a rocha de baixo saindo cortada pela borda da janela. Quem
+     enquadra a ilha é o deck e a mobília; a lamparina é o teto que a ilha não
+     tem, e o domo é o vidro por cima dele. */
   const enquadramento = useMemo(() => {
-    const caixa = new THREE.Box3().setFromObject(ilha);
+    ilha.updateWorldMatrix(true, true);
+    const caixa = new THREE.Box3();
+    ilha.traverse((no) => {
+      if (!(no as THREE.Mesh).isMesh || foraDaMedida(no)) return;
+      caixa.expandByObject(no);
+    });
     const tamanho = caixa.getSize(new THREE.Vector3());
     return {
       meiaLargura: Math.max(tamanho.x, tamanho.z) / 2,
@@ -292,10 +356,14 @@ function Ilha({
       ponteiro.y = -((evento.clientY - r.top) / r.height) * 2 + 1;
     }
 
+    /* Vale o primeiro acerto VISÍVEL. O raio da three não olha `visible`, e o
+       clique morria nas peças escondidas: mirar no Sonic acertava a `box_2`
+       que ele substituiu, e mirar nos livros da cômoda acertava a pilha de
+       pastas. Ver `aparece`. */
     const primeiroAcerto = (evento: PointerEvent) => {
       normalizar(evento);
       raio.setFromCamera(ponteiro, camera);
-      return raio.intersectObject(ilha, true)[0] ?? null;
+      return raio.intersectObject(ilha, true).find((a) => aparece(a.object)) ?? null;
     }
 
     const aoDescer = (evento: PointerEvent) => {
@@ -360,7 +428,10 @@ function Ilha({
       const queCai = oQueCai(acerto.object);
       if (queCai) {
         const daCamera = acerto.point.clone().sub(camera.position);
-        caidos.current.push(derrubar(ilha, queCai, daCamera));
+        derrubar(caidos.current, ilha, queCai, daCamera);
+        /* O contador é o tamanho da lista, e a lista tem um registro por
+           objeto: dois cliques na mesma coisa continuam sendo "1 para
+           arrumar". */
         aoDerrubar(caidos.current.length);
         invalidate();
         return;
@@ -536,11 +607,15 @@ function Ilha({
         shadow-camera-far={30}
       />
       <directionalLight position={[-5, 3, -4]} intensity={0.5} color={0xfff4e6} />
+      <primitive object={ceu} />
       <primitive object={ilha} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[60, 60]} />
-        <shadowMaterial opacity={0.18} />
-      </mesh>
+      {/* Não há plano de sombra. Existia um, 60 x 60 em y=0, cinco metros
+          abaixo do deck, e era ele que desenhava a mancha escura sob a ilha —
+          invisível no tema escuro e gritante no claro. Ilha que flutua no
+          espaço não tem chão em que projetar sombra: a mancha dizia que havia
+          piso ali embaixo, e não há. As sombras que importam continuam: são as
+          dos móveis sobre o deck, que vêm do `receiveShadow` das peças da
+          própria ilha e não deste plano. */}
     </>
   );
 }

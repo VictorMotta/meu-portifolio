@@ -488,10 +488,18 @@ export function PainelCurriculo({
     locale === "pt" ? "/curriculo-victor-motta.pdf" : "/resume-victor-motta.pdf";
 
   return (
-    <div className="mx-auto max-w-[34rem] space-y-5">
-      {/* O mesmo arranjo da folha no 3D: foto, barra do nome, barra do cargo,
-          um filete e o texto. É o que faz o painel parecer a folha que estava
-          ali antes da câmera chegar perto. */}
+    /* O mesmo arranjo da folha no 3D, agora em paisagem: foto e nome em cima,
+       um filete, os dois parágrafos lado a lado e os botões embaixo. É o que
+       faz o painel parecer a folha que estava ali antes de a câmera chegar
+       perto — e o quadro é largo e baixo, então uma coluna de 34rem no meio
+       dele deixava metade da lousa em branco.
+
+       `min-h-full` e não `h-full`: em tela estreita o painel vira folha alta e
+       o conteúdo pode passar da altura: aí ele cresce e o pai rola, em vez de
+       ser aparado. Os parágrafos levam o `flex-1` porque é neles que a sobra
+       de altura deve ficar — assim os botões encostam no rodapé em vez de
+       ficarem pendurados logo abaixo do texto. */
+    <div className="flex min-h-full flex-col gap-5">
       <div className="flex items-start gap-4">
         <Image
           src="/victor.jpg"
@@ -512,8 +520,10 @@ export function PainelCurriculo({
 
       <hr className="border-[var(--risco)]" />
 
-      <div className="space-y-3 text-sm leading-relaxed text-[var(--tinta-fraca)]">
-        {dict.about.paragraphs.slice(0, 2).map((p) => (
+      {/* Uma coluna por parágrafo, os três — os mesmos da folha em 3D. Eram os
+          dois primeiros, corte herdado de quando a folha era retrato. */}
+      <div className="grid flex-1 content-start gap-5 text-sm leading-relaxed text-[var(--tinta-fraca)] sm:grid-cols-3">
+        {dict.about.paragraphs.slice(0, 3).map((p) => (
           <p key={p.slice(0, 24)}>{p}</p>
         ))}
       </div>

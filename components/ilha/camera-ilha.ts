@@ -148,6 +148,52 @@ export function suavizar(t: number): number {
 export type Obstaculo = { objeto: THREE.Object3D; caixa: THREE.Box3 };
 
 /**
+ * Se a peça aparece de verdade na tela.
+ *
+ * A ilha está cheia de peça escondida: todo móvel desenhado que um .glb
+ * substituiu continua na cena, invisível, exatamente onde estava. E nem a
+ * three nem a caixa envolvente olham `visible` — o raycaster acerta o que
+ * ninguém vê, e o mapa de obstáculos desviava a câmera de coisa que não está
+ * mais lá (foi o que empurrou a vista do "Sobre" para dentro da tela: ela
+ * fugia do notebook desenhado, já trocado pelo MacBook).
+ *
+ * A checagem sobe pelos pais porque `visible` é bandeira local: a caneca some
+ * pelo grupo `mug`, e as filhas dela seguem com `visible = true`.
+ */
+/**
+ * Se a peça deve ficar de fora das medidas que varrem a ilha inteira.
+ *
+ * Nem tudo que está dentro do grupo `ilha` é a ilha para todos os efeitos. O
+ * domo de vidro a envolve e a lamparina de teto pendura acima de tudo: as duas
+ * são cenário, e entram em duas contas onde não deveriam.
+ *
+ * No ENQUADRAMENTO da vista geral, `alturaFoco` sai do topo da caixa — contar
+ * com elas sobe a mira e encolhe a ilha no quadro.
+ *
+ * Nos OBSTÁCULOS da câmera é pior: a caixa do domo é a ilha inteira, então
+ * toda pose de chegada acharia que a câmera está dentro de um móvel e puxaria
+ * o enquadramento até colar na tela.
+ *
+ * A marca é `userData.foraDaMedida`, posta em `cena.ts`, e a busca sobe pelos
+ * pais porque quem marca é o grupo, não cada malha. Marca e não lista de
+ * nomes: quem cria a peça é quem sabe que ela é cenário, e assim não há uma
+ * lista em outro arquivo para esquecer de atualizar.
+ */
+export function foraDaMedida(objeto: THREE.Object3D) {
+  for (let no: THREE.Object3D | null = objeto; no; no = no.parent) {
+    if (no.userData?.foraDaMedida) return true;
+  }
+  return false;
+}
+
+export function aparece(objeto: THREE.Object3D) {
+  for (let no: THREE.Object3D | null = objeto; no; no = no.parent) {
+    if (!no.visible) return false;
+  }
+  return true;
+}
+
+/**
  * A caixa de cada peça da ilha, no mundo.
  *
  * Vale a pena guardar: a ilha não se mexe, são 156 peças, e a busca por um
@@ -157,23 +203,8 @@ export function mapearObstaculos(cena: THREE.Object3D): Obstaculo[] {
   cena.updateWorldMatrix(true, true);
   const lista: Obstaculo[] = [];
 
-  /* Peça escondida não é obstáculo. Os móveis desenhados que um modelo .glb
-     substitui continuam na cena, só que invisíveis — e enquanto contavam
-     aqui, a câmera desviava de coisa que ninguém vê. Foi o que empurrou a
-     vista do "Sobre" para dentro da tela: ela fugia do notebook desenhado,
-     que já tinha sido trocado pelo MacBook e estava em outro lugar.
-
-     `visible` é bandeira local, então não basta olhar a malha: a caneca some
-     pelo grupo `mug`, e as filhas dela seguem com visible = true. */
-  const aparece = (o: THREE.Object3D) => {
-    for (let no: THREE.Object3D | null = o; no; no = no.parent) {
-      if (!no.visible) return false;
-    }
-    return true;
-  };
-
   cena.traverse((o) => {
-    if (!(o as THREE.Mesh).isMesh || !aparece(o)) return;
+    if (!(o as THREE.Mesh).isMesh || !aparece(o) || foraDaMedida(o)) return;
     lista.push({ objeto: o, caixa: new THREE.Box3().setFromObject(o) });
   });
   return lista;

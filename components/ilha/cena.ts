@@ -41,11 +41,21 @@ export function construirIlha(): THREE.Group {
     flatShading: o.flat ?? false, emissive: o.emissive ?? 0x000000, emissiveIntensity: o.emissiveIntensity ?? 1,
   });
 
+  /* A ilha é de ferro. O que segura o deck não é pedra: é um casco forjado,
+     e o facetado que já existia passa a trabalhar a favor — metal batido tem
+     face, pedra tem grão. `metalness` alto com `roughness` médio é o que
+     separa ferro de espelho; abaixo de 0,3 de aspereza o casco viraria cromo
+     e refletiria uma cena que não existe (não há mapa de ambiente aqui), o
+     que em três.js resolve para preto chapado.
+
+     Os quatro tons continuam sendo a mesma família azul-noite de antes, um
+     degrau mais claros: metal escuro sem reflexo para acompanhar some, e o
+     casco é a silhueta da ilha contra o céu. */
   const M = {
-    snow:     mat('floorSlate', 0x2a3346, { roughness: 0.7 }),
-    crust:    mat('floorSlateDeep', 0x1b2231, { flat: true }),
-    rock:     mat('rockNavy', 0x141b2a, { flat: true }),
-    rockDark: mat('rockBlack', 0x0d121d, { flat: true }),
+    snow:     mat('ironRim',   0x3d485e, { roughness: 0.42, metalness: 0.9 }),
+    crust:    mat('ironCrust', 0x2b3346, { roughness: 0.46, metalness: 0.9, flat: true }),
+    rock:     mat('ironHull',  0x222a3c, { roughness: 0.5,  metalness: 0.92, flat: true }),
+    rockDark: mat('ironDeep',  0x171d2b, { roughness: 0.55, metalness: 0.92, flat: true }),
     pine:     mat('plantGreen', 0x2c5c46),
     pineDark: mat('plantGreenDeep', 0x1e4433),
     trunk:    mat('trunkDark', 0x2b2621),
@@ -57,6 +67,12 @@ export function construirIlha(): THREE.Group {
     shell:    mat('shellBlack', 0x14171f, { roughness: 0.5 }),
     shellLt:  mat('shellGraphite', 0x39404f, { roughness: 0.45 }),
     metal:    mat('metalSteel', 0x8d95a8, { roughness: 0.35, metalness: 0.3 }),
+    /* O friso da borda do deck. Material próprio, e não o `shellLt` que ele
+       usava: aquele é o cinza de carcaça, compartilhado com a cômoda, o
+       arquivo e o bebedouro — dar metal a ele viraria a sala inteira de
+       alumínio. Aqui o friso é o acabamento do casco de ferro, então ele
+       acompanha o casco e não os móveis. */
+    friso:    mat('ironTrim', 0x4a5670, { roughness: 0.34, metalness: 0.95 }),
     screen:   mat('screenCyan', 0x0e2a38, { emissive: 0x35c8f0, emissiveIntensity: 1.5, roughness: 0.2 }),
     screenTv: mat('screenBlue', 0x121a34, { emissive: 0x3b6ef5, emissiveIntensity: 1.3, roughness: 0.2 }),
     neon:     mat('neonBlue', 0x14224a, { emissive: 0x2f6bff, emissiveIntensity: 1.6, roughness: 0.3 }),
@@ -101,9 +117,22 @@ export function construirIlha(): THREE.Group {
 
   part('island_top', cyl(R, R * 0.98, 0.22, SEG), M.snow, [0, -0.11, 0], [0, ROT, 0], island);
   part('island_crust', cyl(R * 0.98, R * 0.86, 0.34, SEG), M.crust, [0, -0.42, 0], [0, ROT, 0], island);
-  part('island_rock_upper', cyl(R * 0.86, R * 0.6, 0.9, SEG), M.rock, [0, -1.04, 0], [0, ROT, 0], island);
-  part('island_rock_mid', cyl(R * 0.6, R * 0.34, 0.9, SEG), M.rockDark, [0, -1.94, 0], [0, ROT * 2, 0], island);
-  part('island_tip', new THREE.ConeGeometry(R * 0.34, 1.5, SEG), M.rockDark, [0, -3.14, 0], [0, ROT, 0], island);
+
+  /* O fundo é uma calota, e não mais o funil de dois troncos de cone com a
+     ponta embaixo. Uma ilha voadora de pedra termina em ponta; um casco de
+     ferro termina redondo, como casco de navio ou de sonda — e é a mesma
+     leitura que faz a coisa parecer um planeta em vez de um pedaço arrancado
+     do chão.
+
+     Meia esfera de verdade desceria os 3,57 do raio; o 0,82 no Y a achata
+     para 2,93, que é perto do que o funil ocupava. Sem isso a ilha fica com
+     uma barriga funda demais e o enquadramento da vista geral a encolhe para
+     caber. As 14 faces são as mesmas do deck, então as arestas de cima e de
+     baixo se alinham em vez de brigar. */
+  const calota = new THREE.SphereGeometry(R * 0.86, SEG, 7, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+  calota.scale(1, 0.82, 1);
+  const fundo = part('island_bowl', calota, M.rock, [0, -0.59, 0], [0, ROT, 0], island);
+  fundo.name = 'island_bowl';
 
   // blocos de rocha salientes
   ([[2.0, -1.0, 1.3, 0.5], [-2.1, -1.35, 0.8, 0.42], [0.5, -1.7, -2.0, 0.46],
@@ -231,7 +260,7 @@ export function construirIlha(): THREE.Group {
       part(`floor_plank_${i + 1}_${j + 1}`, geo, floorMats[(i + j) % 2]!, [0, 0, 0], [0, 0, 0], island);
     }
   }
-  part('floor_trim', new THREE.TorusGeometry(FR + 0.05, 0.05, 12, 64), M.shellLt, [0, 0.03, 0], [Math.PI / 2, 0, 0], island);
+  part('floor_trim', new THREE.TorusGeometry(FR + 0.05, 0.05, 12, 64), M.friso, [0, 0.03, 0], [Math.PI / 2, 0, 0], island);
 
   // vaso de planta de interior
   function officePlant(
@@ -252,13 +281,30 @@ export function construirIlha(): THREE.Group {
     });
     return g;
   }
-  officePlant('office_plant_1', -2.45, 2.35, 1.0, island);
-  officePlant('office_plant_2', 2.55, 2.2, 0.85, island);
+  /* A árvore andou junto com a cômoda, para o outro lado: as duas dividiam o
+     mesmo canto e a copa entrava dentro do móvel. Agora sobram 5 cm entre a
+     copa e a quina da cômoda, e 8 cm entre ela e o vaso da mesa de trabalho.
+     Ver também o tamanho, em `PLANTA_1`. */
+  officePlant('office_plant_1', -2.66, 2.12, 1.0, island);
+  /* Trocou de lugar com o Sonic: o vaso foi para o canto onde estavam as
+     caixas e o boneco ficou com o canto do vaso, de frente para a mesa de
+     centro. O vaso é mais largo que o boneco, então a quina de fora avança de
+     3,61 para 3,66 — ainda dentro das tábuas, que acabam em 3,78. O giro sai
+     da posição (`(x + z) % 1.5`), então muda sozinho junto — e planta não tem
+     frente, tanto faz para onde ela olha. */
+  officePlant('office_plant_2', 1.1, 3.15, 0.85, island);
   officePlant('office_plant_3', -3.2, -0.5, 0.75, island);
 
   // quadro branco
   const wb = group('whiteboard', island);
-  wb.position.set(-2.05, 0, -2.35); wb.rotation.y = 0.85; wb.scale.setScalar(0.85);
+  /* Puxada 20 cm para dentro pelo raio. Em (-2,05; -2,35) a quina do quadro
+     chegava a 3,90 do centro — o piso de tábuas acaba em 3,78 e o friso em
+     3,88, então ele passava dos dois e ficava pendurado para fora da ilha.
+     Aqui a quina cai para 3,70. Foi por essa direção e não por um eixo só
+     porque é a radial que decide se a peça está dentro do deck; de quebra ela
+     afasta o quadro da beirada sem o aproximar da mesa nem do quadro de
+     projetos, que são os dois vizinhos. */
+  wb.position.set(-1.92, 0, -2.2); wb.rotation.y = 0.85; wb.scale.setScalar(0.85);
   part('whiteboard_panel', box(0.07, 1.0, 1.7), M.cream, [0, 1.0, 0], [0, 0, 0], wb);
   part('whiteboard_frame', box(0.05, 1.06, 1.76), M.metal, [-0.02, 1.0, 0], [0, 0, 0], wb);
   /* Os rabiscos viraram texto de verdade: ver `texturas.ts`. */
@@ -268,7 +314,11 @@ export function construirIlha(): THREE.Group {
 
   // arquivo de gavetas
   const fc = group('filing_cabinet', island);
-  fc.position.set(-1.9, 0, 2.7); fc.rotation.y = -0.35;
+  /* Puxada 30 cm para dentro pelo raio. Em (-1,9; 2,7) o canto de fora da
+     cômoda chegava a 3,85 do centro, e o piso de tábuas acaba em 3,78: ela
+     ficava com a quina em cima do friso, pendurada na beirada. Aqui o canto
+     cai para 3,55, com 23 cm de tábua sobrando por fora. */
+  fc.position.set(-1.73, 0, 2.46); fc.rotation.y = -0.35;
   part('cabinet_body', box(0.5, 0.8, 0.7), M.shellLt, [0, 0.4, 0], [0, 0, 0], fc);
   for (let i = 0; i < 3; i++) {
     part(`cabinet_drawer_${i + 1}`, box(0.03, 0.22, 0.62), M.metal, [0.255, 0.18 + i * 0.25, 0], [0, 0, 0], fc);
@@ -288,7 +338,11 @@ export function construirIlha(): THREE.Group {
 
   // caixas de papelão empilhadas
   const bx = group('boxes', island);
-  bx.position.set(1.1, 0, 3.15);
+  /* O canto que era do vaso de folhas. Os dois têm quase a mesma pegada, então
+     a quina de fora praticamente não muda: 3,69 com o vaso, 3,69 com o boneco,
+     e o piso de tábuas acaba em 3,78. Ver o giro em `SONIC`, que é o que o vira
+     para a mesa. */
+  bx.position.set(2.55, 0, 2.2);
   part('box_1', box(0.6, 0.42, 0.6), M.wood, [0, 0.21, 0], [0, 0.25, 0], bx);
   part('box_2', box(0.5, 0.36, 0.5), M.woodDark, [0.05, 0.6, 0.04], [0, -0.4, 0], bx);
   part('box_tape_1', box(0.62, 0.05, 0.14), M.cream, [0, 0.42, 0], [0, 0.25, 0], bx);
@@ -328,7 +382,13 @@ export function construirIlha(): THREE.Group {
   part('easel_leg_back', cyl(0.03, 0.03, 1.45, 16), M.woodDark, [0, 0.7, -0.45], [-0.32, 0, 0], cv);
   part('easel_tray', box(1.0, 0.05, 0.12), M.woodDark, [0, 0.62, -0.02], [0, 0, 0], cv);
   const sheet = group('resume_face', cv);
-  sheet.position.set(0, 1.3, 0.06); sheet.rotation.x = -0.09;
+  /* A prumo. O -0,09 daqui era a inclinação de folha apoiada num cavalete, e
+     fazia sentido enquanto o cavalete era o desenhado, de pernas tortas. Com o
+     .glb do quadro no lugar dele, a lousa entra reta e a folha ficava 5,2° fora
+     de esquadro com ela — era o currículo torto. A perna de trás desenhada
+     continua inclinada, mas ela sai da cena junto com o resto em `substitui`;
+     só se vê nos primeiros quadros, antes de o modelo chegar. */
+  sheet.position.set(0, 1.3, 0.06); sheet.rotation.x = 0;
   part('resume_backing', box(0.94, 1.24, 0.04), M.shellLt, [0, 0, 0], [0, 0, 0], sheet);
   part('resume_sheet', box(0.84, 1.12, 0.02), M.cream, [0, 0, 0.03], [0, 0, 0], sheet);
   /* Foto, barras e linhas viraram o currículo escrito na folha: ver
@@ -532,9 +592,26 @@ export function construirIlha(): THREE.Group {
   ([[-0.05], [0.06], [0.17]] as [number][]).forEach(([z], i) => {
     part(`game_case_${i + 1}`, box(0.16, 0.19, 0.03), bookMats[(i + 2) % 6]!, [0, 0.34, z], [0, 0, i === 2 ? 0.1 : 0], tv);
   });
-  part('tv_neck', box(0.1, 0.3, 0.28), M.shell, [0, 0.6, 0], [0, 0, 0], tv);
-  part('tv_frame', box(0.06, 0.72, 1.42), M.shell, [-0.01, 1.12, 0], [0, 0, 0], tv);
-  part('tv_screen', box(0.014, 0.66, 1.36), M.screenTv, [-0.045, 1.12, 0], [0, 0, 0], tv);
+  /* As três medidas saem do .glb que entra no lugar delas (`TV`, em
+     modelos.ts), e não de um desenho livre. A chapa do modelo vai de 0,610 a
+     1,393 e o VIDRO dela, recuado por uma moldura de 4,8 cm, de 0,658 a 1,346
+     por z de ±0,624.
+
+     A `tv_screen` importa porque ela NÃO é substituída: é nela que os Mods são
+     pintados e é o retângulo dela, projetado na tela, que decide onde o painel
+     de HTML pousa. Enquanto ela media 0,66 x 1,36 centrada em 1,12, o painel
+     saía 5,7 cm acima da TV inteira e 5,6 cm para fora da moldura de cada
+     lado — era a informação escapando por cima do aparelho.
+
+     O pescoço e a moldura são substituídos e só aparecem nos primeiros
+     quadros, antes de o .glb chegar; seguem as mesmas medidas para que a troca
+     não pule. */
+  part('tv_neck', box(0.1, 0.08, 0.28), M.shell, [0, 0.573, 0], [0, 0, 0], tv);
+  part('tv_frame', box(0.06, 0.783, 1.372), M.shell, [-0.01, 1.002, 0], [0, 0, 0], tv);
+  /* Fina e recuada: a face da frente fica 4 mm à frente do vidro (x -0,032) e
+     8 mm ATRÁS da moldura (x -0,044), então a moldura do aparelho continua
+     emoldurando o conteúdo em vez de ficar coberta por ele. */
+  part('tv_screen', box(0.006, 0.688, 1.248), M.screenTv, [-0.033, 1.002, 0], [0, 0, 0], tv);
   ([[-0.62], [0.62]] as [number][]).forEach(([z], i) => {
     part(`speaker_${i + 1}`, box(0.16, 0.5, 0.16), M.shell, [-0.02, 0.72, z], [0, 0, 0], tv);
     part(`speaker_cone_${i + 1}`, cyl(0.06, 0.06, 0.012, 10), M.fabricLt, [-0.106, 0.8, z], [0, 0, Math.PI / 2], tv);
@@ -583,6 +660,116 @@ export function construirIlha(): THREE.Group {
      câmera passa por baixo. */
   part('floor_lamp_bulb', new THREE.SphereGeometry(0.05, 12, 8), M.bulb, [0, 1.44 + TOPO_DAS_TABUAS, 0], [0, 0, 0], fl);
   model.add(hobby);
+
+  /* A lamparina de teto: no meio da ilha, pendurada em nada.
+     A ilha não tem teto, e é isso que a torna uma ilha voadora — então a
+     lamparina fica no ar mesmo, no eixo do deck (raio 4,15 centrado na
+     origem). A 1,95 do chão: no meio do deck o mais alto é o topo das
+     estantes, com 1,39, então ela passa por cima de tudo que está embaixo
+     dela sem subir tanto a ponto de se soltar da sala — os quadros de 2,1
+     estão na borda, longe do eixo.
+     A luz mora no grupo, e não solta na cena, para acompanhar a lamparina se
+     ela mudar de lugar. Sem sombra pelo mesmo motivo da luminária de chão:
+     uma luz pontual com sombra redesenha a cena inteira seis vezes, uma por
+     face do cubo. */
+  const cl = group('ceiling_lamp', island);
+  /* Mesma marca do domo: ela pendura no ar acima de tudo e não pode mandar no
+     enquadramento da vista geral. Ver `foraDaMedida` lá embaixo. */
+  cl.userData.foraDaMedida = true;
+  cl.position.set(0, 1.95, 0);
+  part('ceiling_lamp_cable', cyl(0.012, 0.012, 0.8, 6), M.metal, [0, 0.95, 0], [0, 0, 0], cl);
+  part('ceiling_lamp_shade', cyl(0.06, 0.24, 0.3, 12), M.cream, [0, 0.4, 0], [0, 0, 0], cl);
+  part('ceiling_lamp_bulb', new THREE.SphereGeometry(0.06, 14, 10), M.bulb, [0, 0.3, 0], [0, 0, 0], cl);
+
+  /* Alcance de 9 m: daqui do meio, a 2,6 de altura, é o que faz a luz chegar
+     à borda do deck de 4,15 de raio em vez de morrer no tapete. */
+  /* A haste que prende a lamparina no domo.
+     Ela ficava pendurada em nada: o modelo termina em 2,90 e o ápice do vidro
+     está em 4,087 — 1,19 m de vão. Enquanto a ilha não tinha teto isso era a
+     graça da coisa; com o domo por cima, virou uma peça flutuando embaixo de
+     um teto que existe.
+
+     As duas pontas saem de medida, não de palpite: 1,187 de comprimento, com
+     o centro em 3,4935 no eixo da ilha — 1,5435 aqui dentro, porque o grupo
+     mora a 1,95. Em ferro, como o aro do domo: é dele que ela pende.
+
+     NÃO entra em `substitui` da `LAMPARINA_TETO`: o .glb troca o cabo, a
+     cúpula e a lâmpada desenhados, e a haste é peça da casa, não do modelo. */
+  part('ceiling_lamp_haste', cyl(0.012, 0.012, 1.187, 8), M.friso, [0, 1.5435, 0], [0, 0, 0], cl);
+
+  const luzDoTeto = new THREE.PointLight(0xffc27a, 26, 9, 2);
+  luzDoTeto.name = 'ceiling_lamp_light';
+  luzDoTeto.position.set(0, 0.28, 0);
+  cl.add(luzDoTeto);
+
+  /* ---------- o domo ---------- */
+
+  /* O vidro que fecha a ilha por cima.
+     Ele é o que transforma o deck num habitat: a ilha deixa de ser uma sala
+     jogada no espaço e passa a ser um lugar onde se pode estar.
+
+     Não pode atrapalhar de ver, e isso decide o material inteiro: opacidade de
+     0,08 e `depthWrite` desligado. Sem desligar a escrita de profundidade, o
+     vidro entraria no buffer e apagaria os móveis atrás dele mesmo sendo
+     quase invisível — é o erro clássico de transparência, e o sintoma seria a
+     sala sumindo por trás de um nada.
+
+     `DoubleSide` porque a câmera fica DENTRO do domo nas paradas: com uma face
+     só, o vidro desapareceria assim que a câmera entrasse.
+
+     4,05 de raio contra os 4,15 do deck: a base pousa EM CIMA da quina de
+     ferro, no anel entre o fim das tábuas (3,78) e a borda (4,15). Em 4,35,
+     que foi a primeira tentativa, o aro sobrava para fora do deck e parecia
+     um arco flutuando em volta da ilha em vez do encaixe de uma cúpula.
+     A altura sobra bem acima da lamparina de teto, que é a peça mais alta com
+     2,9. */
+  const domo = group('domo', island);
+  /* Fora de três contas que varrem a ilha inteira, e a marca diz isso a elas
+     em vez de cada uma reconhecer o domo pelo nome: o enquadramento da vista
+     geral (que subiria a mira 4 m e encolheria a ilha), o mapa de obstáculos
+     (a câmera passaria a "desviar" de uma cúpula que a envolve, e toda parada
+     iria parar colada na tela) e o raio do clique. */
+  domo.userData.foraDaMedida = true;
+
+  const vidroDoDomo = new THREE.MeshPhysicalMaterial({
+    name: 'vidroDomo',
+    color: 0x9fc4ff,
+    metalness: 0,
+    roughness: 0.06,
+    transparent: true,
+    /* 0,055 e não 0,08: com `DoubleSide` a frente e o fundo da cúpula somam,
+       então o que se vê é o dobro disso. Em 0,08 o vidro lavava as estrelas
+       atrás dele e a cúpula virava um véu leitoso sobre o céu. */
+    opacity: 0.055,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const cupula = part(
+    'domo_vidro',
+    new THREE.SphereGeometry(R - 0.1, 40, 22, 0, Math.PI * 2, 0, Math.PI / 2),
+    vidroDoDomo,
+    [0, TOPO_DAS_TABUAS, 0],
+    [0, 0, 0],
+    domo,
+  );
+  /* O raio do clique nunca acerta o vidro. Sem isto, o domo envolve a cena
+     inteira e seria SEMPRE o primeiro acerto: nenhum móvel abriria a seção e
+     nada mais cairia da mesa. */
+  cupula.raycast = () => {};
+  cupula.castShadow = false;
+  cupula.receiveShadow = false;
+
+  /* O aro de ferro onde o vidro encaixa. É ele que faz o domo ter borda em vez
+     de terminar no ar, e é a mesma liga do casco. */
+  const aro = part(
+    'domo_aro',
+    new THREE.TorusGeometry(R - 0.1, 0.05, 10, 72),
+    M.friso,
+    [0, TOPO_DAS_TABUAS + 0.01, 0],
+    [Math.PI / 2, 0, 0],
+    domo,
+  );
+  aro.raycast = () => {};
 
   model.add(island);
   /* Centraliza no chão: a cena original fazia isso antes de entregar ao

@@ -80,6 +80,20 @@ export type Encaixe = {
    */
   renomeia?: Record<string, string>;
   /**
+   * Malhas do arquivo que não entram na cena.
+   *
+   * O Sonic vem em cima de um bloco de grama do jogo, e o bloco não tem nada
+   * que fazer no deck de madeira da ilha. Elas são REMOVIDAS, não escondidas,
+   * e antes da medida: `Box3.setFromObject` não olha `visible`, então uma
+   * peça só apagada continuaria mandando no tamanho do modelo e no ponto em
+   * que ele encosta no chão — o boneco sairia menor e flutuando na altura do
+   * bloco que ninguém vê.
+   *
+   * O nome é o do arquivo, com ponto e tudo: os dois lados passam pela mesma
+   * normalização do `renomeia`.
+   */
+  ocultar?: string[];
+  /**
    * Não projeta sombra. Reservado para malha densa: o mapa de sombra desenha
    * a cena inteira de novo, então um monitor de 219 mil triangulos custa
    * dobrado enquanto a sombra dele, atrás do próprio monitor, não aparece.
@@ -775,12 +789,75 @@ export const GLOBO: Encaixe = {
   arquivo: "/modelos/globe.glb",
   pai: "divider_shelf",
   substitui: [],
-  alvo: { x: 0.26, y: 0.34, z: 0.26 },
+  /* 0,40 de diâmetro por 0,52 de altura — um globo de mesa de verdade, e não
+     o enfeite de 26 cm que era antes. A estante tem 1,02 de comprimento por
+     0,5 de profundidade, então ele ocupa pouco mais de um terço do topo e
+     ainda sobra borda dos dois lados. É a peça mais alta do topo das
+     estantes, e agora se enxerga na vista geral, que é de onde a ilha é vista
+     na maior parte do tempo. */
+  alvo: { x: 0.4, y: 0.52, z: 0.4 },
   proporcional: true,
   base: [ESTANTES_PERTO_DA_CADEIRA, TOPO_DAS_TABUAS + ESTANTE.altura, -PASSO_DA_ESTANTE],
   giroY: 0.4,
   prefixo: "globo_modelo",
 };
+
+/**
+ * O preto metálico da ilha.
+ *
+ * Um só, porque duas coisas o usam — a lataria do bebedouro e o ferro do
+ * quadro branco — e elas ficam a poucos metros uma da outra: dois pretos
+ * quase iguais na mesma sala lêem como erro de tinta. Não é preto puro: um
+ * traço de azul o encosta no `navy` do deck, e a aspereza em 0,35 é o que
+ * separa metal pintado de espelho.
+ */
+const PRETO_METALICO = { cor: "#14161c", metal: 0.85, aspereza: 0.35 };
+
+/**
+ * O cubo mágico e o cogumelo, no topo das outras duas estantes.
+ *
+ * O globo já ocupava o topo da primeira; agora cada uma das três tem uma
+ * coisa em cima, o que era o vazio mais visível da vista geral.
+ *
+ * O tamanho não é o de verdade: um cubo de 5,7 cm em cima de uma estante a
+ * 1,39 m de altura some na vista geral, que é de onde a ilha é vista quase
+ * sempre. 0,22 e 0,30 são o tamanho em que eles se lêem de longe sem passar
+ * o globo de 0,40, que continua sendo a peça maior da fileira.
+ */
+function enfeiteDeEstante(
+  arquivo: string,
+  z: number,
+  tamanho: number,
+  giro: number,
+  prefixo: string,
+): Encaixe {
+  return {
+    arquivo,
+    pai: "divider_shelf",
+    substitui: [],
+    alvo: { x: tamanho, y: tamanho, z: tamanho },
+    proporcional: true,
+    base: [ESTANTES_PERTO_DA_CADEIRA, TOPO_DAS_TABUAS + ESTANTE.altura, z],
+    giroY: giro,
+    prefixo,
+  };
+}
+
+export const CUBO_MAGICO = enfeiteDeEstante(
+  "/modelos/magic_cube.glb",
+  0,
+  0.22,
+  0.6,
+  "cubo_modelo",
+);
+
+export const COGUMELO = enfeiteDeEstante(
+  "/modelos/mushroom_power_up_mario.glb",
+  PASSO_DA_ESTANTE,
+  0.3,
+  -0.4,
+  "cogumelo_modelo",
+);
 
 /** O gabinete, no lugar da torre desenhada. */
 export const GABINETE: Encaixe = {
@@ -803,6 +880,151 @@ export const GABINETE: Encaixe = {
   prefixo: "gabinete_modelo",
 };
 
+/**
+ * Os dois controles em cima da mesa de centro.
+ *
+ * A cena desenhava dois — um na mesa, outro caído no chão ao lado do sofá —,
+ * e os dois estão em `ESCONDIDOS` desde que o .glb do sofá entrou: eram
+ * cápsulas e esferas, e ao lado de um sofá de verdade pareciam brinquedo.
+ * Agora os dois são o mesmo arquivo, os dois em cima da mesa, com giros
+ * diferentes: dois controles largados por duas pessoas não ficam paralelos.
+ *
+ * O alvo é um cubo de propósito. Com `proporcional`, quem manda é o eixo mais
+ * comprido do arquivo — que num controle é a largura —, então ele sai com 17
+ * cm de ponta a ponta sem eu precisar saber em que eixo o modelo foi
+ * exportado.
+ *
+ * Ficam do lado do tabuleiro que está livre. A mesa tem 1,55 de comprimento
+ * (z de -0,775 a 0,775) e já estava ocupada no meio e numa ponta: o xadrez
+ * sai com 0,40 de lado centrado em z=0, então vai de -0,20 a 0,20, e o DS
+ * está em z=0,5. Escritos em z=-0,26 e 0,24 — que foi a primeira tentativa —
+ * os dois nasceram DENTRO do tabuleiro. Daqui em diante os dois moram em z
+ * negativo, com uma folga de 0,18 do xadrez, e o de fora ainda para a 9 cm
+ * da borda do tampo.
+ *
+ * A altura e o X vêm das constantes da mesa: escrever "0,46" à mão aqui é
+ * exatamente o que deixou o globo boiando quando a estante mudou de tamanho.
+ */
+function controle(z: number, giro: number, prefixo: string): Encaixe {
+  return {
+    arquivo: "/modelos/controller.glb",
+    pai: "coffee_table",
+    substitui: [],
+    alvo: { x: 0.17, y: 0.17, z: 0.17 },
+    proporcional: true,
+    base: [MEIO_DA_MESA_DE_CENTRO, ALTURA_DA_MESA_DE_CENTRO, z],
+    giroFinalY: giro,
+    prefixo,
+  };
+}
+
+export const CONTROLE_1 = controle(-0.38, 0.35, "controle_1_modelo");
+export const CONTROLE_2 = controle(-0.6, -0.75, "controle_2_modelo");
+
+/**
+ * A cômoda, no lugar do arquivo de gavetas desenhado.
+ *
+ * Sai o arquivo inteiro: corpo, as três gavetas, os três puxadores e as duas
+ * pilhas de pastas que ficavam em cima. As pastas eram o que sobrava do móvel
+ * de escritório; quem entra no lugar delas é a pilha de livros de verdade,
+ * logo abaixo.
+ *
+ * O alvo aperta pelo Y de propósito: a altura é a medida que se compara com o
+ * resto da sala, e é ela que precisa bater com os 0,8 do móvel antigo. O X e o
+ * Z ficam folgados para o modelo decidir a própria proporção — apertando por
+ * eles, seria a largura mandando e a cômoda sairia baixinha.
+ */
+export const COMODA: Encaixe = {
+  arquivo: "/modelos/modern_interior_dresser.glb",
+  pai: "filing_cabinet",
+  substitui: [
+    "cabinet_body",
+    "cabinet_drawer_1", "cabinet_drawer_2", "cabinet_drawer_3",
+    "cabinet_handle_1", "cabinet_handle_2", "cabinet_handle_3",
+    "cabinet_folder_stack", "cabinet_folder_stack_2",
+  ],
+  alvo: { x: 2, y: 0.86, z: 2 },
+  proporcional: true,
+  base: [0, TOPO_DAS_TABUAS, 0],
+  /* A madeira dos outros móveis, e só nela. O arquivo separa três materiais:
+     `Material.006` é o corpo de madeira — o único com textura —, `Material.004`
+     é o branco das laterais e `Material.007` o cinza do rodapé. Sem a troca, a
+     cômoda entrava com um freixo claro que não existe em nenhum outro móvel da
+     ilha e puxava o olho sozinha; com ela, é o mesmo veio da mesa de centro,
+     que já é o de todos. O branco fica branco: ele é o que separa o corpo do
+     tampo, e pintá-lo junto faria um bloco de madeira sem desenho. */
+  ...madeira(["Material.006"]),
+  prefixo: "comoda_modelo",
+};
+
+/**
+ * Os livros em cima da cômoda.
+ *
+ * A altura sai de `COMODA.alvo.y`, senão a pilha boia quando a cômoda mudar de
+ * tamanho — que é exatamente o que o número escrito à mão fazia aqui antes.
+ *
+ * 0,50 é o lado maior, não a altura: com `proporcional`, quem manda é o eixo
+ * mais comprido do arquivo, e nestes dois livros deitados é o comprimento da
+ * capa. Sai uma pilha de 50 x 10 cm num tampo de 1,0 m — livro grande de mesa,
+ * que é o que se enxerga da vista geral. Nos 0,34 de antes eram 7 cm de lombada
+ * a 1,90 m do chão: de longe, dois riscos no tampo.
+ */
+export const LIVROS_COMODA: Encaixe = {
+  arquivo: "/modelos/old_books.glb",
+  pai: "filing_cabinet",
+  substitui: [],
+  alvo: { x: 0.5, y: 0.3, z: 0.5 },
+  proporcional: true,
+  base: [0, TOPO_DAS_TABUAS + COMODA.alvo.y, 0],
+  /* Os dois livros estão cruzados no arquivo, então a pilha não é um retângulo:
+     em planta ela é um losango, com um lado estreito e um comprido. A 0,5 esse
+     lado comprido caía no FUNDO da cômoda, que mede 0,518 — os livros
+     atravessavam o tampo de ponta a ponta, com 9 mm de borda de cada lado, e
+     era isso que fazia a pilha parecer grande demais para o móvel.
+     1,55 vira o losango 60° e é o ângulo em que o lado estreito fica paralelo
+     ao fundo: a pilha passa a ocupar 0,32 no fundo (quase 10 cm de folga por
+     lado) e os 0,50 dela correm no comprimento do tampo, que tem 0,989 e é
+     onde sobra espaço. Varri os 180° de meio em meio grau e 60 é o mínimo;
+     55 e 65 já devolvem 1 cm de folga cada um. */
+  giroY: 1.55,
+  prefixo: "livros_comoda_modelo",
+};
+
+/**
+ * O Sonic, onde estavam as duas caixas de papelão.
+ *
+ * As caixas eram enchimento — dois caixotes de mudança num canto do deck. O
+ * boneco ocupa o mesmo canto e diz alguma coisa sobre quem mora aqui, que é o
+ * critério de tudo que está na ilha.
+ */
+export const SONIC: Encaixe = {
+  arquivo: "/modelos/sonic.glb",
+  pai: "boxes",
+  substitui: ["box_1", "box_2", "box_tape_1"],
+  /* Fora o cenário que veio junto: o boneco está em pé num bloco de grama do
+     jogo, com a lateral quadriculada. Bonito no Sketchfab, estranho no meio de
+     um deck de madeira — e alto, o que faria o Sonic sair pequeno para o
+     conjunto caber nos 0,95. */
+  ocultar: [
+    "Cube_Platform_0", "Cube_Platform.001_0",
+    "Cube.001_Grass_0", "Cube.001_Grass.001_0",
+    "Cube.002_Grass_0", "Cube.002_Grass.001_0",
+    "Cube.003_Grass_0",
+  ],
+  /* 0,8 de altura: é um boneco grande de vitrine, não um chaveiro, mas fica
+     abaixo da cômoda de 0,86 ao lado — passando dela, ele viraria o móvel
+     mais alto daquele canto. */
+  alvo: { x: 2, y: 0.8, z: 2 },
+  proporcional: true,
+  base: [0, TOPO_DAS_TABUAS, 0],
+  /* Olhando a mesa de centro. Do canto novo (2,55 / 2,20) até o meio da mesa
+     (2,20 / 0,245) a direção é (-0,35 / -1,955), e `atan2(dx, dz)` dá -2,96 —
+     a mesma conta do lugar antigo, que mirava a origem. Sem isto o boneco olha
+     para fora do deck, de costas para a sala inteira. */
+  giroFinalY: -2.96,
+  prefixo: "sonic_modelo",
+};
+
 /** O bebedouro. */
 export const BEBEDOURO: Encaixe = {
   arquivo: "/modelos/water_cooler.glb",
@@ -820,7 +1042,29 @@ export const BEBEDOURO: Encaixe = {
      frente para o meio do deck — `atan2` de (3,3; -1,0) visto de -Z. Não é um
      número redondo porque a posição do móvel também não é. */
   giroFinalY: 1.87,
+  /* Só a lataria. O arquivo tem dois materiais, e o outro é o galão: pintado
+     junto, o bebedouro virava um bloco preto sem a água azul em cima, que é o
+     que faz o objeto ser reconhecido de longe. */
+  recolorir: { WaterCoolerMaterial: PRETO_METALICO },
   prefixo: "bebedouro_modelo",
+};
+
+/**
+ * A lamparina de teto.
+ *
+ * Substitui o cabo, a cúpula e a lâmpada desenhados; o que fica do grupo é a
+ * luz pontual, que não é peça e por isso não entra em `substitui`. O brilho
+ * passa a vir do material `light_emisive` do arquivo, e é ele que `luzes.ts`
+ * apaga quando o site está no tema claro.
+ */
+export const LAMPARINA_TETO: Encaixe = {
+  arquivo: "/modelos/lamparina_teto.glb",
+  pai: "ceiling_lamp",
+  substitui: ["ceiling_lamp_cable", "ceiling_lamp_shade", "ceiling_lamp_bulb"],
+  alvo: { x: 0.6, y: 0.95, z: 0.6 },
+  proporcional: true,
+  base: [0, 0, 0],
+  prefixo: "lamparina_teto_modelo",
 };
 
 /**
@@ -868,6 +1112,15 @@ export const LUMINARIA: Encaixe = {
  * a árvore tem 50 mil triângulos e o vaso de folhas 34 mil, então os dois
  * lugares menos visíveis levam o vaso simples, de 381. Os grupos da cena já
  * têm escala própria, e o encaixe entra por dentro dela.
+ *
+ * As plantas PROJETAM sombra, e é por isso que não há `semSombra` aqui. Ele
+ * estava, herdado dos móveis densos, e o efeito era o vaso pousado no deck sem
+ * nada embaixo: a sombra é o que faz um objeto encostar no chão, e sem ela a
+ * planta boiava a 5 cm do piso. `semSombra` é para malha densa cuja sombra não
+ * se vê de qualquer jeito — os dois monitores de 219 mil triângulos e a cadeira
+ * de 158 mil, que escondem a própria sombra atrás de si. Os 84 mil das três
+ * plantas juntas entram no passe de sombra sem tirar o laço dos 60 quadros:
+ * medi antes e depois, 16,7 ms de mediana nos dois.
  */
 function planta(arquivo: string, pai: string, alto: number, prefixo: string): Encaixe {
   return {
@@ -881,12 +1134,16 @@ function planta(arquivo: string, pai: string, alto: number, prefixo: string): En
     proporcional: true,
     base: [0, 0, 0],
     giroY: 0.5,
-    semSombra: true,
     prefixo,
   };
 }
 
-export const PLANTA_1 = planta("green_tree", "office_plant_1", 1.5, "planta_1_modelo");
+/* A árvore encolheu de 1,5 para 1,25. Ela divide o canto com a cômoda, e a
+   1,5 a copa tinha 1,13 m de diâmetro: entrava no móvel por 30 cm e ainda era
+   o maior balanço da ilha, 9 cm para fora do friso. A 1,25 a copa dá 0,94 e o
+   canto passa a caber nos dois — continua sendo a planta grande da ilha, que é
+   o papel dela. */
+export const PLANTA_1 = planta("green_tree", "office_plant_1", 1.25, "planta_1_modelo");
 export const PLANTA_2 = planta("potted_plant", "office_plant_2", 1.2, "planta_2_modelo");
 export const PLANTA_3 = planta("low_poly_pot", "office_plant_3", 1.1, "planta_3_modelo");
 
@@ -902,7 +1159,6 @@ export const PLANTA_MESA: Encaixe = {
   proporcional: true,
   base: [0, 0, 0],
   giroY: -0.3,
-  semSombra: true,
   prefixo: "planta_mesa_modelo",
 };
 
@@ -925,6 +1181,27 @@ export const PLANTA_MESA: Encaixe = {
  * O quadro é paisagem (2,876 x 1,828, proporção 1,573). A folha do currículo
  * era retrato; virou paisagem junto, em `texturas.ts`.
  */
+/**
+ * Todo o ferro do quadro, menos a face onde se escreve.
+ *
+ * O arquivo separa a armação em catorze materiais — cantoneiras, laterais,
+ * porta-marcador, pés, eixos, rodas — e treze deles são o metal. De fora fica
+ * só `Material.002`, que é o `Backboard`: aquilo é a lousa, e pintá-la de
+ * preto apagaria a superfície onde o conteúdo é escrito.
+ *
+ * Vale para os TRÊS quadros, e é por isso que mora dentro do `quadro()`: eles
+ * saem do mesmo arquivo e ficam à vista um do outro na mesma sala — dois
+ * pretos e um branco leriam como peça faltando, não como escolha.
+ */
+const FERRO_DO_QUADRO: NonNullable<Encaixe["recolorir"]> = Object.fromEntries(
+  [
+    "Material", "Material.001", "Material.003", "Material.004",
+    "Material.005", "Material.006", "Material.007", "Material.008",
+    "Material.010", "Material.011", "Material.012", "Material.013",
+    "Material.014",
+  ].map((nome) => [nome, PRETO_METALICO]),
+);
+
 function quadro(
   pai: string,
   substitui: string[],
@@ -946,6 +1223,7 @@ function quadro(
     proporcional: true,
     base: [0, 0, 0],
     giroY: deitado ? Math.PI / 2 : 0,
+    recolorir: FERRO_DO_QUADRO,
     prefixo,
   };
 }
@@ -991,6 +1269,8 @@ export const ENCAIXES: Encaixe[] = [
   SOFA, MESA_CENTRO, XADREZ, NINTENDO,
   MOVEL_TV, TV, PS1, FLIPERAMA,
   ESTANTE_1, ESTANTE_2, ESTANTE_3, GLOBO, GABINETE, BEBEDOURO, LIXEIRA, LUMINARIA,
+  COMODA, LIVROS_COMODA, SONIC, CONTROLE_1, CONTROLE_2, CUBO_MAGICO, COGUMELO,
+  LAMPARINA_TETO,
   PLANTA_1, PLANTA_2, PLANTA_3, PLANTA_MESA,
   QUADRO_STACK, QUADRO_PROJETOS, QUADRO_CURRICULO,
 ];
@@ -1105,6 +1385,20 @@ function acharMaterial(raiz: THREE.Object3D, nome: string) {
  * ilha sair: geometria, material e textura vivem na placa de vídeo, e o
  * coletor do JavaScript não alcança nenhum dos três.
  */
+/**
+ * O nome do nó como o GLTFLoader o entrega.
+ *
+ * É o `sanitizeNodeName` da three, que existe para o nome poder virar caminho
+ * de animação: espaço vira underscore E os caracteres reservados `[ ] . : /`
+ * somem. Então "Ultrawide Monitor_Screen_0" chega como
+ * "Ultrawide_Monitor_Screen_0" e "Backboard_Material.002_0" chega como
+ * "Backboard_Material002_0". Normalizar os dois lados evita ter de escrever no
+ * encaixe um nome que não é o que se lê no arquivo — e foi o ponto, não o
+ * espaço, que deixou os três quadros em branco na primeira tentativa.
+ */
+const chaveDoNome = (nome: string) =>
+  nome.replace(/\s/g, "_").replace(/[[\].:/]/g, "");
+
 export async function encaixarModelo(
   ilha: THREE.Object3D,
   encaixe: Encaixe,
@@ -1115,6 +1409,16 @@ export async function encaixarModelo(
   if (!pai) return lixo;
 
   const modelo = (await baixar(encaixe.arquivo)).clone(true);
+
+  /* As peças descartadas saem aqui, antes de qualquer medida. Ver `ocultar`. */
+  if (encaixe.ocultar?.length) {
+    const fora = new Set(encaixe.ocultar.map(chaveDoNome));
+    const alvos: THREE.Object3D[] = [];
+    modelo.traverse((no) => {
+      if (fora.has(chaveDoNome(no.name))) alvos.push(no);
+    });
+    for (const no of alvos) no.removeFromParent();
+  }
 
   /* O material emprestado NÃO entra no lixo: ele é do arquivo dono, vive no
      cache junto com ele, e descartá-lo aqui apagaria a madeira das estantes
@@ -1135,9 +1439,18 @@ export async function encaixarModelo(
   suporte.name = encaixe.prefixo;
   suporte.add(giro);
 
-  /* Medida com o giro já aplicado e a escala ainda em 1. */
+  /* Medida com o giro já aplicado e a escala ainda em 1.
+     `precise` percorre vértice a vértice. Sem ele, `setFromObject` usa a
+     caixa alinhada de CADA geometria e a transforma — e a caixa de uma malha
+     girada, depois de transformada, é maior que a malha. O modelo então é
+     medido maior do que é: sai menor para caber no alvo, e o fundo da caixa
+     fica abaixo da peça mais baixa, o que o deixa flutuando essa diferença.
+     Medido nos 32 modelos da ilha, era o Sonic 9,2 cm no ar, a planta do
+     canto 4,8 e os controles 0,6; nos outros 28 as duas contas dão o mesmo
+     número, então isto conserta quem estava errado sem mexer em quem já
+     estava certo. Custa uma passada pelos vértices na montagem, uma vez. */
   giro.updateWorldMatrix(true, true);
-  const caixa = new THREE.Box3().setFromObject(giro);
+  const caixa = new THREE.Box3().setFromObject(giro, true);
   const tamanho = caixa.getSize(new THREE.Vector3());
   const centro = caixa.getCenter(new THREE.Vector3());
 
@@ -1196,17 +1509,8 @@ export async function encaixarModelo(
     lixo.push({ dispose: () => { antiga.name = alvo; } });
   }
 
-  /* O GLTFLoader reescreve o nome de cada nó (é o `sanitizeNodeName` da three,
-     que existe para o nome poder virar caminho de animação): espaço vira
-     underscore E os caracteres reservados `[ ] . : /` somem.
-     Então "Ultrawide Monitor_Screen_0" chega como "Ultrawide_Monitor_Screen_0"
-     e "Backboard_Material.002_0" chega como "Backboard_Material002_0".
-     Normalizar os dois lados evita ter de escrever no encaixe um nome que não
-     é o que se lê no arquivo — e foi o ponto, não o espaço, que deixou os três
-     quadros em branco na primeira tentativa. */
-  const chave = (nome: string) => nome.replace(/\s/g, "_").replace(/[[\].:/]/g, "");
   const renomeia = new Map(
-    Object.entries(encaixe.renomeia ?? {}).map(([de, para]) => [chave(de), para]),
+    Object.entries(encaixe.renomeia ?? {}).map(([de, para]) => [chaveDoNome(de), para]),
   );
 
   /* A UV só pode ser refeita depois que o modelo estiver posicionado: o eixo
@@ -1244,7 +1548,7 @@ export async function encaixarModelo(
     const malha = no as THREE.Mesh;
     malha.castShadow = !encaixe.semSombra;
     malha.receiveShadow = true;
-    const herdado = renomeia.get(chave(malha.name));
+    const herdado = renomeia.get(chaveDoNome(malha.name));
     malha.name = herdado ?? `${encaixe.prefixo}_${malha.name || "peca"}`;
 
     if (herdado && encaixe.uvPlano) aplanar.push(malha);

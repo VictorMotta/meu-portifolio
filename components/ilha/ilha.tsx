@@ -1,6 +1,7 @@
 "use client";
 
 import { Brush, LayoutList } from "lucide-react";
+import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -52,6 +53,13 @@ type Props = {
 };
 
 export function Ilha({ dict, locale, projetos, aoSair }: Props) {
+  /* As lamparinas da ilha acendem no escuro. `resolvedTheme` só existe depois
+     que o next-themes monta; até lá vale escuro, que é o padrão do CSS e o que
+     o servidor renderiza — assim a ilha não começa apagada para escurecer no
+     quadro seguinte. */
+  const { resolvedTheme } = useTheme();
+  const escuro = resolvedTheme !== "light";
+
   const [destino, setDestino] = useState<ChavePonto | null>(null);
   const [chegou, setChegou] = useState(false);
   /* Quantas coisas o visitante derrubou, e o contador que pede para arrumar.
@@ -218,6 +226,7 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
           destino={destino}
           reduzido={reduzido}
           folha={folha}
+          escuro={escuro}
           aoChegar={aoChegar}
           aoAtualizarQuadro={aoAtualizarQuadro}
           aoEscolher={irPara}
@@ -331,14 +340,27 @@ function NavIlha({
       aria-label={dict.ilha.titulo}
       className="pointer-events-none absolute inset-0 z-50"
     >
-      {/* Barra de cima: sair da parada atual e as duas ações que não são
-          seções. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start gap-2 p-3 sm:p-4">
+      {/* Barra de cima: sair da parada atual, a marca no meio e as ações que
+          não são seções.
+
+          Tudo tem 44 px de altura e o alinhamento é pelo CENTRO. Não era: as
+          peças mediam 30, 32, 34, 42 e 44, penduradas num `items-start`, e
+          cada uma crescia para baixo do próprio tamanho — três linhas de
+          centro diferentes (31, 37 e 38) numa fileira só. Os 44 não são um
+          número escolhido aqui: é a altura do botão de tema e do de idioma,
+          que são os mesmos componentes do cabeçalho da página rolável e valem
+          44 por serem alvo de dedo. O resto da barra é que passou a segui-los.
+
+          `relative` por causa da marca, que é posicionada pelo meio da BARRA e
+          não pelo fluxo: os dois grupos das pontas têm larguras diferentes, e
+          um item de flex no meio deles ficaria centrado entre eles, não na
+          tela. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2 p-3 sm:p-4">
         <button
           type="button"
           onClick={() => irPara(null)}
           aria-current={destino === null ? "true" : undefined}
-          className="pointer-events-auto shrink-0 rounded-full border border-border bg-surface/85 px-3 py-1.5 font-mono text-xs text-fg backdrop-blur transition hover:bg-surface aria-[current]:border-accent aria-[current]:text-accent"
+          className="pointer-events-auto inline-flex h-11 shrink-0 items-center rounded-full border border-border bg-surface/85 px-4 font-mono text-xs text-fg backdrop-blur transition hover:bg-surface aria-[current]:border-accent aria-[current]:text-accent"
         >
           {dict.ilha.voltarCurto}
         </button>
@@ -346,7 +368,7 @@ function NavIlha({
         {/* Em tela larga as seções cabem aqui em cima, ao lado do resto. Em
             tela estreita elas descem para a barra de baixo, onde o polegar
             alcança e não competem com o painel. */}
-        <ul className="pointer-events-auto hidden items-center gap-1 rounded-full border border-border bg-surface/85 p-1 backdrop-blur lg:flex">
+        <ul className="pointer-events-auto hidden h-11 items-center gap-1 rounded-full border border-border bg-surface/85 px-1.5 backdrop-blur lg:flex">
           {ORDEM_PONTOS.map((chave) => (
             <li key={chave}>
               <BotaoPonto
@@ -354,10 +376,37 @@ function NavIlha({
                 destino={destino}
                 irPara={irPara}
                 rotulo={dict.nav[rotuloNav(chave)]}
+                compacto
               />
             </li>
           ))}
         </ul>
+
+        {/* A marca, no meio da tela. Decorativa de propósito: `aria-hidden`
+            porque o nome do site já é anunciado pelo rótulo desta navegação, e
+            `pointer-events-none` porque ela fica por cima do canvas — clicável,
+            ela viraria um buraco morto no meio da ilha, onde o arrasto que gira
+            a cena simplesmente não funcionaria.
+
+            O corte de 1360 px foi medido, não estimado, e mudou quando "Jogos"
+            entrou na navegação: com cinco itens a marca já cabia em 1280, com
+            seis ela passou a invadir a pílula em 14 px ali. A folga cresce meio
+            pixel por pixel de janela, então 1360 é onde sobram os ~24 px que
+            separam "perto" de "encostado". Abaixo disso o meio da tela pertence
+            à navegação e a marca sai — entre uma marca e o caminho para as
+            seções, quem fica é o caminho.
+
+            Por isso o valor é literal e não um `xl`: o limite é onde os dois
+            grupos se encontram, e isso muda quando um item entra no menu. Um
+            nome de degrau esconderia essa relação. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 font-[family-name:var(--font-display)] text-lg font-bold tracking-tight text-fg min-[1360px]:block"
+        >
+          {site.monogram.toLowerCase()}
+          <span className="text-accent">.</span>
+          dev
+        </span>
 
         {/* Tema e idioma vivem no cabeçalho da página rolável, que fica
             escondido na ilha. Sem eles aqui, quem entra na ilha perde o jeito
@@ -375,7 +424,7 @@ function NavIlha({
             type="button"
             onClick={() => irPara("curriculo")}
             aria-current={destino === "curriculo" ? "true" : undefined}
-            className="pointer-events-auto hidden rounded-full border border-border bg-surface/85 px-3 py-1.5 text-sm text-fg backdrop-blur transition hover:bg-surface aria-[current]:border-accent aria-[current]:text-accent lg:block"
+            className="pointer-events-auto hidden h-11 items-center rounded-full border border-border bg-surface/85 px-4 text-sm text-fg backdrop-blur transition hover:bg-surface aria-[current]:border-accent aria-[current]:text-accent lg:inline-flex"
           >
             {dict.nav.resume}
           </button>
@@ -384,7 +433,7 @@ function NavIlha({
             onClick={aoSair}
             title={dict.ilha.verComoPaginaDica}
             aria-label={dict.ilha.verComoPagina}
-            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-surface/85 px-3 py-1.5 text-sm text-fg backdrop-blur transition hover:bg-surface"
+            className="pointer-events-auto inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-surface/85 px-4 text-sm text-fg backdrop-blur transition hover:bg-surface"
           >
             <LayoutList aria-hidden="true" className="size-4" />
             <span className="hidden xl:inline">{dict.ilha.verComoPagina}</span>
@@ -415,18 +464,30 @@ function BotaoPonto({
   destino,
   irPara,
   rotulo,
+  compacto = false,
 }: {
   chave: ChavePonto;
   destino: ChavePonto | null;
   irPara: (chave: ChavePonto | null) => void;
   rotulo: string;
+  /**
+   * Dentro da pílula da barra de cima, onde o botão é 36 e a pílula em volta
+   * dele é 44 — os 4 px de folga em cima e embaixo são o que faz o realce da
+   * seção atual parecer encaixado, e não colado na borda.
+   *
+   * Fora dela, na barra de baixo, o botão vale os 44 inteiros: ali ele é alvo
+   * de polegar, e é a única navegação que sobra em tela estreita.
+   */
+  compacto?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={() => irPara(chave)}
       aria-current={destino === chave ? "true" : undefined}
-      className="rounded-full px-3 py-1.5 text-sm text-fg-muted transition hover:bg-surface-2 hover:text-fg aria-[current]:bg-accent aria-[current]:text-accent-ink"
+      className={`inline-flex items-center rounded-full px-4 text-sm text-fg-muted transition hover:bg-surface-2 hover:text-fg aria-[current]:bg-accent aria-[current]:text-accent-ink ${
+        compacto ? "h-9" : "h-11"
+      }`}
     >
       {rotulo}
     </button>
