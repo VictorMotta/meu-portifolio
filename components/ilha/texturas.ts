@@ -122,7 +122,7 @@ function desenharSobre(p: Pincel, dict: Dictionary, foto: CanvasImageSource | nu
   const ALTURA_FOTO = 117;
 
   if (foto) {
-    p.drawImage(foto, 44, topo, LARGURA_FOTO, ALTURA_FOTO);
+    fotoNaCaixa(p, foto, 44, topo, LARGURA_FOTO, ALTURA_FOTO);
   } else {
     /* Enquanto a foto não chega, o lugar dela fica reservado: sem isso o
        texto nasceria encostado na esquerda e pularia quando ela carregasse. */
@@ -717,6 +717,43 @@ function postIt(projeto: Project, dict: Dictionary, fundo: string) {
 }
 
 /**
+ * Desenha a foto preenchendo a caixa, recortada A PARTIR DO TOPO.
+ *
+ * `drawImage` com quatro números ESTICA a imagem inteira até a caixa. Numa
+ * foto de 2278 x 4050 metida num retângulo quase quadrado isso achata o rosto
+ * — o mesmo erro que o currículo tinha quando era desenhado em retrato e
+ * exibido em paisagem.
+ *
+ * Aqui é a forma de oito números: escolhe-se um pedaço da ORIGEM com a mesma
+ * proporção da caixa e copia-se ele. O pedaço começa em y = 0, colado no alto,
+ * porque numa foto de pessoa o que interessa está em cima: recortando pelo
+ * centro some a testa, recortando pelo topo some o peito.
+ */
+function fotoNaCaixa(
+  p: Pincel,
+  foto: CanvasImageSource,
+  x: number,
+  y: number,
+  largura: number,
+  altura: number,
+) {
+  const w = Number((foto as HTMLImageElement).naturalWidth || (foto as HTMLCanvasElement).width);
+  const h = Number((foto as HTMLImageElement).naturalHeight || (foto as HTMLCanvasElement).height);
+  if (!w || !h) return;
+
+  const proporcao = largura / altura;
+  /* Por padrão usa-se a largura toda; se o pedaço resultante for mais alto que
+     a imagem, é a altura que limita e aí o recorte é centrado na horizontal. */
+  let recorteL = w;
+  let recorteA = w / proporcao;
+  if (recorteA > h) {
+    recorteA = h;
+    recorteL = h * proporcao;
+  }
+  p.drawImage(foto, (w - recorteL) / 2, 0, recorteL, recorteA, x, y, largura, altura);
+}
+
+/**
  * A folha do currículo como o painel mostra: foto, nome, a barra do cargo,
  * um filete, os dois primeiros parágrafos e os dois botões.
  *
@@ -750,7 +787,7 @@ function desenharCurriculo(
   const LARGURA_FOTO = 120;
   const ALTURA_FOTO = 140;
   if (foto) {
-    p.drawImage(foto, MARGEM, 56, LARGURA_FOTO, ALTURA_FOTO);
+    fotoNaCaixa(p, foto, MARGEM, 56, LARGURA_FOTO, ALTURA_FOTO);
   } else {
     p.fillStyle = "#d5d0c6";
     p.fillRect(MARGEM, 56, LARGURA_FOTO, ALTURA_FOTO);
@@ -971,7 +1008,7 @@ export function aplicarTexturas(
      tela do móvel também precisa mostrar. */
   const canvasSobre = telaSobre(dict);
   const texturaSobre = pintar(ilha, "monitor_left_screen", canvasSobre, lixo, true);
-  comImagem("/victor.jpg", texturaSobre, (imagem) => {
+  comImagem("/victor.png", texturaSobre, (imagem) => {
     const p = canvasSobre?.getContext("2d");
     if (p) desenharSobre(p, dict, imagem);
   }, lixo);
@@ -996,7 +1033,7 @@ export function aplicarTexturas(
 
   const canvasCurriculo = folhaDoCurriculo(dict, nome);
   const texturaCurriculo = pintar(ilha, "resume_sheet", canvasCurriculo, lixo, false);
-  comImagem("/victor.jpg", texturaCurriculo, (imagem) => {
+  comImagem("/victor.png", texturaCurriculo, (imagem) => {
     const p = canvasCurriculo?.getContext("2d");
     if (p) desenharCurriculo(p, dict, nome, imagem);
   }, lixo);

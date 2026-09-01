@@ -30,7 +30,7 @@ import {
   type Orbita,
 } from "@/components/ilha/controles";
 import { PONTOS, type ChavePonto } from "@/components/ilha/pontos";
-import { ENCAIXES, ESCONDIDOS, encaixarModelos, esconder } from "@/components/ilha/modelos";
+import { ENCAIXES, ESCONDIDOS, SUBSTITUIDAS, encaixarModelos, esconder } from "@/components/ilha/modelos";
 import { acenderLamparinas } from "@/components/ilha/luzes";
 import { girarOCeu, orbitarPedras, orbitarPlanetas } from "@/components/ilha/orbitas";
 import { arrumar, derrubar, integrar, oQueCai, type Caido } from "@/components/ilha/queda";
@@ -159,7 +159,7 @@ function Ilha({
      vídeo, e o coletor do JavaScript não alcança nenhum dos dois.
 
      Mas a MOBÍLIA desenhada não aparece mais nesse meio-tempo. Ela existia
-     como o que se via enquanto os 13 MB desciam, e o raciocínio era "melhor
+     como o que se via enquanto os 50 MB desciam, e o raciocínio era "melhor
      algo do que nada". O algo, porém, é uma sala de blocos quadriculados: numa
      internet lenta ela fica na tela tempo bastante para ser a primeira
      impressão do portfólio. Agora entra escondida e é revelada de uma vez, com
@@ -173,8 +173,17 @@ function Ilha({
     let lixoTexturas = aplicarTexturas(ilha, dict, locale, projetos, nome);
     let lixoModelos: { dispose: () => void }[] = [];
     /* As peças que só saem não dependem de download: somem no primeiro
-       quadro, sem piscar na tela enquanto os .glb chegam. */
-    const lixoEscondidos = esconder(ilha, ESCONDIDOS);
+       quadro, sem piscar na tela enquanto os .glb chegam.
+
+       Junto com elas saem TODAS as que algum modelo cobre, e saem AGORA, e
+       não quando o modelo chega. É a diferença entre uma falha silenciosa e
+       uma sala de blocos: `encaixarModelo` engole o erro de cada arquivo para
+       que um download quebrado não derrube os outros trinta e um, então um
+       .glb que não desce simplesmente não escondia o móvel desenhado dele — e
+       a mobília de caixas voltava para a tela, agora ao lado dos modelos que
+       deram certo. Escondendo antes, o pior caso é um vão vazio, que é a
+       mesma regra do resto da ilha: vazio é melhor que feio. */
+    const lixoEscondidos = esconder(ilha, [...ESCONDIDOS, ...SUBSTITUIDAS]);
     invalidate();
 
     encaixarModelos(ilha, ENCAIXES).then((novo) => {
@@ -188,7 +197,7 @@ function Ilha({
       /* Tudo de uma vez, e só agora. Revelar peça por peça conforme cada
          arquivo chega faria a sala se montar aos pulos na frente do
          visitante. */
-      mostrarMobilia(ilha, true);
+      mostrarMobilia(ilha, true, SUBSTITUIDAS);
       setObstaculos(mapearObstaculos(ilha));
       setModelosProntos((n) => n + 1);
       invalidate();
@@ -202,7 +211,7 @@ function Ilha({
       /* Devolve a mobília: o grupo `ilha` sobrevive ao efeito (vem de um
          `useMemo`), e deixá-lo escondido faria a próxima montagem começar com
          a sala apagada e nunca mais acender. */
-      mostrarMobilia(ilha, true);
+      mostrarMobilia(ilha, true, SUBSTITUIDAS);
     };
   }, [ilha, dict, locale, projetos, nomeDoMod, nome, invalidate]);
 
@@ -399,18 +408,72 @@ function Ilha({
       return raio.intersectObject(ilha, true).find((a) => aparece(a.object)) ?? null;
     }
 
+    /* Os dedos em cima da tela, um por `pointerId`.
+       No mouse nunca passa de um; no celular, dois é a pinça. Guardar todos e
+       decidir pelo tamanho do mapa é o que evita um estado separado
+       "estou pinçando" que sai de sincronia quando um dedo sai da tela sem
+       avisar. */
+    const dedos = new Map<number, { x: number; y: number }>();
+    /* A distância entre os dois dedos no quadro anterior. `null` quando não há
+       pinça em curso — e é o que faz o segundo dedo começar sem um salto de
+       zoom no primeiro quadro. */
+    let pincaAnterior: number | null = null;
+
+    const distanciaEntreDedos = () => {
+      const [a, b] = [...dedos.values()];
+      if (!a || !b) return null;
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
+
     const aoDescer = (evento: PointerEvent) => {
       if (travado()) return;
+      dedos.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
+      tela.setPointerCapture(evento.pointerId);
+
+      if (dedos.size >= 2) {
+        /* O segundo dedo cancela o arrasto em curso: o gesto virou pinça, e
+           continuar girando junto faria a ilha rodar enquanto se dá zoom. */
+        arrastando = false;
+        idDoPonteiro = null;
+        pincaAnterior = distanciaEntreDedos();
+        girandoSozinha.current = false;
+        aoInteragir();
+        return;
+      }
+
       arrastando = true;
       idDoPonteiro = evento.pointerId;
       ultimoX = evento.clientX;
       ultimoY = evento.clientY;
       percorrido = 0;
-      tela.setPointerCapture(evento.pointerId);
       definirCursor("grabbing");
     }
 
     const aoMover = (evento: PointerEvent) => {
+      if (dedos.has(evento.pointerId)) {
+        dedos.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
+      }
+
+      /* Pinça: a razão entre a distância de agora e a do quadro anterior é
+         quanto o zoom muda. Razão, e não diferença, porque afastar os dedos de
+         100 para 200 px tem de dar o mesmo efeito que de 200 para 400 — é
+         assim que a pinça se comporta em toda parte.
+
+         O zoom da órbita é uma DISTÂNCIA da câmera, então ele anda ao
+         contrário do gesto: afastar os dedos (razão > 1) aproxima a câmera. */
+      if (dedos.size >= 2) {
+        const agora = distanciaEntreDedos();
+        if (agora !== null && pincaAnterior !== null && pincaAnterior > 0) {
+          orbita.current = limitarOrbita({
+            ...orbita.current,
+            zoom: orbita.current.zoom * (pincaAnterior / agora),
+          });
+          invalidate();
+        }
+        pincaAnterior = agora;
+        return;
+      }
+
       if (!arrastando) {
         if (travado()) return;
         /* Sem arrasto, o ponteiro só muda o cursor: o visitante precisa ver
@@ -442,12 +505,23 @@ function Ilha({
     }
 
     const aoSubir = (evento: PointerEvent) => {
-      if (!arrastando || evento.pointerId !== idDoPonteiro) return;
-      arrastando = false;
-      idDoPonteiro = null;
+      const eraPinca = dedos.size >= 2;
+      dedos.delete(evento.pointerId);
       if (tela.hasPointerCapture(evento.pointerId)) {
         tela.releasePointerCapture(evento.pointerId);
       }
+      /* Tirar um dedo da pinça NÃO devolve o arrasto ao dedo que ficou: o
+         gesto seguinte teria de começar de um ponto que ninguém marcou, e a
+         ilha daria um pulo. O que fica é uma pinça sem par, inerte, até a mão
+         sair da tela. */
+      if (eraPinca) {
+        pincaAnterior = dedos.size >= 2 ? distanciaEntreDedos() : null;
+        return;
+      }
+
+      if (!arrastando || evento.pointerId !== idDoPonteiro) return;
+      arrastando = false;
+      idDoPonteiro = null;
       definirCursor("grab");
       if (percorrido >= LIMIAR_DE_CLIQUE || travado()) return;
 
@@ -563,9 +637,17 @@ function Ilha({
        não têm o que apagar. Sem o fliperama nesta conta sobrava uma tira da
        textura pintada em volta do painel — a mesma lista escrita duas vezes,
        em dois tamanhos, na mesma tela. */
+    /* Em MODO FOLHA apaga sempre, qualquer que seja a superfície. Ali o painel
+       não pousa em cima do alvo: ele vira uma folha ancorada embaixo, e o
+       quadro fica atrás dele, ocupando a tela toda com o mesmo texto em
+       tamanho gigante. O visitante lê a stack duas vezes, uma por cima da
+       outra — é o que se vê nos prints de celular. Sem alvo pintado atrás, o
+       fundo vira o móvel e só. */
     const deveApagar =
       pontoDoVoo !== null &&
-      (pontoDoVoo.superficie === "tela" || pontoDoVoo.superficie === "fliperama") &&
+      (folha ||
+        pontoDoVoo.superficie === "tela" ||
+        pontoDoVoo.superficie === "fliperama") &&
       t >= 0.8;
 
     /* O controle é pelo MATERIAL, não pelo nome do móvel. A pintura das

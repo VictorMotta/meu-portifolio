@@ -18,6 +18,7 @@ import { PainelJogos } from "@/components/ilha/painel-fliperama";
 import { PainelTela } from "@/components/ilha/painel-tela";
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { Marca } from "@/components/ui/marca";
 import { ORDEM_PONTOS, PONTOS, type ChavePonto } from "@/components/ilha/pontos";
 import { format, type Dictionary } from "@/content/i18n";
 import { mod } from "@/content/hobby";
@@ -228,6 +229,11 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
      estava preta e o afastamento da câmera acontecia atrás de um véu, sem
      ninguém para ver. O canvas fica; o que sai é o HTML colado por cima, que
      viajando junto com o zoom entregaria que é HTML colado por cima. */
+  /* O painel de conteúdo NÃO entra nisto: a opacidade dele é escrita a cada
+     quadro pelo voo da câmera, e uma classe disputando a mesma propriedade
+     criava um fantasma a cada clique. Ver o comentário em `painel-tela.tsx`.
+     Se a saída começar com um painel aberto, ele simplesmente vai com a troca
+     de modo — é o caso raro, e melhor que o fantasma no caso comum. */
   const sumindo = saindo ? "pointer-events-none opacity-0" : "opacity-100";
 
   return (
@@ -263,7 +269,23 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
         />
       </div>
 
-      <div className={`transition-opacity duration-500 ${sumindo}`}>
+      {/* `absolute inset-0`, e não `relative`: a navegação de dentro se
+          posiciona com `absolute inset-0`, e um embrulho `relative` no fluxo
+          tem ALTURA ZERO — o `bottom-0` da barra de baixo passava a ser o topo
+          da tela, e as seções sumiam do celular, que é a única largura em que
+          elas moram lá embaixo. No desktop nada aparecia de errado porque ali
+          elas ficam na barra de cima.
+
+          `z-50` no embrulho, e não só no `nav`: um elemento com `opacity` cria
+          contexto de empilhamento, então o z-50 de dentro passaria a valer só
+          aqui dentro e o painel, que é z-40 e está fora, cobriria os botões.
+
+          `pointer-events-none` porque isto cobre a tela inteira: sem ele, o
+          embrulho engoliria o arrasto que gira a ilha. Quem devolve o clique é
+          cada botão, como já era. */}
+      <div
+        className={`pointer-events-none absolute inset-0 z-50 transition-opacity duration-500 ${sumindo}`}
+      >
         <NavIlha
           dict={dict}
           locale={locale}
@@ -292,7 +314,6 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
 
       {ponto ? (
         <PainelTela
-          className={sumindo}
           refPainel={painelRef}
           aberto
           ativo={chegou}
@@ -422,14 +443,7 @@ function NavIlha({
             Por isso o valor é literal e não um `xl`: o limite é onde os dois
             grupos se encontram, e isso muda quando um item entra no menu. Um
             nome de degrau esconderia essa relação. */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-fg min-[1360px]:block"
-        >
-          {site.monogram}
-          <span className="text-accent">.</span>
-          DEV
-        </span>
+        <Marca className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 text-2xl text-fg min-[1360px]:block" />
 
         {/* Tema e idioma vivem no cabeçalho da página rolável, que fica
             escondido na ilha. Sem eles aqui, quem entra na ilha perde o jeito

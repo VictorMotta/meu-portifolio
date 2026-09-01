@@ -27,6 +27,9 @@
   --color-accent-ink: #04120e; /* texto sobre o acento, 11.7:1 */
   --color-danger: #ff6b6b; /* 6.2:1, AA */
   --color-success: #4ee1c1;
+  /* O roxo do Dracula, e a única cor do sistema que existe só para a marca.
+     8.2:1, AAA. Ver o par do tema claro mais abaixo. */
+  --color-marca: #bd93f9;
 
   /* Tipografia: as tres variaveis vem de next/font em app/[locale]/layout.tsx */
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
@@ -64,6 +67,21 @@
   --color-accent-ink: #ffffff; /* texto sobre o acento, 6.1:1 */
   --color-danger: #c62828; /* 5.0:1, AA */
   --color-success: #0f7d6a;
+  /* O roxo do Dracula não sobrevive ao fundo claro: o #bd93f9 dá 2.3:1 ali,
+     reprovado para qualquer texto. Este é o mesmo roxo escurecido até passar —
+     8.5:1, AAA — e a matiz continua em 263°, dois graus do original, então é
+     a mesma cor e não outra. */
+  --color-marca: #5b2ca8;
+}
+
+/* O ângulo de giro da órbita da stack.
+   Registrada porque propriedade personalizada crua é só texto: a animação não
+   sabe interpolar de "0deg" para "360deg". Declarada com tipo, o navegador
+   interpola como ângulo — e é isso que faz a órbita girar sem transform. */
+@property --giro {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
 }
 
 @layer base {
@@ -159,58 +177,102 @@
     -webkit-text-fill-color: transparent;
   }
 
-  /* Órbitas da seção de stack.
-     3D de CSS, não WebGL: os ícones continuam sendo DOM de verdade, então
-     recebem foco, respondem ao teclado e o leitor de tela os enxerga. Fazer
-     isso em canvas custaria acessibilidade sem ganho visual.
+  /* ==========================================================================
+     A órbita da stack.
 
-     Quatro camadas aninhadas, cada uma com um trabalho:
-       .anel     gira o plano inteiro
-       .orbe     posiciona o item no ângulo e no raio
-       .contra   desfaz o giro do anel, para o ícone não rodar sobre si
-       .levanta  tira o ícone do plano deitado e o vira para a câmera */
+     CSS, não WebGL: os ícones continuam sendo DOM de verdade, então recebem
+     foco, respondem ao teclado e o leitor de tela os enxerga. Em canvas isso
+     custaria acessibilidade sem ganho nenhum de imagem.
+
+     Foi 3D de verdade: a cena tombava num `rotateX`, cada anel girava em Z, e
+     cada pastilha desfazia o giro e o tombo para voltar a encarar quem olha.
+     No papel isso se cancela e sobra um círculo. Na tela não: com a GPU
+     compondo camadas dentro de um `preserve-3d`, parte das pastilhas aparecia
+     achatada, como elipse torta, e não dava para prever quais — medidas em
+     captura headless todas davam quadrado certinho, porque o defeito é da
+     pintura, não da geometria.
+
+     Aqui não há mais 3D nenhum. A elipse é desenhada em 2D: a pastilha anda
+     por `translate: cos(ângulo)·raio, sin(ângulo)·raio·achatamento`, onde
+     `--achata` é o cosseno do tombo antigo. O ângulo vem de `--giro`, que a
+     animação interpola. Pastilha que nunca passa por transformação 3D não tem
+     como sair achatada.
+     ====================================================================== */
   .orbita {
-    perspective: 1100px;
+    /* Quanto a elipse é achatada: 1 é um círculo de frente, 0 é uma linha.
+       Não é só estética, é o que decide se as 24 pastilhas cabem. Bem
+       achatada, a faixa tem a área de uma elipse fina — e em 350px de largura
+       essa área fica menor que a soma das pastilhas, que têm piso de 34px
+       porque abaixo disso o logo não se reconhece mais. O resultado era
+       pastilha em cima de pastilha. Por isso o celular recebe quase um
+       círculo e o monitor recebe a faixa larga. */
+    --achata: 0.9;
     /* container-type habilita as unidades cq*, que fazem raio e pastilha
        encolherem junto com a caixa. Com raio em pixel fixo a órbita não
        cabia em 320px e a página rolava de lado. */
     container-type: inline-size;
-    /* O anel é um quadrado girando: seu retângulo delimitador cresce 41% na
-       diagonal e conta para o scrollWidth, mesmo que a circunferência visível
-       caiba. clip corta esse excesso invisível sem criar área de rolagem.
-       Usar aqui é seguro porque o preserve-3d está no filho, não neste nó. */
+    /* O anel ocupa a caixa toda e as pastilhas saem dele por translate: o
+       retângulo delimitador passa da borda mesmo quando a elipse visível
+       cabe. clip corta esse excesso sem criar área de rolagem. */
     overflow: clip;
+    /* A fumaça de baixo.
+       A metade da frente da órbita se dissolve na página em vez de terminar
+       no corte seco da caixa. É máscara, e não um véu por cima: por cima
+       precisaria ser da cor do fundo, e a seção é transparente — o céu de
+       estrelas passa por trás dela. Um retângulo opaco apagaria as estrelas
+       junto e apareceria como uma faixa escura. */
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 50%,
+      transparent 88%
+    );
+    mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 88%);
   }
 
-  .orbita-cena {
-    transform-style: preserve-3d;
-    /* 64 graus: deitado o bastante para virar órbita, em pé o bastante para
-       os itens do fundo ainda serem clicáveis. */
-    transform: rotateX(64deg);
+  /* Enquanto o teclado estiver numa pastilha, a fumaça sai inteira.
+     Sem isso, chegar de Tab ou de seta numa pastilha da metade de baixo
+     colocaria o foco num botão invisível: o anel de foco existiria e ninguém
+     veria. O mouse continua vendo a fumaça; quem navega por teclado vê a
+     órbita toda no instante em que entra nela. */
+  .orbita:has([role="radio"]:focus-visible) {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  @media (min-width: 40rem) {
+    .orbita {
+      --achata: 0.62;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .orbita {
+      --achata: 0.41;
+    }
   }
 
   .anel {
     position: absolute;
     inset: 0;
-    transform-style: preserve-3d;
-    animation: orbitar var(--dur) linear infinite;
+    animation: girar var(--dur) linear infinite;
   }
 
   .anel-reverso {
     animation-direction: reverse;
   }
 
-  /* A elipse desenhada.
-     Separada do anel que gira por um motivo: mascarar o anel faria o
-     esmaecimento girar junto com ele. Como um círculo girado é idêntico a si
-     mesmo, desenhar a guia parada e deixar só as pastilhas girando dá o mesmo
-     resultado visual e permite apagar a base.
-
-     A máscara fica aqui, e não no container, porque no container ela apagaria
-     as pastilhas também: pastilha invisível mas ainda focável pelo teclado é
-     pior do que não ter o efeito. */
+  /* A elipse desenhada. Fica parada enquanto só as pastilhas giram: um
+     círculo girado é idêntico a si mesmo, então o desenho não precisa
+     acompanhar — e parado ele pode ser apagado nas pontas, o que girando
+     junto ficaria com o esmaecimento rodando pela pista. */
   .guia {
     position: absolute;
+    left: 50%;
+    top: 50%;
+    width: calc(var(--r) * 2);
+    height: calc(var(--r) * 2 * var(--achata));
+    margin: calc(var(--r) * var(--achata) * -1) 0 0 calc(var(--r) * -1);
     border-radius: 50%;
     /* Domo, não linha: uma borda suave no topo e um preenchimento que já
        nasce fraco e some antes da metade. É o que dá o volume do template,
@@ -222,15 +284,33 @@
       color-mix(in srgb, var(--color-fg) 2%, transparent) 34%,
       transparent 66%
     );
-    /* Apaga cedo e por completo: na foto de referência a metade de baixo do
-       arco simplesmente não existe. */
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 16%,
-      transparent 68%
-    );
-    mask-image: linear-gradient(to bottom, #000 0%, #000 16%, transparent 68%);
+    /* Duas máscaras cruzadas, e não uma.
+       De cima para baixo: apaga cedo e por completo, porque na referência a
+       metade de baixo do arco simplesmente não existe.
+       Da esquerda para a direita: apaga as duas pontas da elipse, que é o que
+       faz a faixa se dissolver na página em vez de terminar num corte seco.
+       `intersect` é o que junta as duas — empilhadas sem compor, a de baixo
+       apenas cobriria a de cima. */
+    -webkit-mask-image:
+      linear-gradient(to bottom, #000 0%, #000 16%, transparent 68%),
+      linear-gradient(
+        to right,
+        transparent 0%,
+        #000 18%,
+        #000 82%,
+        transparent 100%
+      );
+    mask-image:
+      linear-gradient(to bottom, #000 0%, #000 16%, transparent 68%),
+      linear-gradient(
+        to right,
+        transparent 0%,
+        #000 18%,
+        #000 82%,
+        transparent 100%
+      );
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
   /* O orbe tem tamanho real e se centraliza por margem negativa, não por
@@ -244,41 +324,30 @@
     width: var(--tam);
     height: var(--tam);
     margin: calc(var(--tam) / -2) 0 0 calc(var(--tam) / -2);
-    transform-style: preserve-3d;
-    transform: rotate(var(--a)) translateX(var(--r)) rotate(calc(-1 * var(--a)));
+    --ang: calc(var(--a) + var(--giro));
+    translate: calc(cos(var(--ang)) * var(--r))
+      calc(sin(var(--ang)) * var(--r) * var(--achata));
+    /* Profundidade sem perspectiva: a pastilha da frente (seno positivo, que
+       é a metade de baixo) fica maior que a de trás. A perspectiva de verdade
+       fazia isso sozinha, e era ela que vinha junto com o achatamento. */
+    scale: calc(1 + 0.2 * sin(var(--ang)));
+    /* E a da frente passa por cima da de trás quando as pistas se cruzam. */
+    z-index: calc(10 + 10 * sin(var(--ang)));
   }
 
-  .contra {
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    animation: orbitar var(--dur) linear infinite reverse;
-  }
-
-  .anel-reverso .contra {
-    animation-direction: normal;
-  }
-
-  .levanta {
-    width: 100%;
-    height: 100%;
-    transform: rotateX(-64deg);
-  }
-
-  @keyframes orbitar {
+  @keyframes girar {
     from {
-      transform: rotate(0deg);
+      --giro: 0deg;
     }
     to {
-      transform: rotate(360deg);
+      --giro: 360deg;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     /* Congela em vez de acelerar: órbita girando é movimento contínuo de
        tela cheia, exatamente o que a preferência pede para não existir. */
-    .anel,
-    .contra {
+    .anel {
       animation: none;
     }
   }
@@ -629,10 +698,18 @@ html[data-ilha="on"] body {
 /* A inclinação é decorativa: quem pediu menos movimento não perde nada, mas
    quem lê com dislexia agradece o texto reto. */
 @media (prefers-reduced-motion: no-preference) {
-  .postit-1 { transform: rotate(-0.8deg); }
-  .postit-2 { transform: rotate(0.6deg); }
-  .postit-3 { transform: rotate(-0.4deg); }
-  .postit-4 { transform: rotate(1deg); }
+  .postit-1 {
+    transform: rotate(-0.8deg);
+  }
+  .postit-2 {
+    transform: rotate(0.6deg);
+  }
+  .postit-3 {
+    transform: rotate(-0.4deg);
+  }
+  .postit-4 {
+    transform: rotate(1deg);
+  }
 }
 
 /* Marcador de lousa: o traço largo e meio transparente por baixo da palavra,

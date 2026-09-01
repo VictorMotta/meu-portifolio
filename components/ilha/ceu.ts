@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { suavizar } from "@/components/ilha/camera-ilha";
+
 /**
  * O céu em volta da ilha.
  *
@@ -107,7 +109,7 @@ function pontoNaEsfera(aleatorio: () => number) {
  * parece grade, não céu.
  */
 export function construirEstrelas() {
-  const aleatorio = sorteio(0x51A17A);
+  const aleatorio = sorteio(0x51a17a);
   const posicoes = new Float32Array(ESTRELAS * 3);
   const cores = new Float32Array(ESTRELAS * 3);
   const tamanhos = new Float32Array(ESTRELAS);
@@ -201,12 +203,60 @@ export function construirEstrelas() {
  * embaixo dela não há chão nenhum.
  */
 const PLANETAS = [
-  { nome: "planeta_azul",     volta: -3.9, altura:   6, dist: 74, raio: 3.4, cor: 0x3f6ea8, anel: false },
-  { nome: "planeta_ocre",     volta:  1.1, altura:  -1, dist: 58, raio: 4.6, cor: 0xb07a4a, anel: true },
-  { nome: "planeta_pequeno",  volta:  2.9, altura:   7, dist: 88, raio: 2.2, cor: 0x8a6f9e, anel: false },
-  { nome: "planeta_gelo",     volta: -0.5, altura: -18, dist: 66, raio: 2.6, cor: 0x9fc4cf, anel: false },
-  { nome: "planeta_rubro",    volta:  0.3, altura: -42, dist: 78, raio: 3.6, cor: 0xa8523f, anel: false },
-  { nome: "planeta_verde",    volta: -1.4, altura: -12, dist: 52, raio: 1.8, cor: 0x4f8f72, anel: false },
+  {
+    nome: "planeta_azul",
+    volta: -3.9,
+    altura: 6,
+    dist: 74,
+    raio: 3.4,
+    cor: 0x3f6ea8,
+    anel: false,
+  },
+  {
+    nome: "planeta_ocre",
+    volta: 1.1,
+    altura: -1,
+    dist: 58,
+    raio: 4.6,
+    cor: 0xb07a4a,
+    anel: true,
+  },
+  {
+    nome: "planeta_pequeno",
+    volta: 2.9,
+    altura: 7,
+    dist: 88,
+    raio: 2.2,
+    cor: 0x8a6f9e,
+    anel: false,
+  },
+  {
+    nome: "planeta_gelo",
+    volta: -0.5,
+    altura: -18,
+    dist: 66,
+    raio: 2.6,
+    cor: 0x9fc4cf,
+    anel: false,
+  },
+  {
+    nome: "planeta_rubro",
+    volta: 0.3,
+    altura: -42,
+    dist: 78,
+    raio: 3.6,
+    cor: 0xa8523f,
+    anel: false,
+  },
+  {
+    nome: "planeta_verde",
+    volta: -1.4,
+    altura: -12,
+    dist: 52,
+    raio: 1.8,
+    cor: 0x4f8f72,
+    anel: false,
+  },
 ] as const;
 
 /**
@@ -234,7 +284,10 @@ function planetas() {
       emissiveIntensity: 0.32,
       flatShading: true,
     });
-    const corpo = new THREE.Mesh(new THREE.IcosahedronGeometry(p.raio, 2), material);
+    const corpo = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(p.raio, 2),
+      material,
+    );
     corpo.name = p.nome;
     corpo.position.copy(noCeu(p.volta, p.altura, p.dist));
     corpo.castShadow = false;
@@ -279,7 +332,7 @@ function texturaDaLua() {
   p.fillStyle = "#c8c9cf";
   p.fillRect(0, 0, 512, 256);
 
-  const aleatorio = sorteio(0x1A2B3C);
+  const aleatorio = sorteio(0x1a2b3c);
   /* Os mares primeiro, grandes e escuros; as crateras por cima, pequenas e
      com a borda clara — é a borda que faz a mancha virar cratera em vez de
      borrão. */
@@ -532,7 +585,9 @@ export function ajustarCeu(ceu: THREE.Object3D, escuro: boolean) {
 /** Descarta geometria, material e textura do céu — nenhum deles é do JS. */
 export function descartarCeu(ceu: THREE.Object3D) {
   ceu.traverse((no) => {
-    const malha = no as THREE.Mesh & { material?: THREE.Material | THREE.Material[] };
+    const malha = no as THREE.Mesh & {
+      material?: THREE.Material | THREE.Material[];
+    };
     if (malha.geometry) malha.geometry.dispose();
     const materiais = Array.isArray(malha.material)
       ? malha.material
@@ -540,7 +595,9 @@ export function descartarCeu(ceu: THREE.Object3D) {
         ? [malha.material]
         : [];
     for (const material of materiais) {
-      const comMapa = material as THREE.MeshStandardMaterial & { map?: THREE.Texture | null };
+      const comMapa = material as THREE.MeshStandardMaterial & {
+        map?: THREE.Texture | null;
+      };
       comMapa.map?.dispose();
       comMapa.emissiveMap?.dispose();
       material.dispose();
@@ -631,7 +688,9 @@ export function refletirNoFerro(
   ilha.traverse((no) => {
     const malha = no as THREE.Mesh;
     if (!malha.isMesh) return;
-    const materiais = Array.isArray(malha.material) ? malha.material : [malha.material];
+    const materiais = Array.isArray(malha.material)
+      ? malha.material
+      : [malha.material];
     for (const bruto of materiais) {
       const material = bruto as THREE.MeshStandardMaterial;
       const nome = material?.name ?? "";
@@ -770,6 +829,110 @@ export function afastarFundo(
   camera.lookAt(mira);
 }
 
+/**
+ * Onde a câmera do fundo fica, no meio do caminho entre ver o sistema inteiro
+ * e estar em cima da ilha.
+ *
+ * No topo da página vale a pose de descanso, que enquadra o Sol e as órbitas.
+ * Conforme se rola, a câmera MERGULHA na ilha e termina colada nela — é onde
+ * a página tem a coluna de contato à esquerda e um vão à direita, e é esse vão
+ * que a ilha passa a ocupar.
+ *
+ * Duas coisas tornam isto menos trivial do que interpolar dois pontos fixos: a
+ * ilha ANDA (ela percorre a terceira órbita), então o destino do mergulho tem
+ * de ser lido a cada quadro; e o zoom da troca de modo continua valendo por
+ * cima, aproximando ainda mais quando o visitante vai para o 3D.
+ *
+ * Os 25 de recuo saíram de medir: em 17, que foi a primeira tentativa, a ilha
+ * ocupava quase 80% da altura do quadro e, com o desvio da mira, saía pela
+ * borda direita — via-se uma fatia dela. Em 25 ela cabe inteira na metade
+ * direita, que é o vão que a página deixa ao lado do formulário de contato.
+ */
+const RECUO_NA_ILHA = new THREE.Vector3(-1, 7.5, 25);
+const DESVIO_DA_MIRA = new THREE.Vector3(-6.7, 3.4, 0);
+
+/**
+ * A pose da viagem: onde a câmera vai enquanto a seção de Stack está na tela.
+ *
+ * A ideia é a da página: ali o visitante não está mais neste sistema, está
+ * numa outra galáxia — a das ferramentas, que é a órbita de CSS desenhada por
+ * cima. Então o sistema com a ilha precisa ficar *para trás*, pequeno e num
+ * canto, e não sumir: sumir seria trocar de cenário, e a página inteira se
+ * apoia em ser um lugar só visto de distâncias diferentes.
+ *
+ * O olho vai de 89 para 311 de distância da origem — três vezes e meia, que é
+ * o que encolhe o sistema até ele virar um detalhe num canto.
+ *
+ * A mira desce e vai para a esquerda do sistema — é isso, e não uma rotação,
+ * que joga o Sol e a ilha para o alto da direita. Mirar no sistema e girar a
+ * câmera daria o mesmo enquadramento com metade do controle. E o desvio da
+ * mira cresce junto com a distância: parado, ele viraria um ângulo cada vez
+ * menor e o sistema escorregaria de volta para o meio do quadro conforme a
+ * câmera recua.
+ *
+ * A 311 a câmera fica bem fora da casca de estrelas, que vive entre 60 e 115 —
+ * daí `ESTRELAS_NA_VIAGEM` logo abaixo.
+ */
+const LONGE_OLHO = new THREE.Vector3(-48, 147, 269);
+const LONGE_MIRA = new THREE.Vector3(-96, -49, 9);
+
+/**
+ * Quanto a casca de estrelas acompanha a câmera na viagem.
+ *
+ * Sozinha ela não acompanharia nada, e é aí que o problema aparece: a 311 de
+ * distância a casca inteira abre uns 40° e a mira aponta 20° para fora dela,
+ * então metade do quadro — justo a metade esquerda, onde mora o texto — ficaria
+ * num preto liso, sem uma estrela. Levando a casca por 75% do caminho, a câmera
+ * volta a ficar dentro dela (78 de 115) e o céu continua cheio para todo lado.
+ *
+ * 75% e não 100%: no cheio a casca ficaria colada na câmera e as estrelas
+ * parariam de escorrer umas contra as outras. O quarto que sobra é a paralaxe,
+ * que é o que faz a viagem parecer viagem.
+ */
+export const ESTRELAS_NA_VIAGEM = 0.75;
+
+/** Onde o mergulho começa e onde termina, em fração da página rolada. */
+const INICIO_DO_MERGULHO = 0.45;
+const FIM_DO_MERGULHO = 0.9;
+
+export function poseDoFundo(
+  camera: THREE.Camera,
+  ilha: THREE.Object3D,
+  descanso: THREE.Vector3,
+  mira: THREE.Vector3,
+  rolagem: number,
+  afastamento: number,
+  /* 0 = neste sistema; 1 = na outra galáxia, com este lá atrás. */
+  viagem: number,
+) {
+  const bruto =
+    (rolagem - INICIO_DO_MERGULHO) / (FIM_DO_MERGULHO - INICIO_DO_MERGULHO);
+  const t = suavizar(Math.min(1, Math.max(0, bruto)));
+
+  const naIlha = new THREE.Vector3();
+  ilha.getWorldPosition(naIlha);
+
+  /* A mira desvia para a esquerda da ilha: assim ela cai na metade direita do
+     quadro, longe da coluna de texto — a mesma razão pela qual a mira do
+     sistema fica à esquerda do Sol. */
+  const alvo = mira.clone().lerp(naIlha.clone().add(DESVIO_DA_MIRA), t);
+  const olho = descanso.clone().lerp(naIlha.clone().add(RECUO_NA_ILHA), t);
+
+  /* A viagem entra POR CIMA do mergulho, e não antes dele.
+     As duas janelas não se encostam — a Stack acaba bem antes de o mergulho
+     começar — mas escrever assim é o que garante que nunca briguem: se um dia
+     uma seção crescer e as janelas se sobrepuserem, o resultado é a média das
+     duas poses, e não um salto. */
+  if (viagem > 0) {
+    const v = suavizar(viagem);
+    alvo.lerp(LONGE_MIRA, v);
+    olho.lerp(LONGE_OLHO, v);
+  }
+
+  camera.position.copy(alvo).addScaledVector(olho.sub(alvo), afastamento);
+  camera.lookAt(alvo);
+}
+
 /* ---------- o sistema solar do fundo da página ---------- */
 
 /**
@@ -831,7 +994,10 @@ export function construirSistemaSolar(escuro: boolean): THREE.Group {
 
   const sol = new THREE.Mesh(
     new THREE.SphereGeometry(4.5, 48, 32),
-    new THREE.MeshBasicMaterial({ name: "sistema_sol", color: escuro ? 0xffb648 : 0xffc23f }),
+    new THREE.MeshBasicMaterial({
+      name: "sistema_sol",
+      color: escuro ? 0xffb648 : 0xffc23f,
+    }),
   );
   sol.name = "sistema_sol";
   sistema.add(sol);
@@ -879,8 +1045,11 @@ export function construirSistemaSolar(escuro: boolean): THREE.Group {
       const anel = new THREE.Mesh(
         new THREE.RingGeometry(p.raio * 0.63, p.raio * 0.97, 40),
         new THREE.MeshBasicMaterial({
-          color: 0xd8b48a, transparent: true, opacity: 0.5,
-          side: THREE.DoubleSide, depthWrite: false,
+          color: 0xd8b48a,
+          transparent: true,
+          opacity: 0.5,
+          side: THREE.DoubleSide,
+          depthWrite: false,
         }),
       );
       anel.rotation.set(-1.1, 0.4, 0.2);
@@ -888,7 +1057,10 @@ export function construirSistemaSolar(escuro: boolean): THREE.Group {
     }
   });
 
-  sistema.traverse((no) => { no.castShadow = false; no.receiveShadow = false; });
+  sistema.traverse((no) => {
+    no.castShadow = false;
+    no.receiveShadow = false;
+  });
   return sistema;
 }
 
@@ -904,7 +1076,11 @@ export function construirSistemaSolar(escuro: boolean): THREE.Group {
  * potência certa (seria 1,5), e sim 1,1, porque com a de verdade os de fora
  * ficariam parados na escala de tempo de quem lê uma página.
  */
-export function moverSistema(sistema: THREE.Object3D, tempo: number, progresso: number) {
+export function moverSistema(
+  sistema: THREE.Object3D,
+  tempo: number,
+  progresso: number,
+) {
   const relogio = tempo + progresso * 240;
   ORBITAS.forEach((raio, i) => {
     const pivo = sistema.getObjectByName(`pivo_${i}`);
@@ -937,5 +1113,7 @@ export function encaixarIlhaNoSistema(
   const casa = sistema.getObjectByName("casa_da_ilha");
   ilha.scale.setScalar(escala);
   casa?.add(ilha);
-  return () => { casa?.remove(ilha); };
+  return () => {
+    casa?.remove(ilha);
+  };
 }

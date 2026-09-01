@@ -4,14 +4,17 @@ import { KeyRound, Network, Table2 } from "lucide-react";
    a busca por string o empacotador não consegue descartar nada, e todos eles
    iam parar no primeiro carregamento do site. */
 import {
+  siBootstrap,
   siDocker,
   siFigma,
   siGit,
   siGithubactions,
   siHtml5,
   siLinux,
+  siMysql,
   siNextdotjs,
   siNodedotjs,
+  siPhp,
   siPostgresql,
   siPython,
   siReact,
@@ -26,9 +29,13 @@ import {
 /**
  * Logo de cada tecnologia.
  *
- * simple-icons (CC0) cobre 18 das 21. As três que sobram são conceitos, não
+ * simple-icons (CC0) cobre 21 das 24. As três que sobram são conceitos, não
  * marcas: REST, autenticação e SQL não têm logo, então recebem um ícone
  * genérico do lucide em vez de eu inventar uma marca que não existe.
+ *
+ * Faltando aqui, a tecnologia não some da grade: ela aparece como a inicial
+ * solta, no meio de vinte logos de verdade. Foi assim que PHP, Bootstrap e
+ * MySQL entraram — como "P", "B" e "M".
  */
 
 const MARCA: Record<string, { path: string }> = {
@@ -37,11 +44,14 @@ const MARCA: Record<string, { path: string }> = {
   "Next.js": siNextdotjs,
   "Tailwind CSS": siTailwindcss,
   "HTML & CSS": siHtml5,
+  Bootstrap: siBootstrap,
   "React Native": siReact,
   "Node.js": siNodedotjs,
+  PHP: siPhp,
   Python: siPython,
   WebSockets: siSocketdotio,
   PostgreSQL: siPostgresql,
+  MySQL: siMysql,
   Supabase: siSupabase,
   Docker: siDocker,
   Vercel: siVercel,

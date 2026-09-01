@@ -54,23 +54,43 @@ function SobretituloTela({ children }: { children: React.ReactNode }) {
 export function PainelSobre({ dict }: { dict: Dictionary }) {
   const t = dict.about;
   return (
-    <div className="space-y-5">
+    /* Preenche a tela do monitor: `min-h-full` na coluna e `flex-1` no miolo,
+       que é onde a sobra de altura deve ficar. Sem isso o conteúdo terminava
+       na metade e sobrava meia tela de vazio embaixo — numa tela de monitor
+       isso não parece sóbrio, parece que faltou carregar.
+
+       `min-h-full` e não `h-full` pelo mesmo motivo do currículo: em tela
+       estreita o painel vira folha alta, e aí o conteúdo cresce e o pai rola
+       em vez de ser aparado. */
+    <div className="flex min-h-full flex-col gap-5">
       <div>
         <SobretituloTela>{t.eyebrow}</SobretituloTela>
         <TituloTela>{t.title}</TituloTela>
       </div>
 
-      <div className="flex flex-col gap-5 sm:flex-row">
+      <div className="flex flex-1 flex-col items-start gap-6 sm:flex-row lg:gap-8">
+        {/* A foto INTEIRA, e não um recorte: a proporção do elemento é a do
+            arquivo (2278x4050), então não há o que cortar. Antes ela era um
+            quadrado de 7,5rem e perdia metade da pessoa — aqui a tela é do
+            monitor ultrawide, larga e sobrando altura, e uma foto em pé é
+            justamente o que ocupa essa sobra. */}
         <Image
-          src="/victor.jpg"
+          src="/victor.png"
           alt={t.photoAlt}
-          width={132}
-          height={132}
-          className="size-[7.5rem] shrink-0 rounded-lg object-cover ring-1 ring-white/10"
+          width={2278}
+          height={4050}
+          sizes="(min-width: 1024px) 16rem, 12rem"
+          className="w-48 shrink-0 rounded-lg object-contain ring-1 ring-white/10 lg:w-64"
         />
-        <div className="min-w-0 space-y-3 text-sm leading-relaxed text-[var(--tinta-fraca)]">
+        {/* Duas colunas a partir de `lg`, e fonte maior. A tela do monitor tem
+            quase 1900px de largura útil: em coluna única e `text-sm` o texto
+            virava quatro linhas soltas no topo de um campo vazio, e cada linha
+            atravessava a tela inteira — cansativo de ler e feio de ver. */}
+        <div className="min-w-0 flex-1 columns-1 gap-8 text-base leading-relaxed text-[var(--tinta-fraca)] lg:columns-2 lg:text-lg">
           {t.paragraphs.map((p) => (
-            <p key={p.slice(0, 24)}>{p}</p>
+            <p key={p.slice(0, 24)} className="mb-4 break-inside-avoid">
+              {p}
+            </p>
           ))}
         </div>
       </div>
@@ -502,11 +522,13 @@ export function PainelCurriculo({
     <div className="flex min-h-full flex-col gap-5">
       <div className="flex items-start gap-4">
         <Image
-          src="/victor.jpg"
+          src="/victor.png"
           alt={dict.about.photoAlt}
           width={96}
           height={112}
-          className="h-28 w-24 shrink-0 object-cover"
+          /* Ancorada no topo pelo mesmo motivo do painel Sobre: recorte
+             centralizado numa foto tão alta come o rosto. */
+          className="h-28 w-24 shrink-0 object-cover object-top"
         />
         <div className="min-w-0 pt-1">
           <h2 className="font-display text-2xl leading-tight text-[var(--tinta)]">

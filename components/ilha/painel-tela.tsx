@@ -29,7 +29,6 @@ import type { Dictionary } from "@/content/i18n";
  * larga a tela e vira uma folha normal, ancorada embaixo.
  */
 export function PainelTela({
-  className = "",
   refPainel,
   aberto,
   ativo,
@@ -41,8 +40,6 @@ export function PainelTela({
   dict,
   children,
 }: {
-  /** Classes de fora. Hoje só o desaparecimento na saída da ilha usa. */
-  className?: string;
   refPainel: RefObject<HTMLDivElement | null>;
   /** O painel existe (a câmera está indo ou já chegou). */
   aberto: boolean;
@@ -72,9 +69,18 @@ export function PainelTela({
       role="dialog"
       aria-modal="false"
       aria-label={`${titulo} — ${legenda}`}
+      /* NADA de transição nem de classe de opacidade aqui. A opacidade deste
+         painel é escrita a cada quadro, em estilo inline, por
+         `aoAtualizarQuadro`: ela sobe de 0 a 1 entre 62% e 100% do voo, para
+         o conteúdo só aparecer quando a câmera já chegou.
+
+         Uma `transition-opacity` nesta mesma propriedade produz um fantasma:
+         no primeiro quadro o painel nasce com a opacidade da CLASSE, e a
+         transição então o desce até o 0 do inline ao longo de meio segundo —
+         uma prévia do conteúdo, no tamanho do alvo ainda distante, aparecendo
+         a cada clique antes do zoom. Foi exatamente esse o sintoma. */
       className={[
-        "superficie fixed z-40 flex flex-col overflow-hidden transition-opacity duration-500",
-        className,
+        "superficie fixed z-40 flex flex-col overflow-hidden",
         `sup-${superficie}`,
         /* A tela tem cantos e brilho de monitor. As outras superfícies são o
            próprio objeto, então nada de borda: qualquer moldura entregaria

@@ -5,7 +5,14 @@ import dynamic from "next/dynamic";
 import { useCallback, useSyncExternalStore } from "react";
 
 import type { Dictionary } from "@/content/i18n";
-import { assinarIlha, lerIlha, lerIlhaNoServidor } from "@/lib/preferencia-ilha";
+import type { Locale } from "@/content/site";
+import type { Project } from "@/lib/projects";
+import {
+  assinarIlha,
+  lerIlha,
+  lerIlhaNoServidor,
+  maquinaAguentaOTresD,
+} from "@/lib/preferencia-ilha";
 
 /**
  * O mundo 3D como fundo do site.
@@ -37,17 +44,32 @@ function assinar(aoMudar: () => void) {
 
 function lerNoNavegador(): "on" | "off" {
   try {
-    return localStorage.getItem(CHAVE) === "off" ? "off" : "on";
+    const salvo = localStorage.getItem(CHAVE);
+    if (salvo === "off" || salvo === "on") return salvo;
   } catch {
-    /* armazenamento bloqueado: o padrão é ligado */
-    return "on";
+    /* armazenamento bloqueado: cai na conta de capacidade abaixo */
   }
+  /* Sem escolha salva, quem decide é a máquina: o sistema solar do fundo é o
+     mesmo motor da ilha, e num aparelho fraco ele trava a rolagem do texto —
+     que é justamente o que a pessoa veio ler. */
+  return maquinaAguentaOTresD() ? "on" : "off";
 }
 
 /* No servidor não há mundo: o HTML sai sem canvas, e o 3D entra na hidratação. */
 const lerNoServidor = (): "on" | "off" => "off";
 
-export function Fundo3D({ dict }: { dict: Dictionary }) {
+export function Fundo3D({
+  dict,
+  locale,
+  projetos,
+}: {
+  dict: Dictionary;
+  locale: Locale;
+  /* O fundo pinta as MESMAS telas da ilha, e a lista de projetos é o que o
+     quadro de kanban escreve. Ela vem pronta do servidor: `getProjects` lê
+     arquivos com `node:fs` e não existe no navegador. */
+  projetos: Project[];
+}) {
   const estado = useSyncExternalStore(assinar, lerNoNavegador, lerNoServidor);
 
   /* Com a ilha aberta este fundo fica atrás de uma camada opaca. Continuar
@@ -76,7 +98,7 @@ export function Fundo3D({ dict }: { dict: Dictionary }) {
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10 opacity-45"
       >
-        {ligado ? <Mundo3D /> : null}
+        {ligado ? <Mundo3D dict={dict} locale={locale} projetos={projetos} /> : null}
 
         {/* Véu por cima do 3D.
             Texto sobre cena colorida perde contraste em pontos imprevisíveis,

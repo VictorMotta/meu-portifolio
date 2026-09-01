@@ -46,7 +46,7 @@ function ehEstrutura(nome: string) {
  *
  * Isto existe por causa dos primeiros segundos. A ilha desenhada à mão é a
  * ilha de verdade em miniatura: sofá de caixas, monitores de retângulos,
- * plantas de bolas. Ela nasceu como o que se via enquanto os 13 MB de `.glb`
+ * plantas de bolas. Ela nasceu como o que se via enquanto os 50 MB de `.glb`
  * desciam — melhor algo do que nada, era o raciocínio.
  *
  * Só que "algo" aqui é uma sala de blocos quadriculados, e numa internet lenta
@@ -57,20 +57,31 @@ function ehEstrutura(nome: string) {
  *
  * A busca é só nos filhos diretos e nos netos: mobília é grupo (`work_zone`,
  * `whiteboard`, `office_plant_1`) ou peça solta do `island`, e esconder o grupo
- * já esconde o que está dentro. E esconder o PAI não apaga a marca de quem
- * está dentro dele — quando isto devolve a visibilidade, as peças que os
- * modelos substituíram continuam escondidas, cada uma com o próprio `visible`.
+ * já esconde o que está dentro.
+ *
+ * `naoDevolver` é o que salva de um bug que existiu: esconder o GRUPO não apaga
+ * a marca de quem está dentro dele, então as peças que um modelo substituiu
+ * continuam escondidas quando o grupo reaparece. Mas as peças SOLTAS no
+ * `island` — a lixeira e o papel amassado — são tocadas uma a uma, e devolver
+ * a visibilidade a elas desfazia a substituição: a lixeira desenhada voltava
+ * para dentro da lixeira modelada, com a bola de papel branca aparecendo pela
+ * grade. Quem passa o conjunto é quem conhece os encaixes.
  */
-export function mostrarMobilia(ilha: THREE.Object3D, visivel: boolean) {
+export function mostrarMobilia(
+  ilha: THREE.Object3D,
+  visivel: boolean,
+  naoDevolver?: ReadonlySet<string>,
+) {
+  const pode = (nome: string) => !visivel || !naoDevolver?.has(nome);
   for (const zona of ilha.children) {
     if (zona.name === "island") {
       for (const peca of zona.children) {
-        if (ehEstrutura(peca.name)) continue;
+        if (ehEstrutura(peca.name) || !pode(peca.name)) continue;
         peca.visible = visivel;
       }
       continue;
     }
-    zona.visible = visivel;
+    if (pode(zona.name)) zona.visible = visivel;
   }
 }
 

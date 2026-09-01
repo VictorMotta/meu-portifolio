@@ -1246,6 +1246,10 @@ export const QUADRO_PROJETOS = quadro(
     "project_board_frame", "project_board_header",
     "project_board_leg_1", "project_board_leg_2",
     "project_board_foot_1", "project_board_foot_2",
+    /* Os seis post-its desenhados. Ficavam de fora desta lista e continuavam
+       na cena, cartõezinhos de geometria colados por cima do kanban que a
+       textura já desenha — o mesmo conteúdo duas vezes, um em relevo. */
+    ...[1, 2, 3].flatMap((c) => [`project_note_${c}_1`, `project_note_${c}_2`]),
   ],
   "quadro_projetos_modelo",
   2.1,
@@ -1274,6 +1278,17 @@ export const ENCAIXES: Encaixe[] = [
   PLANTA_1, PLANTA_2, PLANTA_3, PLANTA_MESA,
   QUADRO_STACK, QUADRO_PROJETOS, QUADRO_CURRICULO,
 ];
+
+/**
+ * Tudo que algum encaixe esconde ao entrar.
+ *
+ * Existe para quem devolve visibilidade em massa (`mostrarMobilia`) saber o que
+ * NÃO deve devolver. Sai da própria lista de encaixes, então não há uma segunda
+ * lista para esquecer de atualizar quando um móvel novo chegar.
+ */
+export const SUBSTITUIDAS: ReadonlySet<string> = new Set(
+  ENCAIXES.flatMap((e) => e.substitui),
+);
 
 /**
  * Um arquivo baixado uma vez só, mesmo usado em dois lugares.
@@ -1864,7 +1879,14 @@ export async function encaixarModelos(
 ): Promise<Descartaveis> {
   const listas = await Promise.all([
     ...encaixes.map((encaixe) =>
-      encaixarModelo(ilha, encaixe).catch(() => [] as Descartaveis),
+      encaixarModelo(ilha, encaixe).catch((erro) => {
+        /* Um arquivo que não desce não pode derrubar os outros 31 — mas
+           também não pode sumir sem deixar rastro. Engolido em silêncio, o
+           sintoma aparecia longe daqui: a sala montada pela metade, e nenhuma
+           pista de que houve download falhado. */
+        console.warn(`[ilha] o modelo ${encaixe.arquivo} não entrou:`, erro);
+        return [] as Descartaveis;
+      }),
     ),
     /* O piso entra aqui porque depende do mesmo download: a madeira dele é a
        dos móveis, e ela vem de dentro de um .glb. */

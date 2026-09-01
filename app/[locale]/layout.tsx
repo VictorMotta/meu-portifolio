@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/header";
 import { SkipLink } from "@/components/layout/skip-link";
 import { Providers } from "@/components/providers";
 import { Fundo3D } from "@/components/ui/fundo-3d";
+import { getProjects } from "@/lib/projects";
 import { GrainOverlay } from "@/components/ui/grain-overlay";
 import { getDictionary } from "@/content/i18n";
 import { locales, site, type Locale } from "@/content/site";
@@ -115,7 +116,7 @@ export default async function LocaleLayout({
       <body suppressHydrationWarning>
         <Providers>
           <SkipLink label={dict.nav.skipToContent} />
-          <Fundo3D dict={dict} />
+          <Fundo3D dict={dict} locale={typedLocale} projetos={getProjects(typedLocale)} />
           <GrainOverlay />
           <Header locale={typedLocale} dict={dict} />
           <main id="conteudo">{children}</main>

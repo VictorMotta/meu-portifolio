@@ -27,6 +27,72 @@ function suportaWebgl(): boolean {
   }
 }
 
+/**
+ * Se vale a pena ligar o 3D nesta máquina, decidido ANTES de desenhar.
+ *
+ * Medir os quadros seria mais honesto e não serve: para medir é preciso já
+ * estar rodando, e quem tem máquina fraca leva justamente os primeiros
+ * segundos de travamento que a conta existe para evitar. Então são sinais que
+ * o navegador entrega de graça, e cada um pega um caso diferente:
+ *
+ * - **Renderizador por software.** SwiftShader, llvmpipe e o "Basic Render" da
+ *   Microsoft são a GPU desenhando na CPU, e é o pior caso de todos: a página
+ *   abre e trava. Alguns navegadores escondem esse nome por privacidade; aí
+ *   este sinal simplesmente não opina e os outros decidem.
+ * - **Memória e núcleos.** Dois núcleos ou menos, ou menos de 4 GB, é
+ *   aparelho de entrada. `deviceMemory` só existe no Chrome e derivados, e
+ *   quando não existe também não opina.
+ * - **Economia de dados.** Quem ligou isso pediu para o site não gastar. A
+ *   ilha baixa 50 MB de modelo; não dá para ignorar o pedido.
+ *
+ * Nenhum deles é prova, e por isso o resultado é o PADRÃO e não uma proibição:
+ * a máquina fraca abre no modo texto, mas o botão de entrar na ilha continua
+ * lá. Heurística erra, e errar trancando a porta é pior que errar deixando
+ * escolher.
+ */
+function aguentaOTresD(): boolean {
+  try {
+    const navegador = navigator as Navigator & {
+      deviceMemory?: number;
+      connection?: { saveData?: boolean };
+    };
+
+    if (navegador.connection?.saveData) return false;
+
+    const memoria = navegador.deviceMemory;
+    if (typeof memoria === "number" && memoria < 4) return false;
+
+    const nucleos = navegador.hardwareConcurrency;
+    if (typeof nucleos === "number" && nucleos > 0 && nucleos <= 2) return false;
+
+    const canvas = document.createElement("canvas");
+    const gl = (canvas.getContext("webgl2") ??
+      canvas.getContext("webgl")) as WebGLRenderingContext | null;
+    if (!gl) return false;
+    const info = gl.getExtension("WEBGL_debug_renderer_info");
+    if (info) {
+      const placa = String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL) ?? "");
+      if (/swiftshader|llvmpipe|softwarerasterizer|basic render|software/i.test(placa)) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    /* Qualquer coisa que estoure aqui é sinal de ambiente estranho: na
+       dúvida, o modo texto, que funciona em todo lugar. */
+    return false;
+  }
+}
+
+/* A resposta é cacheada porque `useSyncExternalStore` exige que duas leituras
+   seguidas devolvam o mesmo valor — e porque criar contexto WebGL não é coisa
+   de se fazer a cada render. */
+let aguenta: boolean | null = null;
+export function maquinaAguentaOTresD(): boolean {
+  if (aguenta === null) aguenta = aguentaOTresD();
+  return aguenta;
+}
+
 function preferenciaSalva(): "on" | "off" | null {
   try {
     const valor = localStorage.getItem(CHAVE);
@@ -61,8 +127,10 @@ export function lerIlha(): EstadoIlha {
     atual = "indisponivel";
     return atual;
   }
-  /* Quem chega sem ter escolhido nada cai na ilha: é o portfólio. */
-  atual = preferenciaSalva() ?? "on";
+  /* Quem chega sem ter escolhido nada cai na ilha: é o portfólio. A exceção
+     é a máquina que não aguenta — aí o padrão vira o modo texto, e o botão de
+     entrar continua disponível para quem quiser tentar mesmo assim. */
+  atual = preferenciaSalva() ?? (maquinaAguentaOTresD() ? "on" : "off");
   return atual;
 }
 

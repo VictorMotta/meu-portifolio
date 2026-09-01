@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { LocaleToggle } from "@/components/layout/locale-toggle";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { Marca } from "@/components/ui/marca";
 import type { Dictionary } from "@/content/i18n";
 import { site, type Locale } from "@/content/site";
 
@@ -137,10 +138,9 @@ export function Header({
           /* inline-flex h-11 + padding lateral: o alvo de toque chega a 44px
              de altura sem o monograma mudar de tamanho. A margem negativa
              cancela o padding para o alinhamento continuar o mesmo. */
-          className="-ml-2 inline-flex h-11 items-center px-2 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight"
+          className="-ml-2 inline-flex h-11 items-center px-2"
         >
-          <span className="text-[var(--color-fg)]">{site.monogram}</span>
-          <span className="text-[var(--color-accent)]">.</span>
+          <Marca className="text-xl text-[var(--color-fg)]" />
           <span className="sr-only">{site.name}, {dict.nav.home}</span>
         </Link>
 
@@ -152,7 +152,14 @@ export function Header({
               aria-current={activeSection === item.id ? "true" : undefined}
               /* h-11 em vez de py-2: a partir de 768px este menu aparece no
                  iPad, onde e alvo de dedo e não de mouse. */
-              className={`inline-flex h-11 items-center rounded-full px-4 text-sm transition-colors ${
+              /* `px-3` até `lg`, `px-4` daí para cima. Com a marca em `VM.DEV`
+                 o cabeçalho passou a estourar 11 px na largura exata de 768,
+                 que é onde esta navegação aparece: marca 90 + nav 396 + ações
+                 231 não cabem em 768 com dois vãos de 16. Os 8 px a menos por
+                 item devolvem 40, e a navegação continua existindo no tablet —
+                 empurrá-la para o menu sanduíche resolveria a conta e tiraria
+                 cinco seções do alcance de um toque. */
+              className={`inline-flex h-11 items-center rounded-full px-3 text-sm transition-colors lg:px-4 ${
                 activeSection === item.id
                   ? "text-[var(--color-accent)]"
                   : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
@@ -213,10 +220,7 @@ export function Header({
             className="absolute inset-x-3 top-3 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-2xl"
           >
             <div className="flex items-center justify-between pb-2">
-              <span className="font-[family-name:var(--font-display)] text-lg font-bold">
-                {site.monogram}
-                <span className="text-[var(--color-accent)]">.</span>
-              </span>
+              <Marca className="text-lg" />
               <button
                 type="button"
                 onClick={closeMenu}
