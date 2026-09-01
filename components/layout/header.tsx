@@ -152,8 +152,9 @@ export function Header({
               aria-current={activeSection === item.id ? "true" : undefined}
               /* h-11 em vez de py-2: a partir de 768px este menu aparece no
                  iPad, onde e alvo de dedo e não de mouse. */
-              /* `px-3` até `lg`, `px-4` daí para cima. Com a marca em `VM.DEV`
-                 o cabeçalho passou a estourar 11 px na largura exata de 768,
+              /* `px-3` até `lg`, `px-4` daí para cima. Quando a marca passou a
+                 escrever o domínio inteiro, e não só `VM.`, o cabeçalho
+                 estourou 11 px na largura exata de 768,
                  que é onde esta navegação aparece: marca 90 + nav 396 + ações
                  231 não cabem em 768 com dois vãos de 16. Os 8 px a menos por
                  item devolvem 40, e a navegação continua existindo no tablet —

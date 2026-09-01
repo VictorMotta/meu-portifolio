@@ -1,17 +1,18 @@
 import { site } from "@/content/site";
 
 /**
- * A marca escrita: `VM` na cor do texto e `.DEV` no roxo do Dracula.
+ * A marca escrita: `VM` na cor do texto e `.dev` no acento.
  *
- * O roxo tem token próprio (`--color-marca`) em vez de sair do acento, e o
- * motivo é o tema claro: o `#bd93f9` do Dracula dá 2,3:1 sobre o fundo claro,
- * reprovado para texto. O token é um PAR — o roxo original no escuro e o mesmo
- * roxo escurecido no claro, ambos AAA — como todo o resto da paleta.
+ * O `.dev` é minúsculo, e não versal como as iniciais: `VM` é sigla e `dev` é
+ * domínio. Em versal os dois pesam igual e a assinatura vira um bloco só.
  *
- * Não é o verde de acento porque marca não é ação: o acento é o que se pode
- * clicar (botões, links, o realce da seção atual), e a assinatura não é um
- * botão. O vermelho foi descartado por já ser `--color-danger`, a cor do erro
- * no formulário de contato.
+ * A cor é a mesma dos botões de ação — `--color-accent`, o verde do
+ * "Currículo" e do "Ver o caso". Já foi o roxo do Dracula num token próprio
+ * (`--color-marca`), com o argumento de que marca não é ação e não devia usar
+ * a cor do que se pode clicar. O Victor escolheu o acento, e o acento aguenta:
+ * 10,5:1 no tema escuro e 5,4:1 no claro, os dois aprovados para texto. O roxo
+ * é que precisava de um par próprio, porque o `#bd93f9` dava 2,3:1 no fundo
+ * claro.
  *
  * Existe como componente porque o mesmo desenho aparece em três lugares — o
  * cabeçalho da página, o menu de tela estreita e a barra da ilha — e as três
@@ -23,7 +24,7 @@ import { site } from "@/content/site";
  *
  * `aria-hidden` sempre: isto é desenho. Onde a marca é um link, quem dá o nome
  * acessível é o texto `sr-only` ao lado — sem isso o leitor de tela anunciaria
- * "VM ponto DEV" antes do nome de verdade. Onde ela é enfeite, não há nome
+ * "VM ponto dev" antes do nome de verdade. Onde ela é enfeite, não há nome
  * nenhum a dar.
  */
 export function Marca({ className = "" }: { className?: string }) {
@@ -33,7 +34,7 @@ export function Marca({ className = "" }: { className?: string }) {
       className={`font-[family-name:var(--font-display)] font-bold tracking-tight ${className}`}
     >
       {site.monogram}
-      <span className="text-[var(--color-marca)]">.DEV</span>
+      <span className="text-[var(--color-accent)]">.dev</span>
     </span>
   );
 }

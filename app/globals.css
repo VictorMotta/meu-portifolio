@@ -27,10 +27,6 @@
   --color-accent-ink: #04120e; /* texto sobre o acento, 11.7:1 */
   --color-danger: #ff6b6b; /* 6.2:1, AA */
   --color-success: #4ee1c1;
-  /* O roxo do Dracula, e a única cor do sistema que existe só para a marca.
-     8.2:1, AAA. Ver o par do tema claro mais abaixo. */
-  --color-marca: #bd93f9;
-
   /* Tipografia: as tres variaveis vem de next/font em app/[locale]/layout.tsx */
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -67,11 +63,6 @@
   --color-accent-ink: #ffffff; /* texto sobre o acento, 6.1:1 */
   --color-danger: #c62828; /* 5.0:1, AA */
   --color-success: #0f7d6a;
-  /* O roxo do Dracula não sobrevive ao fundo claro: o #bd93f9 dá 2.3:1 ali,
-     reprovado para qualquer texto. Este é o mesmo roxo escurecido até passar —
-     8.5:1, AAA — e a matiz continua em 263°, dois graus do original, então é
-     a mesma cor e não outra. */
-  --color-marca: #5b2ca8;
 }
 
 /* O ângulo de giro da órbita da stack.
