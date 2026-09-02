@@ -852,6 +852,36 @@ const RECUO_NA_ILHA = new THREE.Vector3(-1, 7.5, 25);
 const DESVIO_DA_MIRA = new THREE.Vector3(-6.7, 3.4, 0);
 
 /**
+ * As mesmas três poses, para uma janela EM PÉ.
+ *
+ * Tudo aqui em cima foi medido numa janela deitada, onde o texto mora numa
+ * coluna à esquerda e sobra a metade direita da tela para o cenário. Num
+ * celular não existe essa metade: o texto ocupa a largura inteira e o 3D passa
+ * por trás dele. Os desvios laterais, que naquele desenho empurram o sistema
+ * para o vão livre, aqui empurram para FORA do quadro — e o campo horizontal
+ * de uma tela em pé é estreito, então basta pouco para sair.
+ *
+ * Era isso que se via no celular: no topo, uma fatia de Saturno na borda; na
+ * Stack, um preto sem nada, com o sistema fora da tela; e no fim da página, a
+ * ilha cortada pela borda direita em vez de enquadrada.
+ *
+ * Então em pé os desvios vão a zero e o sistema fica CENTRADO, atrás do texto.
+ * A distância de descanso sobe de 88 para 163 porque agora ele precisa caber
+ * na largura: a órbita externa tem raio 29, e 58 de diâmetro num campo
+ * horizontal estreito só cabem de longe. Em 163 sobram 2 unidades de folga de
+ * cada lado — medido, não estimado. É o "talvez ser menor": é menor mesmo, e
+ * inteiro, que era o pedido.
+ *
+ * No fim da página, ao contrário, a câmera chega MAIS PERTO (21 contra 25):
+ * sem o desvio lateral a ilha não precisa mais de recuo para caber ao lado da
+ * mira, e o fim da página é onde ela deve encher o quadro.
+ */
+const DESCANSO_EM_PE = new THREE.Vector3(0, 83, 140);
+const MIRA_EM_PE = new THREE.Vector3(0, 0, 0);
+const RECUO_NA_ILHA_EM_PE = new THREE.Vector3(0, 6.5, 21);
+const DESVIO_DA_MIRA_EM_PE = new THREE.Vector3(0, 2.5, 0);
+
+/**
  * A pose da viagem: onde a câmera vai enquanto a seção de Stack está na tela.
  *
  * A ideia é a da página: ali o visitante não está mais neste sistema, está
@@ -875,6 +905,18 @@ const DESVIO_DA_MIRA = new THREE.Vector3(-6.7, 3.4, 0);
  */
 const LONGE_OLHO = new THREE.Vector3(-48, 147, 269);
 const LONGE_MIRA = new THREE.Vector3(-96, -49, 9);
+
+/**
+ * A viagem numa janela em pé.
+ *
+ * A mesma ideia — o sistema pequeno e num canto, lá atrás — com o desvio
+ * cortado a um terço. Na janela deitada a mira sai 107 de distância do
+ * sistema, e num campo horizontal estreito isso o joga para fora do quadro:
+ * era o preto liso da segunda captura. Aqui ela sai 35, que num quadro em pé é
+ * o mesmo CANTO, não a mesma distância em metros.
+ */
+const LONGE_OLHO_EM_PE = new THREE.Vector3(-20, 150, 272);
+const LONGE_MIRA_EM_PE = new THREE.Vector3(-30, -14, 10);
 
 /**
  * Quanto a casca de estrelas acompanha a câmera na viagem.
@@ -904,6 +946,13 @@ export function poseDoFundo(
   afastamento: number,
   /* 0 = neste sistema; 1 = na outra galáxia, com este lá atrás. */
   viagem: number,
+  /**
+   * Quanto a janela está EM PÉ: 0 numa tela deitada, 1 num celular. Não é um
+   * interruptor por largura porque a composição não muda de repente — ela
+   * escorrega, e um tablet em pé fica no meio do caminho, que é onde ele deve
+   * estar.
+   */
+  emPe: number,
 ) {
   const bruto =
     (rolagem - INICIO_DO_MERGULHO) / (FIM_DO_MERGULHO - INICIO_DO_MERGULHO);
@@ -912,11 +961,21 @@ export function poseDoFundo(
   const naIlha = new THREE.Vector3();
   ilha.getWorldPosition(naIlha);
 
+  /* Cada par de poses mistura pela proporção da janela ANTES de entrar na
+     conta do mergulho. Misturar depois daria o mesmo resultado nas pontas e um
+     caminho torto no meio: a interpolação entre duas interpolações não é a
+     interpolação das pontas quando as curvas de suavização diferem. */
+  const descansoAqui = descanso.clone().lerp(DESCANSO_EM_PE, emPe);
+  const miraAqui = mira.clone().lerp(MIRA_EM_PE, emPe);
+  const recuoAqui = RECUO_NA_ILHA.clone().lerp(RECUO_NA_ILHA_EM_PE, emPe);
+  const desvioAqui = DESVIO_DA_MIRA.clone().lerp(DESVIO_DA_MIRA_EM_PE, emPe);
+
   /* A mira desvia para a esquerda da ilha: assim ela cai na metade direita do
      quadro, longe da coluna de texto — a mesma razão pela qual a mira do
-     sistema fica à esquerda do Sol. */
-  const alvo = mira.clone().lerp(naIlha.clone().add(DESVIO_DA_MIRA), t);
-  const olho = descanso.clone().lerp(naIlha.clone().add(RECUO_NA_ILHA), t);
+     sistema fica à esquerda do Sol. Em pé esse desvio é zero, e o porquê está
+     em `DESCANSO_EM_PE`. */
+  const alvo = miraAqui.lerp(naIlha.clone().add(desvioAqui), t);
+  const olho = descansoAqui.lerp(naIlha.clone().add(recuoAqui), t);
 
   /* A viagem entra POR CIMA do mergulho, e não antes dele.
      As duas janelas não se encostam — a Stack acaba bem antes de o mergulho
@@ -925,8 +984,8 @@ export function poseDoFundo(
      duas poses, e não um salto. */
   if (viagem > 0) {
     const v = suavizar(viagem);
-    alvo.lerp(LONGE_MIRA, v);
-    olho.lerp(LONGE_OLHO, v);
+    alvo.lerp(LONGE_MIRA.clone().lerp(LONGE_MIRA_EM_PE, emPe), v);
+    olho.lerp(LONGE_OLHO.clone().lerp(LONGE_OLHO_EM_PE, emPe), v);
   }
 
   camera.position.copy(alvo).addScaledVector(olho.sub(alvo), afastamento);

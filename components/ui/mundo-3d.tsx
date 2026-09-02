@@ -73,6 +73,24 @@ const ESCALA_DA_ILHA = 0.96;
 const DESCANSO = new THREE.Vector3(-14, 45, 76);
 const MIRA = new THREE.Vector3(-14, 0, 0);
 
+/**
+ * Quanto a janela está em pé, de 0 a 1, para as poses do fundo.
+ *
+ * As duas pontas são as proporções em que a composição já não muda mais: uma
+ * janela mais deitada que 4:3 tem vão de sobra ao lado do texto, e uma mais em
+ * pé que 3:4 não tem vão nenhum. Entre elas o valor escorrega, então um tablet
+ * fica no meio do caminho em vez de saltar de um desenho para o outro num
+ * pixel de largura.
+ *
+ * Da proporção e não da largura: uma janela de navegador estreita num monitor
+ * grande tem o mesmo problema de um celular, e uma de 900 px deitada não tem.
+ */
+const DEITADO = 4 / 3;
+const EM_PE = 3 / 4;
+function emPe(aspecto: number) {
+  return Math.min(1, Math.max(0, (DEITADO - aspecto) / (DEITADO - EM_PE)));
+}
+
 type Conteudo = { dict: Dictionary; locale: Locale; projetos: Project[] };
 
 function Cena({
@@ -266,6 +284,7 @@ function Cena({
       atual.current,
       afastamento.current,
       viagem.current,
+      emPe(estado.size.width / estado.size.height),
     );
 
     /* A casca de estrelas segue a câmera na viagem — o porquê está em
