@@ -132,10 +132,17 @@ export function Fundo3D({
         data-cromo-pagina
         onClick={alternar}
         aria-pressed={ligado}
-        className="flutua flutua-acima inline-flex h-11 items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)]/85 px-4 text-xs text-[var(--color-fg-muted)] backdrop-blur transition-colors hover:border-[var(--color-border-strong)] hover:text-[var(--color-fg)]"
+        className="flutua flutua-acima inline-flex h-11 items-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg)]/85 px-4 text-xs text-[var(--color-fg-muted)] backdrop-blur transition-colors hover:border-[var(--color-border-strong)] hover:text-[var(--color-fg)]"
       >
-        <Boxes aria-hidden="true" className="size-4" />
-        {ligado ? dict.nav.desligar3d : dict.nav.ligar3d}
+        <Boxes aria-hidden="true" className="size-4 shrink-0" />
+        {/* O rótulo continua no HTML mesmo fechado — ele é só recortado por
+            `overflow`, então leitor de tela e busca seguem lendo o texto e o
+            botão não precisa de `aria-label` repetindo o que já está aqui. */}
+        <span className="flutua-rotulo">
+          <span className="pl-2">
+            {ligado ? dict.nav.desligar3d : dict.nav.ligar3d}
+          </span>
+        </span>
       </button>
     </>
   );

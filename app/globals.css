@@ -572,6 +572,64 @@
     bottom: var(--flutua-margem);
   }
 
+  /* Onde há mouse, os dois pills viram ícone e só abrem o rótulo quando o
+     ponteiro chega. Eles ficam a vida inteira na tela, e por escrito ocupam
+     290 px de canto para dizer duas coisas que quem já leu não precisa ler de
+     novo.
+
+     `grid-template-columns` de `0fr` a `1fr`, e não uma largura: a coluna vai
+     de zero ao tamanho do conteúdo sem ninguém precisar saber quanto ele mede,
+     e o botão — que é `fixed` sem largura, então se ajusta ao conteúdo — cresce
+     junto. Com `max-width` seria um número mágico por idioma, e "Desligar o 3D"
+     e "Turn 3D off" não medem o mesmo.
+
+     O padding lateral fica em 0,8125rem porque com o rótulo fechado é ele quem
+     faz o círculo: 13 + 16 do ícone + 13 dá os 42 px que encostam na altura de
+     44 do botão.
+
+     Onde NÃO há mouse o bloco todo não se aplica e os pills seguem escritos.
+     Num celular não existe passar por cima: um pill fechado seria um ícone
+     mudo, e descobrir o que ele faz custaria tocar nele — que é justamente a
+     ação que ele dispara. */
+  @media (hover: hover) {
+    .flutua {
+      padding-inline: 0.8125rem;
+    }
+
+    .flutua-rotulo {
+      display: grid;
+      /* `minmax(0, 0fr)` e não `0fr`: uma coluna `0fr` ainda recebe o tamanho
+         MÍNIMO do conteúdo, então o recuo de 8 px que separa o ícone do texto
+         sobrava com o rótulo fechado e o círculo saía 10 px mais largo que
+         alto. O `minmax` é o que deixa a coluna chegar a zero de verdade. */
+      grid-template-columns: minmax(0, 0fr);
+      opacity: 0;
+      transition:
+        grid-template-columns 200ms ease,
+        opacity 140ms ease;
+    }
+
+    .flutua-rotulo > span {
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .flutua:hover .flutua-rotulo,
+    .flutua:focus-visible .flutua-rotulo {
+      grid-template-columns: minmax(0, 1fr);
+      opacity: 1;
+    }
+  }
+
+  /* Quem pediu menos movimento recebe a mesma abertura, sem a animação: o
+     rótulo aparece e some, que é a informação, sem o deslizar, que é o
+     enfeite. */
+  @media (hover: hover) and (prefers-reduced-motion: reduce) {
+    .flutua-rotulo {
+      transition: none;
+    }
+  }
+
   /* O de cima da pilha. O de baixo já está no lugar com `.flutua` sozinho. */
   .flutua-acima {
     bottom: calc(

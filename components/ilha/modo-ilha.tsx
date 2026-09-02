@@ -67,10 +67,12 @@ export function ModoIlha({
       <button
         type="button"
         onClick={entrar}
-        className="flutua safe-bottom inline-flex h-11 items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)]/85 px-4 text-sm text-[var(--color-fg-muted)] backdrop-blur transition-colors hover:border-[var(--color-border-strong)] hover:text-[var(--color-fg)]"
+        className="flutua safe-bottom inline-flex h-11 items-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg)]/85 px-4 text-sm text-[var(--color-fg-muted)] backdrop-blur transition-colors hover:border-[var(--color-border-strong)] hover:text-[var(--color-fg)]"
       >
-        <Boxes aria-hidden="true" className="size-4 text-accent" />
-        {dict.ilha.entrarNaIlha}
+        <Boxes aria-hidden="true" className="size-4 shrink-0 text-accent" />
+        <span className="flutua-rotulo">
+          <span className="pl-2">{dict.ilha.entrarNaIlha}</span>
+        </span>
       </button>
     );
   }
