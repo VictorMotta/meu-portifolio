@@ -32,6 +32,7 @@ import {
 import {
   LIMIAR_DE_CLIQUE,
   ORBITA_INICIAL,
+  PASSEIO_MAXIMO,
   limitarOrbita,
   pontoDoObjeto,
   type Orbita,
@@ -78,6 +79,8 @@ type PropsCena = {
   aoDerrubar: (quantidade: number) => void;
   /** Muda de valor quando a interface pede para arrumar a ilha. */
   pedidoDeArrumar: number;
+  /** Contador de pedidos de vista geral. Ver o comentário em `ilha.tsx`. */
+  pedidoDeVistaGeral: number;
   /** Que cursor o palco deve mostrar agora. */
   aoMudarCursor: (cursor: Cursor) => void;
   /** Chamado no primeiro gesto, para a dica de uso sair da tela. */
@@ -114,6 +117,7 @@ function Ilha({
   aoEscolher,
   aoDerrubar,
   pedidoDeArrumar,
+  pedidoDeVistaGeral,
   aoMudarCursor,
   aoInteragir,
   dict,
@@ -332,6 +336,14 @@ function Ilha({
   const orbita = useRef<Orbita>({ ...ORBITA_INICIAL });
   const girandoSozinha = useRef(true);
 
+  /* Para onde o visitante levou a vista com dois dedos, em metros do mundo.
+     Fica FORA da `Orbita` de propósito: a órbita é um par de ângulos mais uma
+     distância, três números que descrevem uma volta em torno de um centro
+     fixo. O passeio move esse centro, e enfiá-lo ali dentro faria
+     `limitarOrbita` — que só sabe apertar números soltos — ter de conhecer a
+     geometria da ilha para saber até onde o passeio pode ir. */
+  const passeio = useRef(new THREE.Vector3());
+
   /* O afastamento da entrada e da saída, como fator do raio da órbita.
      Começa em 3,2 — a ilha entra de longe, continuando o mergulho que o fundo
      da página começou — e caminha para 1. Na saída ele volta a 3,2, e quando
@@ -357,6 +369,7 @@ function Ilha({
       enquadramento.alturaFoco,
       orbita.current.angulo,
       orbita.current.elevacao,
+      passeio.current,
     );
     olhoAtual.current.copy(geral.olho);
     focoAtual.current.copy(geral.foco);
@@ -392,6 +405,28 @@ function Ilha({
     tempo.current = reduzido ? DURACAO : 0;
     invalidate();
   }, [destino, ilha, obstaculos, size.width, size.height, reduzido, folha, invalidate]);
+
+  /* Voltar para a vista geral desfaz o passeio de dois dedos.
+     Aqui e não no efeito do destino: dali só se enxerga a TROCA de destino, e
+     quem já está na vista geral e pede a vista geral não troca nada — era
+     exatamente o caso de quem passeou até a beirada sem nunca abrir uma seção,
+     e o botão não fazia coisa alguma. O primeiro pedido é ignorado porque o
+     contador nasce em zero, junto com um passeio que já é zero. */
+  useEffect(() => {
+    if (pedidoDeVistaGeral === 0) return;
+    passeio.current.set(0, 0, 0);
+    /* Zerar o passeio muda a pose geral na mesma hora, e quem já estava na
+       vista geral não tem voo nenhum em curso para diluir isso: sem rearmar o
+       cronômetro, a ilha SALTA de volta ao centro. Rearmar aqui faz a volta
+       ser o mesmo voo suave de sempre. `chegada` já é nula na vista geral,
+       então o destino do voo é justamente a pose geral sem passeio. */
+    partida.current = {
+      olho: olhoAtual.current.clone(),
+      foco: focoAtual.current.clone(),
+    };
+    tempo.current = reduzido ? DURACAO : 0;
+    invalidate();
+  }, [pedidoDeVistaGeral, reduzido, invalidate]);
 
   /* Arrumar a ilha: cada coisa derrubada volta para o móvel de onde saiu. */
   useEffect(() => {
@@ -463,6 +498,54 @@ function Ilha({
       return Math.hypot(a.x - b.x, a.y - b.y);
     };
 
+    /* O ponto no meio dos dois dedos. É ele que anda quando a mão inteira
+       desliza sem abrir — o gesto de passear — enquanto a DISTÂNCIA entre eles
+       é o zoom. Os dois saem do mesmo par de dedos e são medidos no mesmo
+       quadro, então abrir e arrastar ao mesmo tempo faz as duas coisas de uma
+       vez, como em qualquer mapa. */
+    const centroDosDedos = () => {
+      const [a, b] = [...dedos.values()];
+      if (!a || !b) return null;
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    };
+    let centroAnterior: { x: number; y: number } | null = null;
+
+    /* Quantos metros do mundo vale um pixel da tela, na distância em que a
+       câmera está agora.
+
+       Sem esta conta o passeio seria em "unidades por pixel" fixas, e o mesmo
+       gesto arrastaria a ilha inteira de longe e um centímetro de perto. Com
+       ela o cenário acompanha o dedo: o pedaço de ilha embaixo do dedo é o que
+       continua embaixo do dedo. */
+    const metrosPorPixel = () => {
+      const distancia = olhoAtual.current.distanceTo(focoAtual.current);
+      const alturaDoQuadro =
+        2 * distancia * Math.tan(THREE.MathUtils.degToRad(FOV) / 2);
+      return alturaDoQuadro / Math.max(1, tela.clientHeight);
+    };
+
+    /* Os eixos da tela, em metros do mundo: a direita e o cima da câmera saem
+       das duas primeiras colunas da matriz dela. Passear por estes eixos, e
+       não por X e Z do mundo, é o que faz o gesto obedecer ao que se VÊ — com
+       a ilha girada meia volta, arrastar para a direita continua levando a
+       vista para a direita da tela. */
+    const direitaDaCamera = new THREE.Vector3();
+    const cimaDaCamera = new THREE.Vector3();
+    const passear = (dx: number, dy: number) => {
+      camera.updateMatrixWorld();
+      direitaDaCamera.setFromMatrixColumn(camera.matrixWorld, 0);
+      cimaDaCamera.setFromMatrixColumn(camera.matrixWorld, 1);
+      const escala = metrosPorPixel();
+      passeio.current
+        .addScaledVector(direitaDaCamera, -dx * escala)
+        .addScaledVector(cimaDaCamera, dy * escala);
+      /* O limite é uma ESFERA em volta do centro da ilha, e não um par de
+         mínimos e máximos por eixo: com limites por eixo o passeio anda mais
+         na diagonal do que de lado, e o canto do quadrado deixa a ilha sair
+         pela borda justamente onde ela está mais longe. */
+      passeio.current.clampLength(0, enquadramento.meiaLargura * PASSEIO_MAXIMO);
+    };
+
     const aoDescer = (evento: PointerEvent) => {
       if (travado()) return;
       dedos.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
@@ -474,6 +557,7 @@ function Ilha({
         arrastando = false;
         idDoPonteiro = null;
         pincaAnterior = distanciaEntreDedos();
+        centroAnterior = centroDosDedos();
         girandoSozinha.current = false;
         aoInteragir();
         return;
@@ -509,6 +593,17 @@ function Ilha({
           invalidate();
         }
         pincaAnterior = agora;
+
+        /* O passeio: a mão inteira deslizando leva a vista junto. Só na vista
+           geral — com uma seção aberta a câmera está numa pose calculada, de
+           frente para a tela, e arrastar dali sairia do enquadramento que o
+           painel está acompanhando. */
+        const centro = centroDosDedos();
+        if (centro && centroAnterior && destinoAtual.current === null) {
+          passear(centro.x - centroAnterior.x, centro.y - centroAnterior.y);
+          invalidate();
+        }
+        centroAnterior = centro;
         return;
       }
 
@@ -556,6 +651,7 @@ function Ilha({
          sair da tela. */
       if (eraPinca) {
         pincaAnterior = dedos.size >= 2 ? distanciaEntreDedos() : null;
+        centroAnterior = dedos.size >= 2 ? centroDosDedos() : null;
         return;
       }
 
@@ -622,7 +718,7 @@ function Ilha({
       tela.removeEventListener("pointercancel", aoSubir);
       tela.removeEventListener("wheel", aoRolar);
     };
-  }, [camera, ilha, refPalco, aoEscolher, aoDerrubar, aoMudarCursor, aoInteragir, alternarLamparina, invalidate]);
+  }, [camera, ilha, refPalco, enquadramento, aoEscolher, aoDerrubar, aoMudarCursor, aoInteragir, alternarLamparina, invalidate]);
 
   const vetorAux = useMemo(() => new THREE.Vector3(), []);
 
@@ -656,6 +752,7 @@ function Ilha({
       enquadramento.alturaFoco,
       orbita.current.angulo,
       orbita.current.elevacao,
+      passeio.current,
     );
 
     /* A pose de chegada já vem resolvida do efeito acima. */

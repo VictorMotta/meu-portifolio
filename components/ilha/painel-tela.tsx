@@ -27,6 +27,15 @@ import type { Dictionary } from "@/content/i18n";
  * Em tela estreita a conta muda: o retângulo do monitor projetado teria uns
  * duzentos pixels de largura, e ninguém lê um parágrafo ali. Aí o painel
  * larga a tela e vira uma folha normal, ancorada embaixo.
+ *
+ * A folha começa em 18% da altura, e esses 18% já foram 28%. A faixa acima
+ * dela existe para mostrar em que objeto o visitante pousou — mas em modo
+ * folha o alvo é justamente o que APAGA (ver `deveApagar` em ilha-canvas.tsx,
+ * senão o mesmo texto aparece gigante atrás da folha), então o que sobrava ali
+ * era um retângulo preto sob a luz do abajur: 28% de um celular gastos em
+ * nada, com o conteúdo espremido embaixo. Encolher a faixa devolveu 17% de
+ * altura para o texto e deixou só uma tira de sala, que é o quanto de cenário
+ * uma folha de celular consegue mostrar sem mentir.
  */
 export function PainelTela({
   refPainel,
@@ -88,7 +97,7 @@ export function PainelTela({
         eTela || eFliperama ? "rounded-[6px]" : "",
         ativo ? "" : "pointer-events-none",
         folha
-          ? "inset-x-3 bottom-[4.25rem] top-[28vh] mx-auto max-w-[42rem] rounded-[10px] opacity-100 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)]"
+          ? "inset-x-3 bottom-[4.25rem] top-[18vh] mx-auto max-w-[42rem] rounded-[10px] opacity-100 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)]"
           : "opacity-0",
       ].join(" ")}
     >

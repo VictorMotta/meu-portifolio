@@ -65,6 +65,23 @@ export const ELEVACAO_MAXIMA = 1.15;
 export const ZOOM_MINIMO = 0.72;
 export const ZOOM_MAXIMO = 1.7;
 
+/**
+ * Até onde o passeio de dois dedos pode levar a vista, como fator da meia
+ * largura do deck.
+ *
+ * Existe porque o passeio move a câmera E o foco juntos: sem limite, dois
+ * arrastos levam a ilha para fora do quadro e o visitante fica olhando o
+ * oceano, sem nada na tela que explique como voltar.
+ *
+ * 0,45 e não 1. Em 1 o centro da vista chega à BORDA do deck, e ali metade do
+ * quadro já é oceano: a ilha ficava encolhida num canto, o que é sair dela e
+ * não andar por ela — dá para ver isso na captura, com o deck espremido no
+ * alto à esquerda. Em 0,45 o centro para na metade do caminho até a borda,
+ * onde a mobília do lado escolhido enche o quadro e o resto da ilha continua
+ * na tela dando a referência de onde se está.
+ */
+export const PASSEIO_MAXIMO = 0.45;
+
 export function limitarOrbita(orbita: Orbita): Orbita {
   return {
     angulo: orbita.angulo,

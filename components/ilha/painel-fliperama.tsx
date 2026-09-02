@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import {
   ALTURA,
@@ -39,6 +39,22 @@ import type { Locale } from "@/content/site";
  * brinquedo.
  */
 
+/* O ponteiro grosso do dedo, como loja externa para o `useSyncExternalStore`.
+   Fora do componente porque as três funções precisam ser as MESMAS entre
+   renderizações: recriá-las a cada uma faria o React reassinar a consulta
+   sessenta vezes por segundo enquanto o jogo roda. */
+const CONSULTA_TOQUE = "(pointer: coarse)";
+function assinarToque(avisar: () => void) {
+  const consulta = window.matchMedia(CONSULTA_TOQUE);
+  consulta.addEventListener("change", avisar);
+  return () => consulta.removeEventListener("change", avisar);
+}
+const lerToque = () => window.matchMedia(CONSULTA_TOQUE).matches;
+/* No servidor não existe ponteiro: o HTML sai com a redação de teclado e a
+   primeira renderização do cliente já corrige, sem descompasso de hidratação
+   porque o React compara os dois. */
+const lerToqueNoServidor = () => false;
+
 /** O passo fixo do jogo. Ver `passo()` em fliperama.ts. */
 const PASSO = 1 / 60;
 /** A atração não precisa de 60 Hz: dez quadros por segundo já marcham. */
@@ -64,12 +80,22 @@ export function PainelJogos({
   const [jogando, setJogando] = useState(false);
   const [aviso, setAviso] = useState("");
 
+  /* Aparelho de dedo, que decide a redação das instruções. Por
+     `useSyncExternalStore` e não por estado mais efeito: o servidor responde
+     `false` e o cliente responde a verdade já na primeira renderização, sem o
+     quadro intermediário em que a tela mandaria apertar espaço num celular. */
+  const toque = useSyncExternalStore(assinarToque, lerToque, lerToqueNoServidor);
+
+  const comandos = toque ? t.comandosToque : t.comandos;
+  const rotuloJogando = toque ? t.jogandoToque : t.jogando;
+  const rotuloTela = toque ? t.telaToque : t.tela;
+
   const comecar = useCallback(() => {
     if (refJogo.current) return;
     refJogo.current = novoJogo();
-    setAviso(t.jogando);
+    setAviso(rotuloJogando);
     setJogando(true);
-  }, [t.jogando]);
+  }, [rotuloJogando]);
 
   useEffect(() => {
     const canvas = refCanvas.current;
@@ -130,13 +156,13 @@ export function PainelJogos({
            ser repintada e o painel ficava preto. */
         if (!atracaoParadaPronta) {
           atracaoParadaPronta = true;
-          desenharAtracao(p, dict, locale, 0, t.comandos);
+          desenharAtracao(p, dict, locale, 0, comandos);
         }
       } else {
         relogio += dt * 60;
         if (agora - ultimoDesenho >= MS_ATRACAO) {
           ultimoDesenho = agora;
-          desenharAtracao(p, dict, locale, Math.floor(relogio), t.comandos);
+          desenharAtracao(p, dict, locale, Math.floor(relogio), comandos);
         }
       }
 
@@ -148,7 +174,7 @@ export function PainelJogos({
       vivo = false;
       cancelAnimationFrame(id);
     };
-  }, [dict, locale, t.comandos, t.fim, t.perdeuVida, t.venceu]);
+  }, [dict, locale, comandos, t.fim, t.perdeuVida, t.venceu]);
 
   /* O jogo para quando o painel sai de cena. */
   useEffect(
@@ -224,7 +250,7 @@ export function PainelJogos({
            aqui — ver o `aoTeclar` de ilha.tsx. */
         data-fliperama=""
         role="application"
-        aria-label={jogando ? t.jogando : t.tela}
+        aria-label={jogando ? rotuloJogando : rotuloTela}
         tabIndex={0}
         onKeyDown={(e) => tecla(e, true)}
         onKeyUp={(e) => tecla(e, false)}

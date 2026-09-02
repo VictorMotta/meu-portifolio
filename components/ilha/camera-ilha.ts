@@ -120,12 +120,19 @@ export function poseGeral(
   alturaFoco: number,
   angulo: number,
   elevacao: number,
+  /**
+   * Para onde o visitante ARRASTOU a vista, em metros do mundo. Soma nos dois
+   * pontos da pose, e é isso que o torna um passeio e não uma mira: mover só o
+   * foco giraria a câmera parada, como quem vira a cabeça; mover os dois leva
+   * a câmera junto, como quem anda de lado.
+   */
+  deslocamento?: THREE.Vector3,
 ): Pose {
   /* Coordenadas esféricas em volta do centro da ilha: o ângulo dá a volta e a
      elevação sobe e desce o olhar. É o mesmo par que o arrasto do ponteiro
      controla. */
   const horizontal = Math.cos(elevacao) * raio;
-  return {
+  const pose = {
     olho: new THREE.Vector3(
       Math.sin(angulo) * horizontal,
       alturaFoco + Math.sin(elevacao) * raio,
@@ -133,6 +140,11 @@ export function poseGeral(
     ),
     foco: new THREE.Vector3(0, alturaFoco, 0),
   };
+  if (deslocamento) {
+    pose.olho.add(deslocamento);
+    pose.foco.add(deslocamento);
+  }
+  return pose;
 }
 
 /**

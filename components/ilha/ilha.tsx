@@ -116,10 +116,19 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
     };
   }, []);
 
+  /* Quantas vezes o visitante pediu a vista geral. É um CONTADOR e não uma
+     bandeira porque o pedido pode se repetir sem que nada mude de estado: com
+     a ilha já na vista geral, `destino` continua `null` e o React não vê
+     mudança nenhuma — mas o visitante que passeou até a beirada com dois dedos
+     acabou de pedir para voltar, e a câmera precisa saber disso. Cada
+     incremento é um pedido novo. Mesmo padrão de `pedidoDeArrumar`. */
+  const [pedidoDeVistaGeral, setPedidoDeVistaGeral] = useState(0);
+
   const irPara = useCallback((chave: ChavePonto | null) => {
     setChegou(false);
     setDestino(chave);
     setProjetoAberto(null);
+    if (chave === null) setPedidoDeVistaGeral((n) => n + 1);
   }, []);
 
   /* Esc volta para a vista geral; as setas passeiam pelos pontos. É o mesmo
@@ -258,6 +267,7 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
           aoEscolher={irPara}
           aoDerrubar={aoDerrubar}
           pedidoDeArrumar={pedidoDeArrumar}
+          pedidoDeVistaGeral={pedidoDeVistaGeral}
           refPalco={palcoRef}
           aoMudarCursor={setCursor}
           aoInteragir={marcarInteracao}

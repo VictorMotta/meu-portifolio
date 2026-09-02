@@ -68,19 +68,29 @@ export function PainelSobre({ dict }: { dict: Dictionary }) {
         <TituloTela>{t.title}</TituloTela>
       </div>
 
-      <div className="flex flex-1 flex-col items-start gap-6 sm:flex-row lg:gap-8">
+      <div className="flex flex-1 flex-row items-start gap-4 sm:gap-6 lg:gap-8">
         {/* A foto INTEIRA, e não um recorte: a proporção do elemento é a do
             arquivo (2278x4050), então não há o que cortar. Antes ela era um
             quadrado de 7,5rem e perdia metade da pessoa — aqui a tela é do
             monitor ultrawide, larga e sobrando altura, e uma foto em pé é
-            justamente o que ocupa essa sobra. */}
+            justamente o que ocupa essa sobra.
+
+            AO LADO do texto em toda largura, e não empilhada embaixo no
+            celular. Uma foto em pé de 12rem tem 21rem de altura: empilhada num
+            painel de celular ela sozinha ocupava 64% do que cabe na tela, e
+            abrir o "Sobre" mostrava um retrato — o texto começava depois de
+            duas telas de rolagem. Ao lado, com 6rem, ela cabe na primeira
+            dobra junto com o começo do texto, que é o que a seção veio dizer.
+
+            Os três tamanhos seguem as três larguras de painel: folha de
+            celular, folha larga e tela de monitor. */}
         <Image
           src="/victor.png"
           alt={t.photoAlt}
           width={2278}
           height={4050}
-          sizes="(min-width: 1024px) 16rem, 12rem"
-          className="w-48 shrink-0 rounded-lg object-contain ring-1 ring-white/10 lg:w-64"
+          sizes="(min-width: 1024px) 16rem, (min-width: 640px) 12rem, 6rem"
+          className="w-24 shrink-0 rounded-lg object-contain ring-1 ring-white/10 sm:w-48 lg:w-64"
         />
         {/* Duas colunas a partir de `lg`, e fonte maior. A tela do monitor tem
             quase 1900px de largura útil: em coluna única e `text-sm` o texto

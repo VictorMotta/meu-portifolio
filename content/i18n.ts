@@ -256,12 +256,23 @@ const pt = {
 		/* A tela do fliperama é a única parada que também é brinquedo. `comandos`
        é desenhado dentro da tela, na fonte de bloco, que não tem acento nem
        minúscula — por isso já vem escrito assim. O resto é falado por leitor
-       de tela, e aí vale a grafia certa. */
+       de tela, e aí vale a grafia certa.
+
+       Duas versões de cada instrução porque o gabinete sempre soube ser
+       jogado com o dedo — a nave segue o ponteiro e encostar já atira, ver
+       `apontar` em painel-fliperama.tsx —, mas só sabia DIZER teclado. Num
+       celular a tela mandava apertar espaço e usar as setas, num aparelho que
+       não tem nem uma coisa nem outra: o jogo funcionava e a instrução
+       mentia. Quem escolhe é `(pointer: coarse)`, no painel. */
 		fliperama: {
 			tela: "Fliperama: um joguinho de nave. Aperte Enter ou clique para jogar.",
+			telaToque: "Fliperama: um joguinho de nave. Encoste na tela para jogar.",
 			jogando:
 				"Jogando. As setas ou WASD movem a nave, espaço atira, Esc fecha o painel.",
+			jogandoToque:
+				"Jogando. Arraste o dedo pela tela para mover a nave; enquanto o dedo estiver encostado, ela atira.",
 			comandos: "SETAS OU WASD MOVEM  ESPACO ATIRA",
+			comandosToque: "ARRASTE PARA MIRAR E ATIRAR",
 			perdeuVida: "Nave atingida. Restam {n} vidas.",
 			fim: "Fim de jogo, {n} pontos.",
 			venceu: "Fase concluída, {n} pontos.",
@@ -510,9 +521,13 @@ const en: Dictionary = {
 		},
 		fliperama: {
 			tela: "Arcade cabinet: a little shoot'em up. Press Enter or click to play.",
+			telaToque: "Arcade cabinet: a little shoot'em up. Touch the screen to play.",
 			jogando:
 				"Playing. Arrow keys or WASD move the ship, space fires, Esc closes the panel.",
+			jogandoToque:
+				"Playing. Drag your finger across the screen to move the ship; it fires while you hold.",
 			comandos: "ARROWS OR WASD MOVE  SPACE FIRES",
+			comandosToque: "DRAG TO AIM AND FIRE",
 			perdeuVida: "Ship hit. {n} lives left.",
 			fim: "Game over, {n} points.",
 			venceu: "Stage cleared, {n} points.",
