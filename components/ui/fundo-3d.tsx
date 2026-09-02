@@ -132,7 +132,7 @@ export function Fundo3D({
         data-cromo-pagina
         onClick={alternar}
         aria-pressed={ligado}
-        className="safe-bottom fixed bottom-5 left-5 z-40 inline-flex h-11 items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)]/85 px-4 text-xs text-[var(--color-fg-muted)] backdrop-blur transition-colors hover:border-[var(--color-border-strong)] hover:text-[var(--color-fg)]"
+        className="flutua flutua-acima inline-flex h-11 items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)]/85 px-4 text-xs text-[var(--color-fg-muted)] backdrop-blur transition-colors hover:border-[var(--color-border-strong)] hover:text-[var(--color-fg)]"
       >
         <Boxes aria-hidden="true" className="size-4" />
         {ligado ? dict.nav.desligar3d : dict.nav.ligar3d}

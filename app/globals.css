@@ -538,6 +538,69 @@
     white-space: nowrap;
   }
 
+  /* Os três controles flutuantes do rodapé.
+
+     Cada um nasce num galho diferente da árvore: o interruptor do 3D vem do
+     layout, o "entrar na ilha" e o WhatsApp vêm da página. Nenhum enxerga o
+     outro — e enquanto cada um escolhia o próprio canto dentro do próprio
+     arquivo, dois escolheram o mesmo: o "entrar na ilha" pousava EM CIMA do
+     botão de WhatsApp. Este bloco é o único lugar que decide onde cada um
+     pousa.
+
+     À esquerda, empilhados, os dois controles de EXIBIÇÃO: 3D e ilha são a
+     mesma pergunta — "como este site aparece". À direita, sozinho, o WhatsApp,
+     que é a única AÇÃO e mora onde o polegar procura ação.
+
+     Empilhados e não lado a lado: em linha os dois passam de 290 px, e num
+     telefone de 390 sobram 286 até a borda do WhatsApp — encostavam de novo,
+     só que em outro par. Em coluna não disputam largura com ninguém.
+
+     A conta da pilha sai destas três medidas, e não de números soltos: mexer
+     na altura do botão sem mexer no empilhamento foi o que já sobrepôs um par
+     aqui. */
+  :root {
+    --flutua-margem: 1.25rem;
+    /* A altura dos dois botões, que é `h-11`. */
+    --flutua-altura: 2.75rem;
+    --flutua-vao: 0.5rem;
+  }
+
+  .flutua {
+    position: fixed;
+    z-index: 40;
+    left: var(--flutua-margem);
+    bottom: var(--flutua-margem);
+  }
+
+  /* O de cima da pilha. O de baixo já está no lugar com `.flutua` sozinho. */
+  .flutua-acima {
+    bottom: calc(
+      var(--flutua-margem) + var(--flutua-altura) + var(--flutua-vao)
+    );
+  }
+
+  /* A pilha é fixa: ela não empurra nada, só pousa por cima. No fim da
+     página isso encontra o rodapé — e no telefone o rodapé empilha, deixando
+     a fileira de ícones (GitHub, LinkedIn, e-mail, voltar ao topo) exatamente
+     onde a pilha pousa. Os dois pills tapavam GitHub e LinkedIn: links vivos,
+     clicáveis só em teoria.
+
+     Este cálculo reserva no rodapé a faixa que a pilha ocupa, então a fileira
+     sobe e a pilha pousa em espaço vazio. Sai das mesmas três medidas da
+     pilha, e não de um número escolhido a olho — se o botão crescer, a faixa
+     cresce junto.
+
+     Só abaixo de `sm`: a partir dali o rodapé vira uma linha e a fileira mora
+     na direita, longe da pilha. */
+  @media (width < 40rem) {
+    .calco-flutuante {
+      padding-bottom: calc(
+        var(--flutua-margem) + 2 * var(--flutua-altura) + var(--flutua-vao) +
+          var(--flutua-margem)
+      );
+    }
+  }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }

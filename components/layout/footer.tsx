@@ -15,7 +15,13 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   ];
 
   return (
-    <footer data-cromo-pagina className="border-t border-[var(--color-border)] py-12">
+    /* `calco-flutuante`: no telefone a fileira de ícones aqui embaixo divide o
+       canto com os botões flutuantes, que são fixos e não empurram nada. A
+       classe reserva a faixa deles. Ver `globals.css`, no bloco do `.flutua`. */
+    <footer
+      data-cromo-pagina
+      className="calco-flutuante border-t border-[var(--color-border)] py-12"
+    >
       <div className="shell flex flex-col items-center gap-8 sm:flex-row sm:justify-between">
         <div className="text-center sm:text-left">
           <p className="text-sm text-[var(--color-fg)]">

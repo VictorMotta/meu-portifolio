@@ -11,6 +11,12 @@ import { whatsappUrl } from "@/content/site";
  * Só aparece depois que a pessoa passa do hero, na primeira tela ele
  * competiria com os CTAs principais. `safe-bottom` evita que ele fique
  * embaixo da barra de gestos do iPhone.
+ *
+ * O canto de baixo à direita é dele SOZINHO — os controles de exibição moram
+ * empilhados na esquerda, em `.flutua`. Quem quiser pôr outra coisa flutuando
+ * aqui: o "entrar na ilha" já morou neste canto e pousava em cima deste botão,
+ * porque cada componente escolhia o próprio lugar sem enxergar os outros. A
+ * regra está escrita em `globals.css`, no bloco do `.flutua`.
  */
 export function WhatsAppFloatingButton({
   message,
