@@ -404,7 +404,7 @@ function Ilha({
       chegada.current = !mesh
         ? null
         : folha
-          ? poseFolha(mesh, ponto, FOV, size.width / size.height)
+          ? poseFolha(mesh, ponto, FOV)
           : poseDaTela(mesh, ponto, FOV, size.width / size.height, obstaculos);
     }
 
@@ -795,9 +795,14 @@ function Ilha({
        tamanho gigante. O visitante lê a stack duas vezes, uma por cima da
        outra — é o que se vê nos prints de celular. Sem alvo pintado atrás, o
        fundo vira o móvel e só. */
+    /* Em MODO FOLHA apaga sempre, qualquer que seja a superfície. De perto o
+       alvo é bem maior que a folha e sobra pelas beiradas dela: sem apagar, o
+       que aparece nessas tiras são pedaços de palavra do mesmo texto que está
+       sendo lido no painel. Apagado, a tira é só a superfície do móvel. */
     const deveApagar =
       pontoDoVoo !== null &&
-      (pontoDoVoo.superficie === "tela" ||
+      (folha ||
+        pontoDoVoo.superficie === "tela" ||
         pontoDoVoo.superficie === "fliperama") &&
       t >= 0.8;
 

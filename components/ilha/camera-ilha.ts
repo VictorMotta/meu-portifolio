@@ -21,11 +21,15 @@ import type { Ponto } from "@/components/ilha/pontos";
  * seis paradas — que é o que faltava. O preço é honesto: no celular a parada
  * não é mais o objeto em close, é o canto da ilha onde ele mora.
  *
- * `QUADRO` é quanto de mundo cabe na LARGURA do quadro, em metros — e é a
- * largura, não a altura, porque celular é em pé: em 2,6 m de altura sobram
- * 1,20 m de largura, e o quadro de projetos tem 1,73 m. Ele aparecia cortado
- * dos dois lados, gigante, que é o defeito antigo de volta com outra roupa.
- * Em 2,2 m de largura o maior alvo cabe inteiro com folga.
+ * `RECUO` é a distância, como múltiplo do recuo que faria o alvo preencher a
+ * altura do quadro. 1,2 é perto: o alvo ocupa mais de 80% da altura.
+ *
+ * Chegar perto só é possível porque o alvo termina ATRÁS da folha — ver
+ * `TOPO`. Enquanto ele precisava caber na tela, a distância era refém da
+ * largura do aparelho: um celular em pé tem um campo horizontal estreito, e
+ * enquadrar 1,73 m de quadro de projetos jogava a câmera a quase 5 m, do outro
+ * lado da sala. Era esse o "zoom de menos". Escondido, ele não precisa caber —
+ * sobrar pelos lados não custa nada — e a distância passa a sair só da altura.
  *
  * `TOPO` é onde a BORDA DE CIMA do objeto pousa na altura do quadro, e 0,24 a
  * põe ATRÁS da folha de propósito — a folha começa em 18%, e os 6% de margem
@@ -51,7 +55,7 @@ import type { Ponto } from "@/components/ilha/pontos";
  * cai de frente para o objeto de verdade, pintado, sem precisar de zoom
  * nenhum: a viagem continua tendo destino.
  */
-const QUADRO_MODO_FOLHA = 2.2;
+const RECUO_MODO_FOLHA = 1.2;
 const ELEVACAO_MODO_FOLHA = 0.26;
 const TOPO_MODO_FOLHA = 0.24;
 
@@ -110,15 +114,15 @@ export function poseFolha(
   objeto: THREE.Object3D,
   ponto: Ponto,
   fovGraus: number,
-  aspecto: number,
 ): Pose | null {
   const medida = medir(objeto);
   if (!medida) return null;
   const { centro, tamanho } = medida;
 
   const fov = THREE.MathUtils.degToRad(fovGraus);
-  const fovH = 2 * Math.atan(Math.tan(fov / 2) * aspecto);
-  const distancia = QUADRO_MODO_FOLHA / 2 / Math.tan(fovH / 2);
+  /* Só a altura. A largura do alvo não entra na conta porque ele não precisa
+     caber: o que sobra pelos lados fica atrás da folha junto com o resto. */
+  const distancia = (tamanho.y / 2 / Math.tan(fov / 2)) * RECUO_MODO_FOLHA;
   const alturaDoQuadro = 2 * distancia * Math.tan(fov / 2);
 
   /* A frente do objeto, achatada no plano horizontal — a mesma normal que o
