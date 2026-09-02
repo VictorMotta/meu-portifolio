@@ -58,11 +58,18 @@ export const ORBITA_INICIAL: Orbita = {
 };
 
 /* Olhar de baixo do deck não mostra nada além da rocha; de cima demais a ilha
-   vira uma planta baixa. E o zoom para antes de a câmera entrar na mobília:
-   mais perto que isso e o visitante fica dentro do sofá. */
+   vira uma planta baixa. */
 export const ELEVACAO_MINIMA = 0.12;
 export const ELEVACAO_MAXIMA = 1.15;
-export const ZOOM_MINIMO = 0.72;
+
+/* O piso do zoom foi 0,72, escolhido quando a câmera só sabia orbitar o CENTRO
+   da ilha: dali para dentro ela entrava no sofá, e não havia como chegar perto
+   de um móvel sem atravessar outro. Com o passeio de dois dedos a pergunta
+   mudou — dá para levar a vista até a peça antes de aproximar —, e 0,72 virou
+   um teto baixo demais para um celular, onde a ilha inteira cabe em poucos
+   centímetros de tela. Em 0,45 a mobília enche o quadro e a câmera ainda para
+   antes do deck. */
+export const ZOOM_MINIMO = 0.45;
 export const ZOOM_MAXIMO = 1.7;
 
 /**

@@ -181,7 +181,24 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
   const aoAtualizarQuadro = useCallback(
     (q: Quadro) => {
       const el = painelRef.current;
-      if (!el || folha) return;
+      if (!el) return;
+
+      /* O conteúdo só aparece no fim do voo: texto legível passando voando é
+         ilegível e ainda embrulha o estômago. */
+      const opacidade = Math.max(0, (q.progresso - 0.62) / 0.38);
+
+      /* Em modo folha o painel não pousa na tela do móvel — ele é uma folha
+         ancorada embaixo, posicionada por CSS. Só a opacidade vale aqui, e
+         vale MUITO: era o único caminho que escrevia opacidade, e ele voltava
+         antes de escrever nada. A folha nascia com a classe `opacity-100` e
+         aparecia inteira, opaca, no PRIMEIRO quadro do toque, com a câmera
+         ainda no meio do voo. No celular era o que se via: a tela chegando
+         antes do zoom terminar. */
+      if (folha) {
+        el.style.opacity = `${opacidade}`;
+        return;
+      }
+
       if (q.largura <= 0 || q.progresso <= 0) {
         el.style.opacity = "0";
         return;
@@ -219,9 +236,7 @@ export function Ilha({ dict, locale, projetos, aoSair }: Props) {
          outro tamanho. Cobrindo a janela inteira, não há de onde o texto
          escapar. */
       el.style.height = `${altura}px`;
-      /* O conteúdo só aparece no fim do voo: texto legível passando voando
-         é ilegível e ainda embrulha o estômago. */
-      el.style.opacity = `${Math.max(0, (q.progresso - 0.62) / 0.38)}`;
+      el.style.opacity = `${opacidade}`;
     },
     [destino, folha],
   );

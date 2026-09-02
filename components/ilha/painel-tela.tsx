@@ -96,9 +96,14 @@ export function PainelTela({
            que é um retângulo por cima em vez do quadro de verdade. */
         eTela || eFliperama ? "rounded-[6px]" : "",
         ativo ? "" : "pointer-events-none",
+        /* `opacity-0` nos DOIS modos, e a opacidade de verdade escrita quadro a
+           quadro em estilo inline por `aoAtualizarQuadro`. A folha tinha
+           `opacity-100` porque nada escrevia a dela: nascia opaca e aparecia
+           inteira antes de a câmera chegar. */
+        "opacity-0",
         folha
-          ? "inset-x-3 bottom-[4.25rem] top-[18vh] mx-auto max-w-[42rem] rounded-[10px] opacity-100 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)]"
-          : "opacity-0",
+          ? "inset-x-3 bottom-[4.25rem] top-[18vh] mx-auto max-w-[42rem] rounded-[10px] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)]"
+          : "",
       ].join(" ")}
     >
       {eTela ? (

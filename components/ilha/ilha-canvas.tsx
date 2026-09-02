@@ -16,6 +16,7 @@ import {
   foraDaMedida,
   mapearObstaculos,
   poseDaTela,
+  poseFolha,
   poseGeral,
   suavizar,
   type Pose,
@@ -397,9 +398,14 @@ function Ilha({
       const ponto = PONTOS[destino];
       const mesh = ilha.getObjectByName(ponto.alvo) ?? null;
       alvoMesh.current = mesh;
-      chegada.current = mesh
-        ? poseDaTela(mesh, ponto, FOV, size.width / size.height, folha, obstaculos)
-        : null;
+      /* Duas poses de chegada, e não uma com um parâmetro: no desktop a câmera
+         mira a cara do objeto e recua pela normal dele; no celular ela olha o
+         canto da ilha onde ele mora, de fora. Ver `poseFolha`. */
+      chegada.current = !mesh
+        ? null
+        : folha
+          ? poseFolha(mesh, ponto, FOV, size.width / size.height)
+          : poseDaTela(mesh, ponto, FOV, size.width / size.height, obstaculos);
     }
 
     tempo.current = reduzido ? DURACAO : 0;
@@ -791,8 +797,7 @@ function Ilha({
        fundo vira o móvel e só. */
     const deveApagar =
       pontoDoVoo !== null &&
-      (folha ||
-        pontoDoVoo.superficie === "tela" ||
+      (pontoDoVoo.superficie === "tela" ||
         pontoDoVoo.superficie === "fliperama") &&
       t >= 0.8;
 
